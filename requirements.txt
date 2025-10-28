@@ -1,0 +1,11 @@
+numpy 
+scipy 
+pandas 
+scikit-learn 
+statsmodels 
+numba 
+matplotlib 
+pyyaml 
+tqdm 
+pyarrow
+kaggle

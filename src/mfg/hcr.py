@@ -19,7 +19,7 @@ def hcr_coeffs_over_lags(
 
     assert y.shape == z.shape
     n = len(y)
-    lag_samples = np.arrange(0, maxlag_ms + 1, lag_step_ms) * fs // 1000
+    lag_samples = np.arange(0, maxlag_ms + 1, lag_step_ms) * fs // 1000
     n_lags = len(lag_samples)
     F = legendre_orthonormal(y, m)
     G_full = legendre_orthonormal(z, m)
@@ -27,8 +27,6 @@ def hcr_coeffs_over_lags(
     coeffs = np.zeros(((m + 1) * (m + 1), n_lags), float)
 
     for li, L in enumerate(lag_samples):
-        yv = y[n : n - L]
-        zv = z[L:]
         Fy = F[: n - L]
         Gz = G_full[L:]
 
