@@ -1,8 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from typing import Any
 
 
 @dataclass(frozen=True)
 class Config:
+    """Global configuration for MFG EEG analysis."""
+
     fs: int = 500
     maxlag_ms: int = 1000
     lag_step_ms: int = 2
@@ -15,6 +18,13 @@ class Config:
     pca_max_r: int = 4
 
 
-def load_config(**overrides) -> Config:
-    cfg = Config(**{**Config().__dict__, **overrides})
-    return cfg
+def load_config(**overrides: Any) -> Config:
+    """
+    Create a Config instance, optionally overriding selected fields:
+
+        cfg = load_config(fs=128, maxlag_ms=500)
+
+    """
+    base = asdict(Config())
+    base.update(overrides)
+    return Config(**base)
