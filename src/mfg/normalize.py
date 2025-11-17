@@ -6,14 +6,13 @@ This module provides three main 1D normalizations:
 - normalize_gauss:
     x -> (x - mean) / std, then mapped by standard Gaussian CDF
     to approximately U(0,1). This corresponds to the basic
-    normalization used in the paper (Section II.A).
 
 - normalize_edf:
     x -> empirical CDF via ranks, without assuming any parametric
     distribution. Also maps to approximately U(0,1).
 
 - pnorm_student:
-    time-series "p-normalization" inspired by the paper's
+    time-series "p-normalization"
     Granger-causality section:
        * predict x from its AR(p) past,
        * take residuals,

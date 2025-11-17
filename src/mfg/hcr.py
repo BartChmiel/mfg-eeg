@@ -16,7 +16,7 @@ marginal contributions:
 
     M_tilde_jk = M_jk - E[f_j(y)] * E[f_k(z)],
 
-to focus on pure dependencies (mixed moments), as in eq. (3) of the paper.
+to focus on pure dependencies (mixed moments)
 
 All such matrices M(L) are then flattened and stacked into a 2D array
 of coefficients over lags.

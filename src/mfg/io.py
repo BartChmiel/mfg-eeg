@@ -38,7 +38,7 @@ def load_pair_for_analysis(
     roi_win_samples : np.ndarray or None, optional
         1-based sample indices WITHIN A TRIAL to keep for ROI .mat files.
         If None and `path` is MAT, the default is the first 64 samples
-        (≈0.5 s for fs=128 Hz), consistent with the paper setup.
+        (≈0.5 s for fs=128 Hz).
         Ignored for CSV.
     fs_fallback : int or None, optional
         Sampling frequency used if it cannot be read from the file
@@ -103,7 +103,6 @@ def load_pair_for_analysis(
     # ---------- mfgin .mat: ROI with multiple trials ----------
     if ext == "mat":
         # Default ROI window: first 64 samples of each trial (1-based),
-        # consistent with the methodology used in the paper.
         if roi_win_samples is None:
             win_samples = np.arange(1, 65, dtype=int)
         else:
