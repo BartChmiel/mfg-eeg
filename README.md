@@ -16,25 +16,7 @@ uv venv --python 3.12
 pip install -r requirements.txt
 ```
 
----
-
-## What this project does (current pipeline)
-
-This repository implements MFG/HCR-based lagged dependency analysis for EEG.
-For Kaggle Grasp-and-Lift EEG (TRAIN split), it supports **phase-aware** analysis using event labels:
-- build a **shared PCA basis** for a fixed channel pair across phases/windows (so PC1/PC2/PC3 are comparable),
-- compute **phase-pair curves** (PC projections vs lag) per phase,
-- compute **phase matrices** (C×C) summarizing directed dependencies between all channels per phase,
-- batch versions for aggregation across many training files and optional grouping by subject.
-
-Key concept:
-- HCR produces coefficient-vectors over lag; PCA compresses them into interpretable feature curves.
-- A shared PCA basis is required if you want to compare PC curves across phases/files.
-
----
-
-## Kaggle (TRAIN) – Phase-aware workflow (recommended)
-
+## Kaggle - workflow 
 ### A) Build shared PCA basis (single file)
 Build a basis for a *fixed* channel pair (A->B), mode and epoch length.
 This basis can later be reused to make PC curves comparable across phases.
@@ -50,7 +32,7 @@ python -m scripts.build_kaggle_basis \
   --out out/basis/basis_Fp1_Fp2_gc_e2s_m4.npz
 ```
 
-### A2) Build shared PCA basis (batch across MANY train files) – recommended
+### A2) Build shared PCA basis (batch across MANY train files) - recommended
 More stable than single-file basis. Works only on TRAIN split (needs *_events.csv).
 
 ```bash
@@ -114,7 +96,7 @@ Outputs:
 
 ---
 
-### D) Phase matrices (batch across MANY train files) – recommended
+### D) Phase matrices (batch across MANY train files) - recommended
 Aggregates phase matrices across many files.
 Useful for repeatability and stable “global” phase structure.
 
@@ -153,7 +135,7 @@ Optional filters:
 
 ---
 
-## Legacy pipeline (to be moved to /legacy)
+## Legacy pipeline 
 
 These scripts run analysis on:
 - a full Kaggle series treated as one long trial (no phase slicing),
