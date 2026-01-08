@@ -485,11 +485,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-# python -m scripts.mfg_kaggle_phase_matrix_batch `
-#   --root data/grasp-and-lift-eeg-detection/train `
-#   --out out/phase_mats_batch `
-#   --mode gc --epoch-len-s 2.0 --m 4 `
-#   --lags-ms 50 100 150 200 `
-#   --metric neglog10p --summary mean
