@@ -48,32 +48,31 @@ def plot_features(
 
 
 def plot_gc_matrix(
-    gc_mat: np.ndarray, ch_names: list[str], title: str, outpath: str
+    gc_mat: np.ndarray,
+    ch_names: list[str],
+    title: str,
+    outpath: str,
+    *,
+    vmin: float | None = None,
+    vmax: float | None = None,
+    cmap: str = "viridis",
 ) -> None:
-    """
-    Plot GC matrix over channels as a heatmap.
-
-    Parameters
-    ----------
-    gc_mat : array_like, shape (N, N)
-        Pairwise GC-like evaluation between channels:
-        row = "reason", column = "result".
-    ch_names : list of str, length N
-        Channel names in the same order as in gc_mat.
-    title : str
-        Plot title.
-    outpath : str
-        Path to the output PNG file.
-    """
     gc_mat = np.asarray(gc_mat, float)
     n = gc_mat.shape[0]
     assert gc_mat.shape == (n, n), "plot_gc_matrix: gc_mat must be square"
     assert len(ch_names) == n, "plot_gc_matrix: ch_names length must match gc_mat"
 
     plt.figure(figsize=(7, 6))
-    im = plt.imshow(gc_mat, origin="lower", interpolation="nearest")
+    im = plt.imshow(
+        gc_mat,
+        origin="lower",
+        interpolation="nearest",
+        vmin=vmin,
+        vmax=vmax,
+        cmap=cmap,
+    )
     cbar = plt.colorbar(im)
-    cbar.set_label("GC(lag)")
+    cbar.set_label("GC summary")
 
     plt.xticks(range(n), ch_names, rotation=90, fontsize=8)
     plt.yticks(range(n), ch_names, fontsize=8)

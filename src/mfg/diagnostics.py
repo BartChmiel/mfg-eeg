@@ -51,7 +51,9 @@ def pearson_over_lags(
     n = len(y)
 
     # Candidate lags in samples, starting from 0 ms
-    lag_samples_full = (np.arange(0, maxlag_ms + 1, step_ms) * fs // 1000).astype(int)
+    step_samples = max(1, int(round(step_ms * fs / 1000.0)))
+    maxlag_samples = int(round(maxlag_ms * fs / 1000.0))
+    lag_samples_full = np.arange(0, maxlag_samples + 1, step_samples, dtype=int)
 
     corr_list = []
     lags_list = []
