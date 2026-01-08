@@ -32,7 +32,7 @@ python -m scripts.build_kaggle_basis `
   --out out/basis/basis_Fp1_Fp2_gc_e2s_m4.npz
 ```
 
-### A2) Build shared PCA basis (batch across MANY train files) - recommended
+### A2) Build shared PCA basis 
 More stable than single-file basis. Works only on TRAIN split (needs *_events.csv).
 
 ```bash
