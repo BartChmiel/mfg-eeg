@@ -1,0 +1,4752 @@
+--- File: .\szukacz.py ---
+# program przegladajacy folder w ktorym sue znajduje i wszystko podflodery w poszukiwaniu plikow z rozszerzeniem .py i zapisuje je do pliku .txt w fromacie nazwa kod w danym pliku, pomijajac folder .venv
+
+import os
+
+
+def find_py_files(root_folder: str, output_file: str):
+    with open(output_file, "w", encoding="utf-8") as out_f:
+        for dirpath, dirnames, filenames in os.walk(root_folder):
+            # Pomijamy folder .venv
+            if ".venv" in dirnames:
+                dirnames.remove(".venv")
+            if "legacy" in dirnames:
+                dirnames.remove("legacy")
+            for filename in filenames:
+                if filename.endswith(".py"):
+                    file_path = os.path.join(dirpath, filename)
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        code = f.read()
+                    out_f.write(f"--- File: {file_path} ---\n")
+                    out_f.write(code + "\n\n")
+
+
+if __name__ == "__main__":
+    find_py_files(".", "found_py_files.txt")
+
+
+--- File: .\scripts\build_kaggle_basis.py ---
+# scripts/build_kaggle_basis.py
+"""
+Build a shared PCA basis for a fixed Kaggle electrode pair across ALL phases.
+
+Output: .npz containing:
+- mean (K,), V (K,K), eigvals (K,), lag_samples (L,)
+- metadata: fs, maxlag_ms, lag_step_ms, m, mixed_only, chan_a, chan_b, mode, epoch_len_s
+
+This basis can be reused in scripts/mfg_kaggle_phase_pair.py to make
+PC1/PC2/PC3 comparable across phases.
+"""
+
+from __future__ import annotations
+
+import os
+import argparse
+import numpy as np
+
+from src.mfg.config import load_config
+from src.mfg.io import (
+    load_kaggle_data_with_events,
+    extract_grasp_cycles,
+    phase_window_bounds,
+)
+from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src.mfg.hcr import hcr_coeffs_over_lags
+from src.mfg.global_basis import pca_from_second_moments
+
+
+PHASES = [
+    ("HandStart", "FirstDigitTouch"),
+    ("FirstDigitTouch", "BothStartLoadPhase"),
+    ("BothStartLoadPhase", "LiftOff"),
+    ("LiftOff", "Replace"),
+    ("Replace", "BothReleased"),
+]
+
+
+def main() -> None:
+    cfg = load_config()
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", required=True)
+    ap.add_argument("--events", required=True)
+    ap.add_argument("--chan-a", required=True)
+    ap.add_argument("--chan-b", required=True)
+    ap.add_argument("--mode", choices=["corr", "gc"], default="gc")
+
+    ap.add_argument("--epoch-len-s", type=float, default=2.0)
+    ap.add_argument("--max-cycle-s", type=float, default=6.0)
+    ap.add_argument("--min-cycles", type=int, default=10)
+
+    ap.add_argument(
+        "--m", type=int, default=4
+    )  # <-- m=4 => 16 features (mixed_only=True)
+    ap.add_argument("--out", required=True, help="Output .npz path for the basis")
+
+    args = ap.parse_args()
+
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+
+    ids, X, E, ch_names, _ = load_kaggle_data_with_events(args.data, args.events)
+    fs = int(cfg.fs)
+
+    try:
+        ia = ch_names.index(args.chan_a)
+        ib = ch_names.index(args.chan_b)
+    except ValueError as exc:
+        raise ValueError(
+            f"Channel not found. Available example: {ch_names[:10]} ..."
+        ) from exc
+
+    cycles = extract_grasp_cycles(E, fs=fs, max_cycle_s=args.max_cycle_s)
+    if len(cycles) < args.min_cycles:
+        print(
+            f"[WARN] cycles={len(cycles)} < min_cycles={args.min_cycles}. Basis may be noisy."
+        )
+
+    T = X.shape[0]
+
+    # Global normalization over full series (NOT per window)
+    if args.mode == "corr":
+        a_reason_all = normalize_gauss(X[:, ia])
+        b_result_all = normalize_gauss(X[:, ib])
+    else:
+        a_reason_all = normalize_edf(X[:, ia])
+        b_result_all = pnorm_student(
+            X[:, ib],
+            fs,
+            cfg.ar_order,
+            cfg.ema_half_life_s,
+            cfg.student_nu,
+        )
+
+    # Fixed window length => fixed maxlag => fixed lag grid
+    seg_len = int(round(args.epoch_len_s * fs))
+    min_pairs = 10
+    maxlag_samples_data = max(1, seg_len - min_pairs)
+    maxlag_ms_data = int(1000.0 * maxlag_samples_data / fs)
+    maxlag_ms = int(min(cfg.maxlag_ms, maxlag_ms_data))
+
+    lag_step_ms = int(cfg.lag_step_ms)
+
+    m = int(args.m)
+    mixed_only = True
+    K = m * m  # 16 when m=4
+
+    # Online accumulation of samples x in R^K (each lag-column of coeffs is a sample)
+    n_samples = 0
+    sum_x = np.zeros(K, dtype=float)
+    sum_xxT = np.zeros((K, K), dtype=float)
+    lag_ref = None
+
+    n_windows = 0
+
+    for cyc in cycles:
+        for ev0, ev1 in PHASES:
+            bounds = phase_window_bounds(
+                T, cyc[ev0], cyc[ev1], fs=fs, epoch_len_s=args.epoch_len_s
+            )
+            if bounds is None:
+                continue
+            a, b = bounds
+
+            y = a_reason_all[a:b]
+            z = b_result_all[a:b]
+            if y.size != seg_len or z.size != seg_len:
+                continue
+
+            coeffs, lag_samples = hcr_coeffs_over_lags(
+                y,
+                z,
+                fs,
+                maxlag_ms,
+                lag_step_ms,
+                m,
+                subtract_marginals=True,
+                mixed_only=mixed_only,
+            )
+
+            if coeffs.shape[0] != K:
+                raise RuntimeError(f"Expected K={K} features, got {coeffs.shape[0]}")
+
+            if lag_ref is None:
+                lag_ref = lag_samples
+            else:
+                if not np.array_equal(lag_ref, lag_samples):
+                    raise RuntimeError(
+                        "Lag grid mismatch. Check epoch_len_s / fs / lag_step_ms consistency."
+                    )
+
+            # Accumulate across ALL lag-columns: each column is one sample in R^K
+            sum_x += coeffs.sum(axis=1)
+            sum_xxT += coeffs @ coeffs.T
+            n_samples += int(coeffs.shape[1])
+            n_windows += 1
+
+    if n_samples < 2:
+        raise RuntimeError(
+            "Not enough samples to build PCA basis. Increase data / windows / epoch length."
+        )
+
+    mean, V, eigvals = pca_from_second_moments(sum_x, sum_xxT, n_samples)
+
+    np.savez_compressed(
+        args.out,
+        mean=mean,
+        V=V,
+        eigvals=eigvals,
+        lag_samples=np.asarray(lag_ref, dtype=int),
+        fs=int(fs),
+        maxlag_ms=int(maxlag_ms),
+        lag_step_ms=int(lag_step_ms),
+        m=int(m),
+        mixed_only=np.int8(1),
+        chan_a=str(args.chan_a),
+        chan_b=str(args.chan_b),
+        mode=str(args.mode),
+        epoch_len_s=float(args.epoch_len_s),
+        n_cycles=int(len(cycles)),
+        n_windows=int(n_windows),
+        n_samples=int(n_samples),
+    )
+
+    print(
+        f"Saved basis: {args.out}\n"
+        f"  cycles={len(cycles)} windows={n_windows} samples={n_samples}\n"
+        f"  K={K} m={m} mixed_only={mixed_only}\n"
+        f"  fs={fs} epoch_len_s={args.epoch_len_s} maxlag_ms={maxlag_ms} step_ms={lag_step_ms}"
+    )
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\build_kaggle_basis_allpairs_batch.py ---
+# """
+# Build PCA bases for ALL ordered channel pairs (i -> j) from Kaggle TRAIN split.
+
+# For each ordered pair (i->j), we collect K=m*m HCR mixed-only features at a fixed set
+# of lags (e.g. 0,50,100,150,200 ms) across:
+# - many files (train),
+# - all canonical phases,
+# - all cycles/windows.
+
+# Then we compute PCA per pair and keep r=3 components.
+
+# Output .npz contains:
+# - ch_names (object array of strings), C
+# - mean:   (C, C, K)
+# - U:      (C, C, r, K)   (top-r PCA directions, row-major)
+# - eigvals:(C, C, r)
+# - lags_ms, lag_samples
+# - metadata: fs, m, mode, epoch_len_s, counts
+# """
+
+# from __future__ import annotations
+
+# import os
+# import re
+# import argparse
+# from dataclasses import asdict
+# from pathlib import Path
+# from typing import List, Optional, Tuple
+
+# import numpy as np
+
+# from src.mfg.config import load_config
+# from src.mfg.basis import legendre_orthonormal
+# from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+# from src.mfg.io import (
+#     load_kaggle_data_with_events,
+#     extract_grasp_cycles,
+#     phase_window_bounds,
+# )
+
+# PHASES = [
+#     ("HandStart", "FirstDigitTouch"),
+#     ("FirstDigitTouch", "BothStartLoadPhase"),
+#     ("BothStartLoadPhase", "LiftOff"),
+#     ("LiftOff", "Replace"),
+#     ("Replace", "BothReleased"),
+# ]
+
+# _RX = re.compile(r"subj(?P<subj>\d+)_series(?P<series>\d+)_data\.csv$", re.IGNORECASE)
+
+
+# def _parse_subj_series(p: Path) -> Tuple[Optional[int], Optional[int]]:
+#     m = _RX.search(p.name)
+#     if not m:
+#         return None, None
+#     return int(m.group("subj")), int(m.group("series"))
+
+
+# def _iter_train_data_files(root: Path) -> List[Path]:
+#     if (root / "train").is_dir():
+#         train_dir = root / "train"
+#     else:
+#         train_dir = root
+#     return sorted(train_dir.glob("subj*_series*_data.csv"))
+
+
+# def _events_path_for_data(data_path: Path) -> Path:
+#     return data_path.with_name(data_path.name.replace("_data.csv", "_events.csv"))
+
+
+# def _filter_files(
+#     files: List[Path],
+#     subjects: Optional[List[int]],
+#     series: Optional[List[int]],
+#     max_files: Optional[int],
+# ) -> List[Path]:
+#     out: List[Path] = []
+#     for p in files:
+#         s, se = _parse_subj_series(p)
+#         if s is None or se is None:
+#             continue
+#         if subjects is not None and s not in subjects:
+#             continue
+#         if series is not None and se not in series:
+#             continue
+#         out.append(p)
+#         if max_files is not None and len(out) >= max_files:
+#             break
+#     return out
+
+
+# def _basis_mixed(u_1d: np.ndarray, m: int) -> np.ndarray:
+#     """
+#     Legendre orthonormal basis on [0,1], keep only degrees 1..m (mixed_only).
+#     Returns shape (T, m).
+#     """
+#     F = legendre_orthonormal(u_1d, m)  # (T, m+1)
+#     return F[:, 1:]  # drop degree-0
+
+
+# def _compute_coeffs_all_pairs_for_lag(
+#     Fy: np.ndarray,  # (n_eff, C, m)
+#     Fz: np.ndarray,  # (n_eff, C, m)
+#     subtract_marginals: bool,
+# ) -> np.ndarray:
+#     """
+#     M[i,j,a,b] = E[ Fy_i,a * Fz_j,b ] - E[Fy_i,a]E[Fz_j,b]
+#     Returns shape (C, C, m, m).
+#     """
+#     n_eff = Fy.shape[0]
+#     M = np.einsum("tcm,tdn->cdmn", Fy, Fz) / float(n_eff)
+
+#     if subtract_marginals:
+#         my = Fy.mean(axis=0)  # (C, m)
+#         mz = Fz.mean(axis=0)  # (C, m)
+#         M = M - my[:, None, :, None] * mz[None, :, None, :]
+
+#     return M
+
+
+# def _normalize_series(
+#     X: np.ndarray, mode: str, fs: int, cfg
+# ) -> Tuple[np.ndarray, np.ndarray]:
+#     """
+#     Produce Y (reason) and Z (result) arrays, shape (T, C) each, for the WHOLE series.
+#     - corr: both gaussian-CDF
+#     - gc:   reason = EDF, result = pnorm_student
+#     """
+#     T, C = X.shape
+#     Y = np.empty((T, C), dtype=float)
+#     Z = np.empty((T, C), dtype=float)
+
+#     if mode == "corr":
+#         for c in range(C):
+#             u = normalize_gauss(X[:, c])
+#             Y[:, c] = u
+#             Z[:, c] = u
+#         return Y, Z
+
+#     for c in range(C):
+#         Y[:, c] = normalize_edf(X[:, c])
+#         Z[:, c] = pnorm_student(
+#             X[:, c],
+#             fs,
+#             cfg.ar_order,
+#             cfg.ema_half_life_s,
+#             cfg.student_nu,
+#         )
+#     return Y, Z
+
+
+# def _fix_pca_signs(U: np.ndarray) -> np.ndarray:
+#     """
+#     Deterministic PCA sign convention:
+#     for each component u, make the largest-abs entry positive.
+#     U shape: (r, K)
+#     """
+#     U = np.asarray(U, float).copy()
+#     for k in range(U.shape[0]):
+#         idx = int(np.argmax(np.abs(U[k])))
+#         if U[k, idx] < 0:
+#             U[k] *= -1.0
+#     return U
+
+
+# def main() -> None:
+#     cfg = load_config()
+
+#     ap = argparse.ArgumentParser()
+#     ap.add_argument("--root", required=True, help="Dataset root or train/ directory.")
+#     ap.add_argument(
+#         "--out", required=True, help="Output .npz path, e.g. out/basis_allpairs.npz"
+#     )
+
+#     ap.add_argument("--mode", choices=["corr", "gc"], default="gc")
+#     ap.add_argument("--epoch-len-s", type=float, default=2.0)
+#     ap.add_argument("--max-cycle-s", type=float, default=6.0)
+#     ap.add_argument("--min-cycles", type=int, default=10)
+
+#     ap.add_argument("--m", type=int, default=4)
+#     ap.add_argument("--lags-ms", type=int, nargs="+", default=[0, 50, 100, 150, 200])
+#     ap.add_argument("--pca-r", type=int, default=3)
+
+#     ap.add_argument("--subjects", type=int, nargs="*", default=None)
+#     ap.add_argument("--series", type=int, nargs="*", default=None)
+#     ap.add_argument("--max-files", type=int, default=None)
+#     ap.add_argument("--dry-run", action="store_true")
+
+#     args = ap.parse_args()
+
+#     root = Path(args.root)
+#     files_all = _iter_train_data_files(root)
+#     files = _filter_files(files_all, args.subjects, args.series, args.max_files)
+#     if not files:
+#         raise RuntimeError("No matching train data files found.")
+
+#     if args.dry_run:
+#         print(f"Matched {len(files)} files:")
+#         for p in files[:50]:
+#             print(" -", p)
+#         return
+
+#     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+
+#     fs = int(cfg.fs)
+#     m = int(args.m)
+#     K = m * m
+#     r = int(args.pca_r)
+
+#     lags_ms = list(map(int, args.lags_ms))
+#     lag_samples = [int(round(ms * fs / 1000.0)) for ms in lags_ms]
+#     seg_len = int(round(float(args.epoch_len_s) * float(fs)))
+
+#     # Initialize from first file: reference channel ordering
+#     first_data = files[0]
+#     first_events = _events_path_for_data(first_data)
+#     if not first_events.exists():
+#         raise RuntimeError("Missing events for first file (expected TRAIN split).")
+
+#     _, X0, _, ch_names0, _ = load_kaggle_data_with_events(
+#         str(first_data), str(first_events)
+#     )
+#     C = X0.shape[1]
+
+#     # Streaming moments per pair: sum_x and sum_xxT
+#     sum_x = np.zeros((C, C, K), dtype=float)
+#     sum_xxT = np.zeros((C, C, K, K), dtype=float)
+#     n_samples = np.zeros((C, C), dtype=np.int64)
+
+#     n_files_used = 0
+#     n_cycles_total = 0
+#     n_windows_total = 0
+
+#     subtract_marginals = True
+
+#     for data_path in files:
+#         events_path = _events_path_for_data(data_path)
+#         if not events_path.exists():
+#             print(f"[WARN] Missing events for {data_path.name} -> skipping")
+#             continue
+
+#         _, X, E, ch_names, _ = load_kaggle_data_with_events(
+#             str(data_path), str(events_path)
+#         )
+
+#         # align channel ordering to ch_names0 if needed
+#         if ch_names != ch_names0:
+#             idx_map = []
+#             ok = True
+#             for nm in ch_names0:
+#                 if nm not in ch_names:
+#                     ok = False
+#                     break
+#                 idx_map.append(ch_names.index(nm))
+#             if not ok:
+#                 raise RuntimeError(
+#                     f"Channel mismatch in {data_path.name}, cannot align."
+#                 )
+#             X = X[:, idx_map]
+#             ch_names = ch_names0
+
+#         T = X.shape[0]
+#         Y_all, Z_all = _normalize_series(X, mode=str(args.mode), fs=fs, cfg=cfg)
+
+#         cycles = extract_grasp_cycles(E, fs=fs, max_cycle_s=float(args.max_cycle_s))
+#         if len(cycles) < int(args.min_cycles):
+#             print(
+#                 f"[WARN] {data_path.name}: cycles={len(cycles)} < min_cycles={args.min_cycles}"
+#             )
+
+#         n_files_used += 1
+#         n_cycles_total += int(len(cycles))
+
+#         for cyc in cycles:
+#             for ev0, ev1 in PHASES:
+#                 bounds = phase_window_bounds(
+#                     T,
+#                     int(cyc[ev0]),
+#                     int(cyc[ev1]),
+#                     fs=fs,
+#                     epoch_len_s=float(args.epoch_len_s),
+#                 )
+#                 if bounds is None:
+#                     continue
+#                 a, b = bounds
+#                 if (b - a) != seg_len:
+#                     continue
+
+#                 Yr = Y_all[a:b, :]  # (seg_len, C)
+#                 Zr = Z_all[a:b, :]  # (seg_len, C)
+
+#                 Fy_full = np.empty((seg_len, C, m), dtype=float)
+#                 Fz_full = np.empty((seg_len, C, m), dtype=float)
+#                 for c in range(C):
+#                     Fy_full[:, c, :] = _basis_mixed(Yr[:, c], m)
+#                     Fz_full[:, c, :] = _basis_mixed(Zr[:, c], m)
+
+#                 for Ls in lag_samples:
+#                     n_eff = seg_len - Ls
+#                     if n_eff <= 5:
+#                         continue
+
+#                     Fy = Fy_full[:n_eff, :, :]
+#                     Fz = Fz_full[Ls:, :, :]
+
+#                     M = _compute_coeffs_all_pairs_for_lag(
+#                         Fy, Fz, subtract_marginals=subtract_marginals
+#                     )
+#                     Xpair = M.reshape(C, C, K)  # (C,C,K)
+
+#                     # Accumulate per pair: each (window,lag) is one sample in R^K
+#                     sum_x += Xpair
+#                     # Outer products per pair (vectorized)
+#                     sum_xxT += np.einsum("cdk,cdl->cdkl", Xpair, Xpair)
+#                     n_samples += 1
+
+#                 n_windows_total += 1
+
+#     # PCA per pair
+#     mean = np.zeros((C, C, K), dtype=float)
+#     U = np.zeros((C, C, r, K), dtype=float)
+#     eigvals = np.zeros((C, C, r), dtype=float)
+
+#     for i in range(C):
+#         for j in range(C):
+#             if n_samples[i, j] < 2:
+#                 # leave zeros
+#                 continue
+
+#             mu = sum_x[i, j] / float(n_samples[i, j])
+#             Exx = sum_xxT[i, j] / float(n_samples[i, j])
+#             Cov = Exx - np.outer(mu, mu)
+
+#             # Symmetrize tiny numerical asymmetry
+#             Cov = 0.5 * (Cov + Cov.T)
+
+#             w, V = np.linalg.eigh(Cov)  # ascending
+#             idx = np.argsort(w)[::-1]  # descending
+#             w = w[idx]
+#             V = V[:, idx]  # columns are eigenvectors
+
+#             # store top-r
+#             mu = np.asarray(mu, float)
+#             Uk = V[:, :r].T  # (r,K), row = component
+#             Uk = _fix_pca_signs(Uk)
+
+#             mean[i, j] = mu
+#             U[i, j] = Uk
+#             eigvals[i, j] = w[:r]
+
+#     np.savez_compressed(
+#         args.out,
+#         ch_names=np.array(ch_names0, dtype=object),
+#         mean=mean,
+#         U=U,
+#         eigvals=eigvals,
+#         lags_ms=np.array(lags_ms, dtype=int),
+#         lag_samples=np.array(lag_samples, dtype=int),
+#         fs=int(fs),
+#         m=int(m),
+#         mixed_only=np.int8(1),
+#         mode=str(args.mode),
+#         epoch_len_s=float(args.epoch_len_s),
+#         n_files=int(n_files_used),
+#         n_cycles_total=int(n_cycles_total),
+#         n_windows_total=int(n_windows_total),
+#         n_samples_per_pair=n_samples,
+#         config=str(asdict(cfg)),
+#     )
+
+#     print(
+#         f"Saved all-pairs PCA basis: {args.out}\n"
+#         f"  files={n_files_used} cycles_total={n_cycles_total} windows_total={n_windows_total}\n"
+#         f"  C={C} K={K} r={r} lags_ms={lags_ms} mode={args.mode} epoch_len_s={args.epoch_len_s}"
+#     )
+
+
+# if __name__ == "__main__":
+#     main()
+
+
+from __future__ import annotations
+import os
+import argparse
+import logging
+from dataclasses import asdict
+from pathlib import Path
+
+import numpy as np
+from tqdm import tqdm
+
+from src.mfg.config import load_config
+from src.mfg.basis import legendre_orthonormal
+from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src.mfg.io import (
+    load_kaggle_data_with_events,
+    extract_grasp_cycles,
+    phase_window_bounds,
+)
+
+# Constants
+PHASES = [
+    ("HandStart", "FirstDigitTouch"),
+    ("FirstDigitTouch", "BothStartLoadPhase"),
+    ("BothStartLoadPhase", "LiftOff"),
+    ("LiftOff", "Replace"),
+    ("Replace", "BothReleased"),
+]
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
+logger = logging.getLogger("HCR-PCA")
+
+
+def _fix_pca_signs(U: np.ndarray) -> np.ndarray:
+    """Deterministic PCA signs."""
+    U = np.asarray(U, float).copy()
+    for k in range(U.shape[0]):
+        idx = int(np.argmax(np.abs(U[k])))
+        if U[k, idx] < 0:
+            U[k] *= -1.0
+    return U
+
+
+def _basis_mixed(u_1d: np.ndarray, m: int) -> np.ndarray:
+    """Legendre basis on [0,1], drop degree-0."""
+    F = legendre_orthonormal(u_1d, m)
+    return F[:, 1:]
+
+
+def _compute_coeffs_all_pairs_for_lag(
+    Fy: np.ndarray, Fz: np.ndarray, subtract_marginals: bool
+) -> np.ndarray:
+    """Compute HCR coefficients M[i,j,a,b]."""
+    n_eff = Fy.shape[0]
+    M = np.einsum("tcm,tdn->cdmn", Fy, Fz) / float(n_eff)
+    if subtract_marginals:
+        my = Fy.mean(axis=0)
+        mz = Fz.mean(axis=0)
+        M -= my[:, None, :, None] * mz[None, :, None, :]
+    return M
+
+
+def _normalize_series(X, mode, fs, cfg):
+    """Normalize full series."""
+    T, C = X.shape
+    Y, Z = np.zeros_like(X), np.zeros_like(X)
+    for c in range(C):
+        Y[:, c] = normalize_edf(X[:, c])
+        if mode == "gc":
+            Z[:, c] = pnorm_student(
+                X[:, c], fs, cfg.ar_order, cfg.ema_half_life_s, cfg.student_nu
+            )
+        else:
+            Z[:, c] = Y[:, c]
+    return Y, Z
+
+
+def main():
+    cfg = load_config()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", required=True, help="Data directory")
+    ap.add_argument("--out", required=True, help="Output .npz path")
+    ap.add_argument("--mode", choices=["corr", "gc"], default="gc")
+    ap.add_argument("--m", type=int, default=4)
+    ap.add_argument("--pca-r", type=int, default=3)
+    ap.add_argument("--epoch-len-s", type=float, default=2.0)  # Added missing arg
+    ap.add_argument(
+        "--per-phase", action="store_true", help="Build separate PCA per phase"
+    )
+    args = ap.parse_args()
+
+    root = Path(args.root)
+    files = sorted(root.glob("**/subj*_series*_data.csv"))
+    if not files:
+        raise RuntimeError("No files found.")
+
+    fs, m, r = int(cfg.fs), int(args.m), int(args.pca_r)
+    epoch_len_s = float(args.epoch_len_s)
+    K = m * m
+
+    # Metadata init
+    _, X0, _, ch_names, _ = load_kaggle_data_with_events(
+        str(files[0]), str(files[0]).replace("_data.csv", "_events.csv")
+    )
+    C = X0.shape[1]
+
+    phase_keys = [f"{p0}__{p1}" for p0, p1 in PHASES] if args.per_phase else ["global"]
+    storage = {
+        pk: {
+            "sum_x": np.zeros((C, C, K)),
+            "sum_xxT": np.zeros((C, C, K, K)),
+            "n": np.zeros((C, C), dtype=np.int64),
+        }
+        for pk in phase_keys
+    }
+
+    # Main Processing Loop
+    for data_path in tqdm(files, desc="Processing files"):
+        ev_path = Path(str(data_path).replace("_data.csv", "_events.csv"))
+        if not ev_path.exists():
+            continue
+
+        _, X, E, _, _ = load_kaggle_data_with_events(str(data_path), str(ev_path))
+        Y_all, Z_all = _normalize_series(X, args.mode, fs, cfg)
+        cycles = extract_grasp_cycles(E, fs=fs)
+
+        for cyc in cycles:
+            for p0, p1 in PHASES:
+                pk = f"{p0}__{p1}" if args.per_phase else "global"
+                # Fixed call with epoch_len_s
+                bounds = phase_window_bounds(
+                    X.shape[0],
+                    int(cyc[p0]),
+                    int(cyc[p1]),
+                    fs=fs,
+                    epoch_len_s=epoch_len_s,
+                )
+                if bounds is None:
+                    continue
+
+                a, b = bounds
+                Yr, Zr = Y_all[a:b, :], Z_all[a:b, :]
+
+                # Precompute basis
+                Fy_full = np.stack(
+                    [_basis_mixed(Yr[:, c], m) for c in range(C)], axis=1
+                )
+                Fz_full = np.stack(
+                    [_basis_mixed(Zr[:, c], m) for c in range(C)], axis=1
+                )
+
+                for ms in [0, 50, 100, 150, 200]:
+                    Ls = int(round(ms * fs / 1000.0))
+                    n_eff = (b - a) - Ls
+                    if n_eff <= 5:
+                        continue
+
+                    M = _compute_coeffs_all_pairs_for_lag(
+                        Fy_full[:n_eff], Fz_full[Ls:], True
+                    )
+                    Xpair = M.reshape(C, C, K)
+
+                    storage[pk]["sum_x"] += Xpair
+                    storage[pk]["sum_xxT"] += np.einsum("cdk,cdl->cdkl", Xpair, Xpair)
+                    storage[pk]["n"] += 1
+
+    # Finalize PCA
+    for pk, data in storage.items():
+        mean, U, eigvals = (
+            np.zeros((C, C, K)),
+            np.zeros((C, C, r, K)),
+            np.zeros((C, C, r)),
+        )
+        for i in range(C):
+            for j in range(C):
+                if data["n"][i, j] < 2:
+                    continue
+                mu = data["sum_x"][i, j] / data["n"][i, j]
+                cov = (data["sum_xxT"][i, j] / data["n"][i, j]) - np.outer(mu, mu)
+                cov = 0.5 * (cov + cov.T)
+                w, V = np.linalg.eigh(cov)
+                idx = np.argsort(w)[::-1]
+                mean[i, j], U[i, j], eigvals[i, j] = (
+                    mu,
+                    _fix_pca_signs(V[:, idx[:r]].T),
+                    w[idx[:r]],
+                )
+
+        out_path = (
+            args.out.replace(".npz", f"_{pk}.npz") if args.per_phase else args.out
+        )
+        np.savez_compressed(
+            out_path,
+            ch_names=ch_names,
+            mean=mean,
+            U=U,
+            eigvals=eigvals,
+            mode=args.mode,
+            pk=pk,
+        )
+        logger.info(f"Saved: {out_path}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\build_kaggle_basis_batch.py ---
+# scripts/build_kaggle_basis_batch.py
+"""
+Build a shared PCA basis for a fixed Kaggle electrode pair across MANY Kaggle files.
+
+This is the "full version" of build_kaggle_basis.py:
+- iterates over many subj/series in train/
+- aggregates HCR feature samples across ALL phases and cycles (streaming moments)
+- outputs one .npz that can be reused to compare PC1/PC2/PC3 across phases AND across files
+
+Important:
+- Requires *_events.csv -> works on TRAIN split (series 1..8).
+- TEST split has no events, so basis cannot be built from test unless you have predicted events.
+
+Output .npz contains:
+- mean (K,), V (K,K), eigvals (K,), lag_samples (L,)
+- metadata: fs, maxlag_ms, lag_step_ms, m, mixed_only, chan_a, chan_b, mode, epoch_len_s
+- batch metadata: n_files, n_cycles_total, n_windows_total, n_samples_total, included_files
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import argparse
+from pathlib import Path
+from typing import Iterable, List, Optional, Tuple
+
+import numpy as np
+
+from src.mfg.config import load_config
+from src.mfg.io import (
+    load_kaggle_data_with_events,
+    extract_grasp_cycles,
+    phase_window_bounds,
+)
+from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src.mfg.hcr import hcr_coeffs_over_lags
+from src.mfg.global_basis import pca_from_second_moments
+
+
+PHASES = [
+    ("HandStart", "FirstDigitTouch"),
+    ("FirstDigitTouch", "BothStartLoadPhase"),
+    ("BothStartLoadPhase", "LiftOff"),
+    ("LiftOff", "Replace"),
+    ("Replace", "BothReleased"),
+]
+
+
+_RX = re.compile(r"subj(?P<subj>\d+)_series(?P<series>\d+)_data\.csv$", re.IGNORECASE)
+
+
+def _parse_subj_series(p: Path) -> Tuple[Optional[int], Optional[int]]:
+    m = _RX.search(p.name)
+    if not m:
+        return None, None
+    return int(m.group("subj")), int(m.group("series"))
+
+
+def _iter_train_data_files(root: Path) -> Iterable[Path]:
+    # Kaggle extracted layout usually: root/train/*.csv
+    # Accept either root pointing to dataset root OR directly to train/
+    if (root / "train").is_dir():
+        train_dir = root / "train"
+    else:
+        train_dir = root
+    yield from sorted(train_dir.glob("subj*_series*_data.csv"))
+
+
+def _events_path_for_data(data_path: Path) -> Path:
+    return data_path.with_name(data_path.name.replace("_data.csv", "_events.csv"))
+
+
+def _filter_files(
+    files: List[Path],
+    subjects: Optional[List[int]],
+    series: Optional[List[int]],
+    max_files: Optional[int],
+) -> List[Path]:
+    out: List[Path] = []
+    for p in files:
+        s, se = _parse_subj_series(p)
+        if s is None or se is None:
+            continue
+        if subjects is not None and s not in subjects:
+            continue
+        if series is not None and se not in series:
+            continue
+        out.append(p)
+        if max_files is not None and len(out) >= max_files:
+            break
+    return out
+
+
+def main() -> None:
+    cfg = load_config()
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--root",
+        required=True,
+        help="Path to Kaggle dataset root or train/ directory (with subj*_series*_data.csv).",
+    )
+    ap.add_argument("--chan-a", required=True)
+    ap.add_argument("--chan-b", required=True)
+    ap.add_argument("--mode", choices=["corr", "gc"], default="gc")
+
+    ap.add_argument("--epoch-len-s", type=float, default=2.0)
+    ap.add_argument("--max-cycle-s", type=float, default=6.0)
+    ap.add_argument("--min-cycles", type=int, default=10)
+
+    ap.add_argument("--m", type=int, default=4)  # m=4 => K=16 with mixed_only=True
+    ap.add_argument(
+        "--out",
+        required=True,
+        help="Output .npz path for the basis (e.g., out/basis_Fp1_Fp2_gc_e2s_m4_batch.npz).",
+    )
+
+    ap.add_argument(
+        "--subjects",
+        type=int,
+        nargs="*",
+        default=None,
+        help="Optional list of subject ids to include (e.g. --subjects 1 2 3).",
+    )
+    ap.add_argument(
+        "--series",
+        type=int,
+        nargs="*",
+        default=None,
+        help="Optional list of series ids to include (e.g. --series 1 2 3 4 5 6 7 8).",
+    )
+    ap.add_argument(
+        "--max-files",
+        type=int,
+        default=None,
+        help="Optional cap on number of files to process (debug).",
+    )
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only list matched files and exit.",
+    )
+
+    args = ap.parse_args()
+
+    root = Path(args.root)
+    files_all = list(_iter_train_data_files(root))
+    files = _filter_files(files_all, args.subjects, args.series, args.max_files)
+
+    if not files:
+        raise RuntimeError(
+            f"No train data files found under {root!r} with given filters."
+        )
+
+    if args.dry_run:
+        print(f"Matched {len(files)} files:")
+        for p in files[:50]:
+            print(" -", p)
+        if len(files) > 50:
+            print(" ...")
+        return
+
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+
+    fs = int(cfg.fs)
+    lag_step_ms = int(cfg.lag_step_ms)
+
+    m = int(args.m)
+    mixed_only = True
+    K = m * m  # 16 when m=4
+
+    # Streaming moments for PCA
+    n_samples_total = 0
+    sum_x = np.zeros(K, dtype=float)
+    sum_xxT = np.zeros((K, K), dtype=float)
+    lag_ref = None
+
+    included_files: List[str] = []
+    n_cycles_total = 0
+    n_windows_total = 0
+
+    # We also need a consistent lag grid -> depends on epoch_len_s/fs/maxlag_ms/lag_step_ms
+    # maxlag_ms is limited by cfg.maxlag_ms and data window length
+    seg_len = int(round(float(args.epoch_len_s) * float(fs)))
+    min_pairs = 10
+    maxlag_samples_data = max(1, seg_len - min_pairs)
+    maxlag_ms_data = int(1000.0 * maxlag_samples_data / fs)
+    maxlag_ms = int(min(cfg.maxlag_ms, maxlag_ms_data))
+
+    for data_path in files:
+        events_path = _events_path_for_data(data_path)
+        if not events_path.exists():
+            # Should not happen for train split; skip safely.
+            print(
+                f"[WARN] Missing events file for {data_path.name}: {events_path.name} -> skipping"
+            )
+            continue
+
+        ids, X, E, ch_names, _ = load_kaggle_data_with_events(
+            str(data_path), str(events_path)
+        )
+        T = X.shape[0]
+
+        try:
+            ia = ch_names.index(args.chan_a)
+            ib = ch_names.index(args.chan_b)
+        except ValueError as exc:
+            raise ValueError(
+                f"Channel not found in {data_path.name}. "
+                f"Looking for ({args.chan_a}, {args.chan_b}). "
+                f"Example channels: {ch_names[:10]} ..."
+            ) from exc
+
+        cycles = extract_grasp_cycles(E, fs=fs, max_cycle_s=float(args.max_cycle_s))
+        if len(cycles) < int(args.min_cycles):
+            print(
+                f"[WARN] {data_path.name}: cycles={len(cycles)} < min_cycles={args.min_cycles} (still using it)"
+            )
+
+        # Global normalization on full series (NOT per window)
+        if args.mode == "corr":
+            a_reason_all = normalize_gauss(X[:, ia])
+            b_result_all = normalize_gauss(X[:, ib])
+        else:
+            a_reason_all = normalize_edf(X[:, ia])
+            b_result_all = pnorm_student(
+                X[:, ib],
+                fs,
+                cfg.ar_order,
+                cfg.ema_half_life_s,
+                cfg.student_nu,
+            )
+
+        included_files.append(str(data_path))
+        n_cycles_total += int(len(cycles))
+
+        for cyc in cycles:
+            for ev0, ev1 in PHASES:
+                bounds = phase_window_bounds(
+                    T,
+                    int(cyc[ev0]),
+                    int(cyc[ev1]),
+                    fs=fs,
+                    epoch_len_s=float(args.epoch_len_s),
+                )
+                if bounds is None:
+                    continue
+                a, b = bounds
+
+                y = a_reason_all[a:b]
+                z = b_result_all[a:b]
+                if y.size != seg_len or z.size != seg_len:
+                    continue
+
+                coeffs, lag_samples = hcr_coeffs_over_lags(
+                    y,
+                    z,
+                    fs,
+                    maxlag_ms,
+                    lag_step_ms,
+                    m,
+                    subtract_marginals=True,
+                    mixed_only=mixed_only,
+                )
+                if coeffs.shape[0] != K:
+                    raise RuntimeError(
+                        f"Expected K={K} features, got {coeffs.shape[0]}"
+                    )
+
+                if lag_ref is None:
+                    lag_ref = lag_samples
+                else:
+                    if not np.array_equal(lag_ref, lag_samples):
+                        raise RuntimeError(
+                            "Lag grid mismatch across files/windows. "
+                            "Check fs/epoch_len_s/lag_step_ms consistency."
+                        )
+
+                # Each lag-column is one sample x in R^K
+                sum_x += coeffs.sum(axis=1)
+                sum_xxT += coeffs @ coeffs.T
+                n_samples_total += int(coeffs.shape[1])
+                n_windows_total += 1
+
+    if n_samples_total < 2:
+        raise RuntimeError(
+            "Not enough samples to build PCA basis. "
+            "Increase files/windows or verify event extraction."
+        )
+
+    mean, V, eigvals = pca_from_second_moments(sum_x, sum_xxT, n_samples_total)
+
+    np.savez_compressed(
+        args.out,
+        mean=mean,
+        V=V,
+        eigvals=eigvals,
+        lag_samples=np.asarray(lag_ref, dtype=int),
+        fs=int(fs),
+        maxlag_ms=int(maxlag_ms),
+        lag_step_ms=int(lag_step_ms),
+        m=int(m),
+        mixed_only=np.int8(1),
+        chan_a=str(args.chan_a),
+        chan_b=str(args.chan_b),
+        mode=str(args.mode),
+        epoch_len_s=float(args.epoch_len_s),
+        n_files=int(len(included_files)),
+        n_cycles_total=int(n_cycles_total),
+        n_windows_total=int(n_windows_total),
+        n_samples_total=int(n_samples_total),
+        included_files=np.array(included_files, dtype=object),
+    )
+
+    print(
+        f"Saved batch basis: {args.out}\n"
+        f"  files={len(included_files)} cycles_total={n_cycles_total}\n"
+        f"  windows_total={n_windows_total} samples_total={n_samples_total}\n"
+        f"  chan=({args.chan_a}->{args.chan_b}) mode={args.mode} m={m} K={K}\n"
+        f"  fs={fs} epoch_len_s={args.epoch_len_s} maxlag_ms={maxlag_ms} step_ms={lag_step_ms}"
+    )
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\generate_final_results.py ---
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("Visualizer")
+
+
+def save_top_edges_report(f, mat, ch_names, pc_label, lag_ms, top_k=10):
+    """Zapisuje listę najsilniejszych połączeń do pliku tekstowego."""
+    A = mat.copy()
+    np.fill_diagonal(A, 0)
+    flat_idx = np.argsort(A.ravel())[::-1]
+
+    f.write(f"--- {pc_label} | Lag: {lag_ms}ms ---\n")
+    for k in range(top_k):
+        idx = flat_idx[k]
+        val = A.ravel()[idx]
+        if val <= 0:
+            break
+        i, j = idx // A.shape[1], idx % A.shape[1]
+        f.write(f"{k+1:02d}. {ch_names[i]} -> {ch_names[j]} (score: {val:.4f})\n")
+    f.write("\n")
+
+
+def process_all_phases(input_dir, output_root):
+    input_path = Path(input_dir)
+    output_path = Path(output_root)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    # Szukamy wszystkich plików .npz wygenerowanych przez skrypt bazowy
+    npz_files = list(input_path.glob("*.npz"))
+
+    if not npz_files:
+        logger.error(f"Nie znaleziono plików .npz w {input_dir}!")
+        return
+
+    lags = [0, 50, 100, 150, 200]
+
+    for npz_file in npz_files:
+        logger.info(f"Przetwarzanie fazy: {npz_file.name}")
+        data = np.load(npz_file)
+        ch_names = data["ch_names"]
+        eigvals = data["eigvals"]  # (C, C, r)
+        pk = str(data["pk"])
+        r = eigvals.shape[2]
+
+        # Tworzymy folder dla konkretnej fazy
+        phase_dir = output_path / pk
+        phase_dir.mkdir(parents=True, exist_ok=True)
+
+        # --- 1. GENEROWANIE RAPORTU TEKSTOWEGO ---
+        report_path = phase_dir / f"top_edges_{pk}.txt"
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write(f"RAPORT POŁĄCZEŃ DLA FAZY: {pk}\n")
+            f.write("=" * 40 + "\n\n")
+            for pc_idx in range(r):
+                for lag_idx, ms in enumerate(lags):
+                    # Tutaj estymujemy macierz dla konkretnego laga
+                    # (W Twoim skrypcie bazowym eigvals jest statyczne per faza,
+                    #  możesz to rozbudować o zapisywanie macierzy per lag)
+                    mat = eigvals[:, :, pc_idx]
+                    save_top_edges_report(f, mat, ch_names, f"PC{pc_idx+1}", ms)
+
+        # --- 2. GENEROWANIE GRAFIKI 3x5 ---
+        fig, axes = plt.subplots(r, len(lags), figsize=(22, 13))
+
+        for pc_idx in range(r):
+            # Skalowanie kolorów (vmax) na podstawie 99 percentyla dla całego wiersza
+            vmax = np.percentile(eigvals[:, :, pc_idx], 99)
+
+            for lag_idx, ms in enumerate(lags):
+                ax = axes[pc_idx, lag_idx]
+                mat = eigvals[:, :, pc_idx].copy()
+                np.fill_diagonal(mat, 0)
+
+                im = ax.imshow(mat, cmap="magma", origin="lower", vmin=0, vmax=vmax)
+
+                if pc_idx == 0:
+                    ax.set_title(f"Lag {ms}ms", fontsize=15, fontweight="bold")
+                if lag_idx == 0:
+                    ax.set_ylabel(f"PC {pc_idx+1}", fontsize=15, fontweight="bold")
+
+                ax.set_xticks([])
+                ax.set_yticks([])
+
+        fig.suptitle(f"Analiza Dynamiki Sieci Funkcjonalnej: {pk}", fontsize=22, y=0.98)
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+        plt.savefig(phase_dir / f"grid_visualization_{pk}.png", dpi=300)
+        plt.close()
+
+    logger.info(f"ZAKOŃCZONO! Wyniki w: {output_root}")
+
+
+if __name__ == "__main__":
+    # Upewnij się, że ścieżki są poprawne
+    process_all_phases(input_dir=".", output_root="out/final_results")
+
+
+--- File: .\scripts\mfg_batch.py ---
+"""
+Batch runner for MFG/HCR analysis on multiple EEG files.
+
+This script searches for EEG CSV files (e.g. Kaggle grasp-and-lift
+`*_data.csv`) under a given root directory and, for each file, calls
+`scripts.mfg_pair` as a separate CLI process.
+
+Example:
+    python -m scripts.mfg_batch \
+        --root data/grasp-and-lift-eeg-detection/train \
+        --chan-a Fp1 \
+        --chan-b Fp2 \
+        --mode gc \
+        --out-root out/csv_run
+"""
+
+import os
+import sys
+import argparse
+import subprocess
+from typing import List
+
+
+def find_eeg_csv_files(root: str) -> List[str]:
+    """
+    Recursively find all EEG CSV files under the given root.
+
+    Current convention: files ending with '_data.csv'.
+    """
+    matches: List[str] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        for fname in filenames:
+            if fname.endswith("_data.csv"):
+                full = os.path.join(dirpath, fname)
+                matches.append(os.path.normpath(full))
+    matches.sort()
+    return matches
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        prog="mfg_batch",
+        description="Batch runner for MFG pair analysis over many EEG CSV files.",
+    )
+    ap.add_argument(
+        "--root",
+        required=True,
+        help="Root directory to search for EEG CSV files (e.g. train/).",
+    )
+    ap.add_argument(
+        "--chan-a",
+        required=True,
+        help="Name of electrode/channel A (reason).",
+    )
+    ap.add_argument(
+        "--chan-b",
+        required=True,
+        help="Name of electrode/channel B (result).",
+    )
+    ap.add_argument(
+        "--mode",
+        choices=["corr", "gc"],
+        default="corr",
+        help="Analysis mode: 'corr' (symmetric correlation) or 'gc' (Granger-like).",
+    )
+    ap.add_argument(
+        "--out-root",
+        required=True,
+        help="Root output directory for all per-file results.",
+    )
+    ap.add_argument(
+        "--max-files",
+        type=int,
+        default=None,
+        help="Optional limit on the number of files processed (for quick tests).",
+    )
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="If set, only print what would be executed, do not run mfg_pair.",
+    )
+
+    args = ap.parse_args()
+
+    root = os.path.normpath(args.root)
+    out_root = os.path.normpath(args.out_root)
+
+    os.makedirs(out_root, exist_ok=True)
+
+    files = find_eeg_csv_files(root)
+    if args.max_files is not None:
+        files = files[: args.max_files]
+
+    if not files:
+        print(f"[mfg_batch] No *_data.csv files found under: {root}")
+        return
+
+    print(f"[mfg_batch] Found {len(files)} EEG CSV files under: {root}")
+    print(f"[mfg_batch] Output root: {out_root}")
+    print(f"[mfg_batch] Mode: {args.mode}, chan-a={args.chan_a}, chan-b={args.chan_b}")
+    if args.dry_run:
+        print("[mfg_batch] DRY RUN enabled - commands will not be executed.")
+
+    for idx, csv_path in enumerate(files, start=1):
+        rel = os.path.relpath(csv_path, root)  # e.g. 'subj10_series1_data.csv'
+        base_no_ext = os.path.splitext(os.path.basename(csv_path))[0]
+        out_dir = os.path.join(out_root, base_no_ext)
+
+        os.makedirs(out_dir, exist_ok=True)
+
+        cmd = [
+            sys.executable,
+            "-m",
+            "scripts.mfg_pair",
+            "--file",
+            csv_path,
+            "--chan-a",
+            args.chan_a,
+            "--chan-b",
+            args.chan_b,
+            "--mode",
+            args.mode,
+            "--out",
+            out_dir,
+        ]
+
+        print(f"[{idx}/{len(files)}] {rel}")
+        print("  -> out:", out_dir)
+        print("  -> cmd:", " ".join(cmd))
+
+        if args.dry_run:
+            continue
+
+        try:
+            res = subprocess.run(cmd, check=False)
+            if res.returncode != 0:
+                print(
+                    f"  !! mfg_pair failed with return code {res.returncode} "
+                    f"for file: {csv_path}"
+                )
+        except Exception as exc:
+            print(f"  !! Exception while running mfg_pair for {csv_path}: {exc}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\mfg_kaggle_phase_matrix.py ---
+from __future__ import annotations
+
+import os
+import argparse
+from dataclasses import asdict
+
+import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from scipy.stats import chi2
+
+from src.mfg.config import load_config
+from src.mfg.basis import legendre_orthonormal
+from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src.mfg.io import (
+    load_kaggle_data_with_events,
+    extract_grasp_cycles,
+    phase_window_bounds,
+    KAGGLE_EVENT_COLS,
+)
+
+
+# Canonical phases derived from event order (single source of truth)
+PHASES = list(zip(KAGGLE_EVENT_COLS[:-1], KAGGLE_EVENT_COLS[1:]))
+
+
+def _basis_mixed(u_1d: np.ndarray, m: int) -> np.ndarray:
+    """
+    Legendre orthonormal basis on [0,1], keep only degrees 1..m (mixed_only).
+    Returns shape (T, m).
+    """
+    F = legendre_orthonormal(u_1d, m)  # (T, m+1)
+    return F[:, 1:]  # drop degree-0
+
+
+def _normalize_window(
+    W: np.ndarray, mode: str, fs: int, cfg
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Build (Y,Z) from raw window W (T,C).
+    - corr: Y=Z=Gaussian-CDF normalization
+    - gc:   Y=EDF (reason), Z=Student-t pnorm (result)
+    """
+    T, C = W.shape
+    Y = np.empty((T, C), dtype=float)
+    Z = np.empty((T, C), dtype=float)
+
+    if mode == "corr":
+        for c in range(C):
+            u = normalize_gauss(W[:, c])
+            Y[:, c] = u
+            Z[:, c] = u
+        return Y, Z
+
+    # mode == "gc"
+    for c in range(C):
+        Y[:, c] = normalize_edf(W[:, c])
+        Z[:, c] = pnorm_student(
+            W[:, c],
+            fs,
+            cfg.ar_order,
+            cfg.ema_half_life_s,
+            cfg.student_nu,
+        )
+    return Y, Z
+
+
+def _compute_coeffs_all_pairs_for_lag(
+    Fy: np.ndarray,  # (n_eff, C, m)
+    Fz: np.ndarray,  # (n_eff, C, m)
+    subtract_marginals: bool,
+) -> np.ndarray:
+    """
+    Cross-moments for all ordered pairs (i -> j):
+      M[i,j,a,b] = E[ Fy_i,a * Fz_j,b ]   (optionally centered by marginals)
+    Returns shape (C, C, m, m).
+    """
+    n_eff = Fy.shape[0]
+    M = np.einsum("tcm,tdn->cdmn", Fy, Fz) / float(n_eff)
+
+    if subtract_marginals:
+        my = Fy.mean(axis=0)  # (C, m)
+        mz = Fz.mean(axis=0)  # (C, m)
+        M = M - my[:, None, :, None] * mz[None, :, None, :]
+
+    return M
+
+
+def _robust_vmax(A: np.ndarray) -> float:
+    x = A[np.isfinite(A)]
+    if x.size == 0:
+        return 1.0
+    return float(np.quantile(x, 0.98))
+
+
+def _append_top_edges(
+    path: str, mat: np.ndarray, ch_names: list[str], topk: int = 40
+) -> None:
+    """
+    Append top directed edges (i->j) to an existing text file.
+    Diagonal is ignored.
+    """
+    A = np.array(mat, float)
+    np.fill_diagonal(A, -np.inf)
+
+    flat_idx = np.argsort(A.ravel())[::-1]
+
+    with open(path, "a", encoding="utf-8") as f:
+        k = 0
+        for idx in flat_idx:
+            val = float(A.ravel()[idx])
+            if not np.isfinite(val):
+                continue
+            i = idx // A.shape[1]
+            j = idx % A.shape[1]
+            f.write(f"{k+1:03d}. {ch_names[i]} -> {ch_names[j]} : {val:.6f}\n")
+            k += 1
+            if k >= topk:
+                break
+
+
+def run_one_phase(
+    *,
+    data_csv: str,
+    events_csv: str,
+    ev0: str,
+    ev1: str,
+    out_dir: str,
+    mode: str,
+    epoch_len_s: float,
+    max_cycle_s: float,
+    min_cycles: int,
+    m: int,
+    lags_ms: list[int],
+    summary: str,
+    metric: str,
+) -> None:
+    cfg = load_config()
+    fs = cfg.fs
+
+    ids, X, E, ch_names, _ = load_kaggle_data_with_events(data_csv, events_csv)
+    T = X.shape[0]
+    cycles = extract_grasp_cycles(E, fs=fs, max_cycle_s=max_cycle_s)
+    if len(cycles) < min_cycles:
+        print(f"[WARN] cycles={len(cycles)} < min_cycles={min_cycles} for {ev0}->{ev1}")
+
+    windows: list[np.ndarray] = []
+    seg_len = int(round(epoch_len_s * fs))
+
+    for cyc in cycles:
+        t0 = cyc[ev0]
+        t1 = cyc[ev1]
+        bounds = phase_window_bounds(T, t0, t1, fs=fs, epoch_len_s=epoch_len_s)
+        if bounds is None:
+            continue
+        a, b = bounds
+        W = X[a:b]
+        if W.shape[0] != seg_len:
+            continue
+        windows.append(W)
+
+    if not windows:
+        raise RuntimeError(f"No usable windows for phase {ev0}->{ev1}")
+
+    C = windows[0].shape[1]
+    K = m * m
+    lag_samples = [int(round(ms * fs / 1000.0)) for ms in lags_ms]
+
+    # Pooled sums per lag (weighted by n_eff)
+    coeffs_sum = np.zeros((len(lag_samples), C, C, K), dtype=float)
+    n_eff_sum = np.zeros((len(lag_samples),), dtype=float)
+
+    subtract_marginals = True
+
+    for W in windows:
+        Y, Z = _normalize_window(W, mode=mode, fs=fs, cfg=cfg)
+        T = Y.shape[0]
+
+        Fy_full = np.empty((T, C, m), dtype=float)
+        Fz_full = np.empty((T, C, m), dtype=float)
+        for c in range(C):
+            Fy_full[:, c, :] = _basis_mixed(Y[:, c], m)
+            Fz_full[:, c, :] = _basis_mixed(Z[:, c], m)
+
+        for li, L in enumerate(lag_samples):
+            n_eff = T - L
+            if n_eff <= 5:
+                continue
+
+            Fy = Fy_full[:n_eff, :, :]
+            Fz = Fz_full[L:, :, :]
+
+            M = _compute_coeffs_all_pairs_for_lag(
+                Fy, Fz, subtract_marginals=subtract_marginals
+            )
+            M_flat = M.reshape(C, C, K)
+
+            coeffs_sum[li] += float(n_eff) * M_flat
+            n_eff_sum[li] += float(n_eff)
+
+    if np.any(n_eff_sum <= 0):
+        bad = [lags_ms[i] for i in range(len(lags_ms)) if n_eff_sum[i] <= 0]
+        raise RuntimeError(f"No samples accumulated for lags_ms={bad}")
+
+    coeffs_mean = coeffs_sum / n_eff_sum[:, None, None, None]  # pooled estimate
+    energy_per_lag = np.sqrt(np.sum(coeffs_mean**2, axis=-1))  # (L,C,C)
+
+    # Significance proxy: under null, n_eff * sum(coeff^2) ~ chi2(df=K) (heuristic)
+    chi2_stat = n_eff_sum[:, None, None] * np.sum(coeffs_mean**2, axis=-1)
+    p = chi2.sf(chi2_stat, df=K)
+    p = np.clip(p, 1e-300, 1.0)
+    neglog10p = -np.log10(p)
+
+    if metric == "energy":
+        per_lag = energy_per_lag
+        cbar_label = "||coeffs||"
+    elif metric == "chi2":
+        per_lag = chi2_stat
+        cbar_label = f"chi2(df={K})"
+    elif metric == "neglog10p":
+        per_lag = neglog10p
+        cbar_label = "-log10(p)"
+    else:
+        raise ValueError(f"Unknown metric: {metric}")
+
+    if summary == "mean":
+        mat = np.mean(per_lag, axis=0)
+    elif summary == "max":
+        mat = np.max(per_lag, axis=0)
+    else:
+        raise ValueError(f"Unknown summary: {summary}")
+
+    # Display matrix with cleared diagonal
+    mat_disp = np.array(mat, float)
+    np.fill_diagonal(mat_disp, 0.0)
+
+    os.makedirs(out_dir, exist_ok=True)
+
+    title = (
+        f"{ev0}__{ev1} | mode={mode} | m={m} | metric={metric} | summary={summary} "
+        f"| lags_ms={lags_ms} | windows={len(windows)}"
+    )
+
+    # Heatmap
+    plt.figure(figsize=(11.5, 10))
+    vmax = _robust_vmax(mat_disp)
+    im = plt.imshow(mat_disp, origin="lower", vmin=0.0, vmax=vmax)
+    plt.colorbar(im, label=cbar_label)
+    plt.xticks(range(C), ch_names, rotation=90, fontsize=8)
+    plt.yticks(range(C), ch_names, fontsize=8)
+    plt.title(title)
+    plt.tight_layout()
+
+    out_png = os.path.join(
+        out_dir, f"phase_{ev0}__{ev1}_{mode}_m{m}_{metric}_{summary}.png"
+    )
+    plt.savefig(out_png, dpi=220)
+    plt.close()
+
+    # Text report (header + appended top edges)
+    out_txt = os.path.join(
+        out_dir, f"phase_top_edges_{ev0}__{ev1}_{mode}_m{m}_{metric}_{summary}.txt"
+    )
+    with open(out_txt, "w", encoding="utf-8") as f:
+        f.write(f"phase={ev0}__{ev1}\n")
+        f.write(
+            f"mode={mode} m={m} metric={metric} summary={summary} lags_ms={lags_ms}\n"
+        )
+        f.write(f"epoch_len_s={epoch_len_s} fs={fs} windows={len(windows)}\n")
+        f.write(f"config={asdict(cfg)}\n\n")
+
+    _append_top_edges(out_txt, mat, ch_names, topk=40)
+
+    print("Saved:", out_png)
+    print("Saved:", out_txt)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", required=True)
+    ap.add_argument("--events", required=True)
+    ap.add_argument("--out", required=True)
+
+    ap.add_argument("--mode", choices=["corr", "gc"], default="gc")
+    ap.add_argument("--epoch-len-s", type=float, default=2.0)
+    ap.add_argument("--max-cycle-s", type=float, default=6.0)
+    ap.add_argument("--min-cycles", type=int, default=10)
+
+    ap.add_argument("--m", type=int, default=4)
+    ap.add_argument("--lags-ms", type=int, nargs="+", default=[50, 100, 150, 200])
+    ap.add_argument("--summary", choices=["mean", "max"], default="mean")
+    ap.add_argument(
+        "--metric", choices=["energy", "chi2", "neglog10p"], default="neglog10p"
+    )
+
+    ap.add_argument(
+        "--phase",
+        nargs=2,
+        default=None,
+        help="Two event names: ev0 ev1. If omitted, run all canonical phases.",
+    )
+    args = ap.parse_args()
+
+    if args.phase is not None:
+        ev0, ev1 = args.phase
+        run_one_phase(
+            data_csv=args.data,
+            events_csv=args.events,
+            ev0=ev0,
+            ev1=ev1,
+            out_dir=args.out,
+            mode=args.mode,
+            epoch_len_s=args.epoch_len_s,
+            max_cycle_s=args.max_cycle_s,
+            min_cycles=args.min_cycles,
+            m=args.m,
+            lags_ms=args.lags_ms,
+            summary=args.summary,
+            metric=args.metric,
+        )
+        return
+
+    for ev0, ev1 in PHASES:
+        run_one_phase(
+            data_csv=args.data,
+            events_csv=args.events,
+            ev0=ev0,
+            ev1=ev1,
+            out_dir=args.out,
+            mode=args.mode,
+            epoch_len_s=args.epoch_len_s,
+            max_cycle_s=args.max_cycle_s,
+            min_cycles=args.min_cycles,
+            m=args.m,
+            lags_ms=args.lags_ms,
+            summary=args.summary,
+            metric=args.metric,
+        )
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\mfg_kaggle_phase_matrix_batch.py ---
+"""
+Batch version of mfg_kaggle_phase_matrix.py
+
+Goal:
+- compute phase matrices (C x C) for canonical phases
+- aggregate across MANY Kaggle train files
+- optionally group by subject (to compare repeatability across subjects)
+
+This outputs:
+- heatmaps per phase: phase_<ev0>__<ev1>_<mode>_m<m>_<metric>_<summary>.png
+- top edges per phase: phase_top_edges_<...>.txt
+- a short metadata header in each txt with config + counts
+
+Notes:
+- Works on TRAIN split (needs *_events.csv).
+- Uses fixed-length windows via phase_window_bounds for consistent lag grid.
+- Normalization is global per series (per file), not per window (better comparability).
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import argparse
+from dataclasses import asdict
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+from typing import Any
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from scipy.stats import chi2
+
+from src.mfg.config import load_config
+from src.mfg.basis import legendre_orthonormal
+from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src.mfg.io import (
+    load_kaggle_data_with_events,
+    extract_grasp_cycles,
+    phase_window_bounds,
+)
+
+
+PHASES = [
+    ("HandStart", "FirstDigitTouch"),
+    ("FirstDigitTouch", "BothStartLoadPhase"),
+    ("BothStartLoadPhase", "LiftOff"),
+    ("LiftOff", "Replace"),
+    ("Replace", "BothReleased"),
+]
+
+
+_RX = re.compile(r"subj(?P<subj>\d+)_series(?P<series>\d+)_data\.csv$", re.IGNORECASE)
+
+
+def _load_allpairs_basis(path: str) -> dict[str, Any]:
+    D = np.load(path, allow_pickle=True)
+    return {
+        "ch_names": list(D["ch_names"]),
+        "mean": D["mean"],  # (C,C,K)
+        "U": D["U"],  # (C,C,r,K)
+        "eigvals": D["eigvals"],  # (C,C,r)
+        "lags_ms": list(map(int, D["lags_ms"])),
+        "lag_samples": list(map(int, D["lag_samples"])),
+        "fs": int(D["fs"]),
+        "m": int(D["m"]),
+        "mode": str(D["mode"]),
+        "epoch_len_s": float(D["epoch_len_s"]),
+    }
+
+
+def _parse_subj_series(p: Path) -> Tuple[Optional[int], Optional[int]]:
+    m = _RX.search(p.name)
+    if not m:
+        return None, None
+    return int(m.group("subj")), int(m.group("series"))
+
+
+def _iter_train_data_files(root: Path) -> List[Path]:
+    if (root / "train").is_dir():
+        train_dir = root / "train"
+    else:
+        train_dir = root
+    return sorted(train_dir.glob("subj*_series*_data.csv"))
+
+
+def _events_path_for_data(data_path: Path) -> Path:
+    return data_path.with_name(data_path.name.replace("_data.csv", "_events.csv"))
+
+
+def _basis_mixed(u_1d: np.ndarray, m: int) -> np.ndarray:
+    """
+    Legendre orthonormal basis on [0,1], keep only degrees 1..m (mixed_only).
+    Returns shape (T, m).
+    """
+    F = legendre_orthonormal(u_1d, m)  # (T, m+1)
+    return F[:, 1:]  # drop degree-0
+
+
+def _compute_coeffs_all_pairs_for_lag(
+    Fy: np.ndarray,  # (n_eff, C, m)
+    Fz: np.ndarray,  # (n_eff, C, m)
+    subtract_marginals: bool,
+) -> np.ndarray:
+    """
+    Compute M for all ordered pairs (i -> j):
+      M[i,j,a,b] = E[ Fy_i,a * Fz_j,b ]  (optionally - marginals)
+    Returns shape (C, C, m, m).
+    """
+    n_eff = Fy.shape[0]
+    M = np.einsum("tcm,tdn->cdmn", Fy, Fz) / float(n_eff)
+
+    if subtract_marginals:
+        my = Fy.mean(axis=0)  # (C, m)
+        mz = Fz.mean(axis=0)  # (C, m)
+        M = M - my[:, None, :, None] * mz[None, :, None, :]
+
+    return M
+
+
+def _robust_vmax(A: np.ndarray) -> float:
+    x = A[np.isfinite(A)]
+    if x.size == 0:
+        return 1.0
+    return float(np.quantile(x, 0.98))
+
+
+def _save_top_edges(
+    path: str, mat: np.ndarray, ch_names: List[str], topk: int = 40
+) -> None:
+    A = np.array(mat, float)
+    np.fill_diagonal(A, -np.inf)
+    flat_idx = np.argsort(A.ravel())[::-1]
+    with open(path, "a", encoding="utf-8") as f:
+        k = 0
+        for idx in flat_idx:
+            val = float(A.ravel()[idx])
+            if not np.isfinite(val):
+                continue
+            i = idx // A.shape[1]
+            j = idx % A.shape[1]
+            f.write(f"{k+1:03d}. {ch_names[i]} -> {ch_names[j]} : {val:.6f}\n")
+            k += 1
+            if k >= topk:
+                break
+
+
+def _normalize_series(
+    X: np.ndarray, mode: str, fs: int, cfg
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Produce Y (reason) and Z (result) arrays, shape (T, C) each, for the WHOLE series.
+    - corr: both gaussian-CDF
+    - gc:   reason = EDF, result = pnorm_student
+    """
+    T, C = X.shape
+    Y = np.empty((T, C), dtype=float)
+    Z = np.empty((T, C), dtype=float)
+
+    if mode == "corr":
+        for c in range(C):
+            u = normalize_gauss(X[:, c])
+            Y[:, c] = u
+            Z[:, c] = u
+        return Y, Z
+
+    for c in range(C):
+        Y[:, c] = normalize_edf(X[:, c])
+        Z[:, c] = pnorm_student(
+            X[:, c],
+            fs,
+            cfg.ar_order,
+            cfg.ema_half_life_s,
+            cfg.student_nu,
+        )
+    return Y, Z
+
+
+def _filter_files(
+    files: List[Path],
+    subjects: Optional[List[int]],
+    series: Optional[List[int]],
+    max_files: Optional[int],
+) -> List[Path]:
+    out: List[Path] = []
+    for p in files:
+        s, se = _parse_subj_series(p)
+        if s is None or se is None:
+            continue
+        if subjects is not None and s not in subjects:
+            continue
+        if series is not None and se not in series:
+            continue
+        out.append(p)
+        if max_files is not None and len(out) >= max_files:
+            break
+    return out
+
+
+def _run_group(
+    *,
+    group_name: str,
+    files: List[Path],
+    out_dir: Path,
+    mode: str,
+    epoch_len_s: float,
+    max_cycle_s: float,
+    min_cycles: int,
+    m: int,
+    lags_ms: List[int],
+    summary: str,
+    metric: str,
+    basis_allpairs: Optional[str],
+    pca_r: int,
+) -> None:
+    cfg = load_config()
+    fs = int(cfg.fs)
+
+    if not files:
+        print(f"[WARN] group={group_name}: no files -> skipping")
+        return
+
+    # Setup from first file
+    first_data = files[0]
+    first_events = _events_path_for_data(first_data)
+    if not first_events.exists():
+        print(f"[WARN] group={group_name}: missing events for first file -> skipping")
+        return
+
+    _, X0, E0, ch_names0, _ = load_kaggle_data_with_events(
+        str(first_data), str(first_events)
+    )
+    C = X0.shape[1]
+
+    # Lag setup
+    seg_len = int(round(float(epoch_len_s) * float(fs)))
+    lag_samples = [int(round(ms * fs / 1000.0)) for ms in lags_ms]
+    K = m * m  # mixed_only=True
+
+    P = len(PHASES)
+    L = len(lag_samples)
+
+    # Accumulators per phase, per lag
+    coeffs_sum = np.zeros((P, L, C, C, K), dtype=float)
+    n_eff_sum = np.zeros((P, L), dtype=float)
+
+    subtract_marginals = True
+
+    n_files_used = 0
+    n_cycles_total = 0
+    n_windows_total = 0
+
+    for data_path in files:
+        events_path = _events_path_for_data(data_path)
+        if not events_path.exists():
+            print(f"[WARN] Missing events for {data_path.name} -> skipping")
+            continue
+
+        ids, X, E, ch_names, _ = load_kaggle_data_with_events(
+            str(data_path), str(events_path)
+        )
+
+        # Verify channel order consistency; if not, attempt to reorder to match first file
+        if ch_names != ch_names0:
+            # Build mapping from current file channels to reference ordering
+            idx_map = []
+            ok = True
+            for nm in ch_names0:
+                if nm not in ch_names:
+                    ok = False
+                    break
+                idx_map.append(ch_names.index(nm))
+            if not ok:
+                raise RuntimeError(
+                    f"Channel mismatch in {data_path.name}. Cannot align to reference order."
+                )
+            X = X[:, idx_map]
+            ch_names = ch_names0
+
+        T = X.shape[0]
+        Y_all, Z_all = _normalize_series(X, mode=mode, fs=fs, cfg=cfg)
+
+        cycles = extract_grasp_cycles(E, fs=fs, max_cycle_s=float(max_cycle_s))
+        if len(cycles) < int(min_cycles):
+            print(
+                f"[WARN] {data_path.name}: cycles={len(cycles)} < min_cycles={min_cycles}"
+            )
+
+        n_files_used += 1
+        n_cycles_total += int(len(cycles))
+
+        for cyc in cycles:
+            for pi, (ev0, ev1) in enumerate(PHASES):
+                bounds = phase_window_bounds(
+                    T,
+                    int(cyc[ev0]),
+                    int(cyc[ev1]),
+                    fs=fs,
+                    epoch_len_s=float(epoch_len_s),
+                )
+                if bounds is None:
+                    continue
+                a, b = bounds
+                if (b - a) != seg_len:
+                    continue
+
+                Yr = Y_all[a:b, :]  # (seg_len, C)
+                Zr = Z_all[a:b, :]  # (seg_len, C)
+
+                # Precompute basis per channel for this window: (seg_len, C, m)
+                Fy_full = np.empty((seg_len, C, m), dtype=float)
+                Fz_full = np.empty((seg_len, C, m), dtype=float)
+                for c in range(C):
+                    Fy_full[:, c, :] = _basis_mixed(Yr[:, c], m)
+                    Fz_full[:, c, :] = _basis_mixed(Zr[:, c], m)
+
+                for li, Ls in enumerate(lag_samples):
+                    n_eff = seg_len - Ls
+                    if n_eff <= 5:
+                        continue
+
+                    Fy = Fy_full[:n_eff, :, :]  # (n_eff, C, m)
+                    Fz = Fz_full[Ls:, :, :]  # (n_eff, C, m)
+
+                    M = _compute_coeffs_all_pairs_for_lag(
+                        Fy, Fz, subtract_marginals=subtract_marginals
+                    )
+                    M_flat = M.reshape(C, C, K)
+
+                    coeffs_sum[pi, li] += float(n_eff) * M_flat
+                    n_eff_sum[pi, li] += float(n_eff)
+
+                n_windows_total += 1
+
+    # Finalize + save per phase
+    group_out = out_dir / group_name
+    group_out.mkdir(parents=True, exist_ok=True)
+
+    for pi, (ev0, ev1) in enumerate(PHASES):
+        if np.all(n_eff_sum[pi] <= 0):
+            print(
+                f"[WARN] group={group_name} phase={ev0}->{ev1}: no samples -> skipping outputs"
+            )
+            continue
+
+        coeffs_mean = coeffs_sum[pi] / n_eff_sum[pi][:, None, None, None]  # (L,C,C,K)
+        if basis_allpairs is not None:
+            B = _load_allpairs_basis(basis_allpairs)
+
+            # sanity checks
+            if B["fs"] != fs:
+                raise ValueError("Basis fs mismatch.")
+            if B["mode"] != mode:
+                raise ValueError("Basis mode mismatch.")
+            if abs(B["epoch_len_s"] - float(epoch_len_s)) > 1e-9:
+                raise ValueError("Basis epoch_len_s mismatch.")
+            if B["m"] != int(m):
+                raise ValueError("Basis m mismatch.")
+            if list(B["ch_names"]) != list(ch_names0):
+                raise ValueError("Basis channel order mismatch (ch_names).")
+
+            if list(map(int, B["lag_samples"])) != list(map(int, lag_samples)):
+                raise ValueError(
+                    f"Basis lag_samples mismatch.\n"
+                    f"  basis={list(B['lag_samples'])}\n"
+                    f"  run  ={list(lag_samples)}"
+                )
+
+            r = int(pca_r)
+            U = B["U"][:, :, :r, :]  # (C,C,r,K)
+            mu = B["mean"]  # (C,C,K)
+
+            # scores: (r, L, C, C)
+            scores = np.zeros((r, L, C, C), dtype=float)
+
+            for li in range(L):
+                Xlag = coeffs_mean[li]  # (C,C,K)
+                Xc = Xlag - mu  # (C,C,K)
+                S = np.einsum("cdrk,cdk->cdr", U, Xc)  # (C,C,r)
+                for pc in range(r):
+                    scores[pc, li] = S[:, :, pc]
+
+            # Plot as a grid r x L (recommended for paper)
+            fig, axes = plt.subplots(
+                r, L, figsize=(4.2 * L, 4.0 * r), sharex=True, sharey=True
+            )
+            if r == 1:
+                axes = np.array([axes])
+
+            for pc in range(r):
+                for li, ms in enumerate(lags_ms):
+                    ax = axes[pc, li]
+                    mat = np.array(scores[pc, li], float)
+                    np.fill_diagonal(mat, 0.0)
+                    vmax = _robust_vmax(np.abs(mat))
+                    im = ax.imshow(mat, origin="lower", vmin=-vmax, vmax=vmax)
+                    ax.set_title(f"PC{pc+1} | lag={ms} ms", fontsize=10)
+                    ax.set_xticks([])
+                    ax.set_yticks([])
+
+            title = (
+                f"{ev0}__{ev1} | group={group_name} | mode={mode} | m={m} | "
+                f"pca_r={r} | lags_ms={lags_ms} | files={n_files_used} windows={n_windows_total}"
+            )
+            fig.suptitle(title, y=0.995)
+            fig.tight_layout(rect=[0, 0, 1, 0.97])
+
+            out_png = group_out / (
+                f"phasegrid_{ev0}__{ev1}_{mode}_m{m}_pca_r{r}_lags{'-'.join(map(str,lags_ms))}.png"
+            )
+            fig.savefig(out_png, dpi=220)
+            plt.close(fig)
+            print("Saved:", str(out_png))
+
+            # Optional: top edges per (pc, lag)
+            for pc in range(r):
+                for li, ms in enumerate(lags_ms):
+                    mat = np.array(scores[pc, li], float)
+                    np.fill_diagonal(mat, 0.0)
+                    out_txt = group_out / (
+                        f"phase_top_edges_{ev0}__{ev1}_{mode}_m{m}_pc{pc+1}_lag{ms}ms.txt"
+                    )
+                    with open(out_txt, "w", encoding="utf-8") as f:
+                        f.write(f"phase={ev0}__{ev1}\n")
+                        f.write(f"group={group_name}\n")
+                        f.write(f"mode={mode} m={m} pca_r={r} pc={pc+1} lag_ms={ms}\n")
+                        f.write(f"epoch_len_s={epoch_len_s} fs={fs}\n")
+                        f.write(
+                            f"files={n_files_used} cycles_total={n_cycles_total} windows_total={n_windows_total}\n"
+                        )
+                        f.write(f"config={asdict(cfg)}\n\n")
+                    _save_top_edges(str(out_txt), mat, ch_names0, topk=40)
+                    print("Saved:", str(out_txt))
+
+            continue
+
+        energy_per_lag = np.sqrt(np.sum(coeffs_mean**2, axis=-1))  # (L,C,C)
+
+        chi2_stat = n_eff_sum[pi][:, None, None] * np.sum(
+            coeffs_mean**2, axis=-1
+        )  # (L,C,C)
+        p = chi2.sf(chi2_stat, df=K)
+        p = np.clip(p, 1e-300, 1.0)
+        neglog10p = -np.log10(p)
+
+        if metric == "energy":
+            per_lag = energy_per_lag
+            cbar_label = "||coeffs||"
+        elif metric == "chi2":
+            per_lag = chi2_stat
+            cbar_label = f"chi2(df={K})"
+        elif metric == "neglog10p":
+            per_lag = neglog10p
+            cbar_label = "-log10(p)"
+        else:
+            raise ValueError(f"Unknown metric: {metric}")
+
+        if summary == "mean":
+            mat = np.mean(per_lag, axis=0)
+        elif summary == "max":
+            mat = np.max(per_lag, axis=0)
+        else:
+            raise ValueError(f"Unknown summary: {summary}")
+
+        mat_disp = np.array(mat, float)
+        np.fill_diagonal(mat_disp, 0.0)
+
+        title = (
+            f"{ev0}__{ev1} | group={group_name} | mode={mode} | m={m} | "
+            f"metric={metric} | summary={summary} | lags_ms={lags_ms} | "
+            f"files={n_files_used} cycles={n_cycles_total} windows={n_windows_total}"
+        )
+
+        # Heatmap
+        plt.figure(figsize=(11.5, 10))
+        vmax = _robust_vmax(mat_disp)
+        im = plt.imshow(mat_disp, origin="lower", vmin=0.0, vmax=vmax)
+        plt.colorbar(im, label=cbar_label)
+        plt.xticks(range(C), ch_names0, rotation=90, fontsize=8)
+        plt.yticks(range(C), ch_names0, fontsize=8)
+        plt.title(title)
+        plt.tight_layout()
+
+        out_png = group_out / f"phase_{ev0}__{ev1}_{mode}_m{m}_{metric}_{summary}.png"
+        plt.savefig(out_png, dpi=220)
+        plt.close()
+
+        # Top edges
+        out_txt = (
+            group_out
+            / f"phase_top_edges_{ev0}__{ev1}_{mode}_m{m}_{metric}_{summary}.txt"
+        )
+        with open(out_txt, "w", encoding="utf-8") as f:
+            f.write(f"phase={ev0}__{ev1}\n")
+            f.write(f"group={group_name}\n")
+            f.write(
+                f"mode={mode} m={m} metric={metric} summary={summary} lags_ms={lags_ms}\n"
+            )
+            f.write(f"epoch_len_s={epoch_len_s} fs={fs}\n")
+            f.write(
+                f"files={n_files_used} cycles_total={n_cycles_total} windows_total={n_windows_total}\n"
+            )
+            f.write(f"config={asdict(cfg)}\n\n")
+        _save_top_edges(str(out_txt), mat, ch_names0, topk=40)
+
+        print("Saved:", str(out_png))
+        print("Saved:", str(out_txt))
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", required=True, help="Dataset root or train/ directory.")
+    ap.add_argument(
+        "--out", required=True, help="Output directory (e.g. out/phase_mats_batch)."
+    )
+
+    ap.add_argument("--mode", choices=["corr", "gc"], default="gc")
+    ap.add_argument("--epoch-len-s", type=float, default=2.0)
+    ap.add_argument("--max-cycle-s", type=float, default=6.0)
+    ap.add_argument("--min-cycles", type=int, default=10)
+
+    ap.add_argument("--m", type=int, default=4)
+    ap.add_argument("--lags-ms", type=int, nargs="+", default=[50, 100, 150, 200])
+    ap.add_argument("--summary", choices=["mean", "max"], default="mean")
+    ap.add_argument(
+        "--metric", choices=["energy", "chi2", "neglog10p"], default="neglog10p"
+    )
+
+    ap.add_argument(
+        "--basis-allpairs",
+        default=None,
+        help="If set, run PCA-projection mode using an all-pairs basis .npz",
+    )
+
+    ap.add_argument("--pca-r", type=int, default=3)
+    ap.add_argument("--subjects", type=int, nargs="*", default=None)
+    ap.add_argument("--series", type=int, nargs="*", default=None)
+    ap.add_argument("--max-files", type=int, default=None)
+
+    ap.add_argument(
+        "--group-by",
+        choices=["all", "subject"],
+        default="all",
+        help="all: single global aggregate; subject: separate outputs for each subject.",
+    )
+
+    args = ap.parse_args()
+
+    root = Path(args.root)
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    files_all = _iter_train_data_files(root)
+    files = _filter_files(files_all, args.subjects, args.series, args.max_files)
+    if not files:
+        raise RuntimeError("No matching train data files found.")
+
+    if args.group_by == "all":
+        _run_group(
+            group_name="ALL",
+            files=files,
+            out_dir=out_dir,
+            mode=args.mode,
+            epoch_len_s=float(args.epoch_len_s),
+            max_cycle_s=float(args.max_cycle_s),
+            min_cycles=int(args.min_cycles),
+            m=int(args.m),
+            lags_ms=list(args.lags_ms),
+            summary=str(args.summary),
+            metric=str(args.metric),
+            basis_allpairs=args.basis_allpairs,
+            pca_r=int(args.pca_r),
+        )
+        return
+
+    # group_by == "subject"
+    groups: Dict[str, List[Path]] = {}
+    for p in files:
+        subj, se = _parse_subj_series(p)
+        if subj is None:
+            continue
+        key = f"subj{subj:02d}"
+        groups.setdefault(key, []).append(p)
+
+    for key in sorted(groups.keys()):
+        _run_group(
+            group_name=key,
+            files=groups[key],
+            out_dir=out_dir,
+            mode=args.mode,
+            epoch_len_s=float(args.epoch_len_s),
+            max_cycle_s=float(args.max_cycle_s),
+            min_cycles=int(args.min_cycles),
+            m=int(args.m),
+            lags_ms=list(args.lags_ms),
+            summary=str(args.summary),
+            metric=str(args.metric),
+            basis_allpairs=args.basis_allpairs,
+            pca_r=int(args.pca_r),
+        )
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\mfg_kaggle_phase_pair.py ---
+from __future__ import annotations
+
+import os
+import argparse
+
+import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+from src.mfg.config import load_config
+from src.mfg.io import (
+    load_kaggle_data_with_events,
+    extract_grasp_cycles,
+    phase_window_bounds,
+    KAGGLE_EVENT_COLS,
+)
+from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src.mfg.hcr import hcr_coeffs_over_lags
+from src.mfg.diagnostics import pearson_over_lags
+from src.mfg.pca_features import select_r
+
+
+PHASES = list(zip(KAGGLE_EVENT_COLS[:-1], KAGGLE_EVENT_COLS[1:]))
+
+
+def moving_avg(x: np.ndarray, win: int) -> np.ndarray:
+    if win <= 1:
+        return np.asarray(x, float)
+    win = int(win)
+    if win % 2 == 0:
+        win += 1
+    pad = win // 2
+    x = np.asarray(x, float)
+    xpad = np.r_[np.full(pad, x[0]), x, np.full(pad, x[-1])]
+    return np.convolve(xpad, np.ones(win) / win, mode="valid")
+
+
+def load_basis(path: str) -> dict:
+    D = np.load(path, allow_pickle=False)
+    return {
+        "mean": D["mean"],
+        "V": D["V"],
+        "eigvals": D["eigvals"],
+        "lag_samples": D["lag_samples"],
+        "fs": int(D["fs"]),
+        "maxlag_ms": int(D["maxlag_ms"]),
+        "lag_step_ms": int(D["lag_step_ms"]),
+        "m": int(D["m"]),
+        "mixed_only": bool(int(D["mixed_only"])),
+        "chan_a": str(D["chan_a"]),
+        "chan_b": str(D["chan_b"]),
+        "mode": str(D["mode"]),
+        "epoch_len_s": float(D["epoch_len_s"]),
+    }
+
+
+def main() -> None:
+    cfg = load_config()
+    fs = int(cfg.fs)
+    maxlag_ms_cfg = int(cfg.maxlag_ms)
+    lag_step_ms = int(cfg.lag_step_ms)
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", required=True)
+    ap.add_argument("--events", required=True)
+    ap.add_argument("--chan-a", required=True)
+    ap.add_argument("--chan-b", required=True)
+    ap.add_argument("--mode", choices=["corr", "gc"], default="gc")
+
+    ap.add_argument("--epoch-len-s", type=float, default=2.0)
+    ap.add_argument("--max-cycle-s", type=float, default=6.0)
+    ap.add_argument("--min-cycles", type=int, default=10)
+
+    ap.add_argument("--m", type=int, default=4)  # m=4 => 16 features (mixed_only=True)
+
+    ap.add_argument(
+        "--basis",
+        required=True,
+        help="Path to PCA basis .npz built by scripts/build_kaggle_basis.py",
+    )
+
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args()
+
+    os.makedirs(args.out, exist_ok=True)
+
+    ids, X, E, ch_names, _ = load_kaggle_data_with_events(args.data, args.events)
+    T = X.shape[0]
+
+    try:
+        ia = ch_names.index(args.chan_a)
+        ib = ch_names.index(args.chan_b)
+    except ValueError as exc:
+        raise ValueError(
+            f"Channel not found. Example available: {ch_names[:10]} ..."
+        ) from exc
+
+    cycles = extract_grasp_cycles(E, fs=fs, max_cycle_s=args.max_cycle_s)
+    if len(cycles) < args.min_cycles:
+        print(
+            f"[WARN] cycles={len(cycles)} < min_cycles={args.min_cycles}. Results may be noisy."
+        )
+
+    basis = load_basis(args.basis)
+
+    # Validate basis compatibility
+    if (basis["chan_a"], basis["chan_b"]) != (args.chan_a, args.chan_b):
+        raise ValueError("Basis was built for a different channel pair.")
+    if basis["mode"] != args.mode:
+        raise ValueError("Basis was built for a different mode (corr/gc).")
+    if abs(basis["epoch_len_s"] - float(args.epoch_len_s)) > 1e-9:
+        raise ValueError("Basis was built for a different epoch_len_s.")
+    if basis["fs"] != fs:
+        raise ValueError("Basis was built for a different fs.")
+    if basis["lag_step_ms"] != lag_step_ms:
+        raise ValueError("Basis was built for a different lag_step_ms.")
+    if basis["m"] != int(args.m) or not basis["mixed_only"]:
+        raise ValueError("Basis was built with different m or not mixed_only=True.")
+
+    # Global normalization over the whole series (must match basis building)
+    if args.mode == "corr":
+        a_reason_all = normalize_gauss(X[:, ia])
+        b_result_all = normalize_gauss(X[:, ib])
+    else:
+        a_reason_all = normalize_edf(X[:, ia])
+        b_result_all = pnorm_student(
+            X[:, ib],
+            fs,
+            cfg.ar_order,
+            cfg.ema_half_life_s,
+            cfg.student_nu,
+        )
+
+    seg_len = int(round(args.epoch_len_s * fs))
+    min_pairs = 10
+    maxlag_samples_data = max(1, seg_len - min_pairs)
+    maxlag_ms_data = int(1000.0 * maxlag_samples_data / fs)
+    maxlag_ms = int(min(maxlag_ms_cfg, maxlag_ms_data))
+
+    m = int(args.m)
+    mixed_only = True
+    K = m * m
+
+    # Smoothing in lag-step units
+    smooth_ms = 10
+    win = max(1, int(round(smooth_ms / lag_step_ms)))
+
+    fig, ax = plt.subplots(len(PHASES), 1, figsize=(12, 2.5 * len(PHASES)), sharex=True)
+    if len(PHASES) == 1:
+        ax = [ax]
+
+    for pi, (ev0, ev1) in enumerate(PHASES):
+        coeffs_list = []
+        pear_list = []
+        lag_ref = None
+        n_windows = 0
+
+        for cyc in cycles:
+            bounds = phase_window_bounds(
+                T, cyc[ev0], cyc[ev1], fs=fs, epoch_len_s=args.epoch_len_s
+            )
+            if bounds is None:
+                continue
+            a0, b0 = bounds
+
+            y = a_reason_all[a0:b0]
+            z = b_result_all[a0:b0]
+            if y.size != seg_len or z.size != seg_len:
+                continue
+
+            coeffs, lag_samples = hcr_coeffs_over_lags(
+                y,
+                z,
+                fs,
+                maxlag_ms,
+                lag_step_ms,
+                m,
+                subtract_marginals=True,
+                mixed_only=mixed_only,
+            )
+            pear, lag_p = pearson_over_lags(y, z, fs, maxlag_ms, lag_step_ms)
+
+            if coeffs.shape[0] != K:
+                raise RuntimeError(f"Expected K={K}, got {coeffs.shape[0]}")
+
+            if lag_ref is None:
+                lag_ref = lag_samples
+            else:
+                if not np.array_equal(lag_ref, lag_samples) or not np.array_equal(
+                    lag_ref, lag_p
+                ):
+                    raise RuntimeError(
+                        "Lag grid mismatch across windows (unexpected with fixed windows)."
+                    )
+
+            coeffs_list.append(coeffs)
+            pear_list.append(pear)
+            n_windows += 1
+
+        if n_windows == 0:
+            ax[pi].set_title(f"{ev0} → {ev1} | windows=0 (no valid fixed windows)")
+            ax[pi].grid(True, alpha=0.15)
+            continue
+
+        coeffs_mean = np.mean(np.stack(coeffs_list, axis=0), axis=0)  # (K, L)
+        pear_mean = np.mean(np.stack(pear_list, axis=0), axis=0)  # (L,)
+
+        if not np.array_equal(lag_ref, basis["lag_samples"]):
+            raise ValueError(
+                "Basis lag_samples differ from analysis lag grid. Rebuild basis with the same settings."
+            )
+
+        Xc = coeffs_mean - basis["mean"][:, None]
+        scores_full = basis["V"].T @ Xc  # (K, L)
+
+        r = select_r(basis["eigvals"], cfg.pca_var_thresh, cfg.pca_max_r)
+        r = min(int(r), 3)
+
+        ms = np.asarray(lag_ref, float) * 1000.0 / float(fs)
+
+        ax[pi].plot(ms, moving_avg(pear_mean, win), label="corr", linewidth=1.1)
+
+        for k in range(r):
+            yk = scores_full[k]
+            yk = yk / (np.max(np.abs(yk)) + 1e-12)
+            ax[pi].plot(ms, moving_avg(yk, win), label=f"PC{k+1}", linewidth=1.0)
+
+        ax[pi].axvline(0, color="k", lw=0.6)
+        ax[pi].set_title(f"{ev0} → {ev1} | windows={n_windows} | mode={args.mode}")
+        ax[pi].grid(True, alpha=0.15)
+        ax[pi].set_ylabel("norm proj")
+
+        if pi == 0:
+            ax[pi].legend(ncol=6, frameon=False, loc="upper right")
+
+    ax[-1].set_xlabel("lag [ms]")
+    out_png = os.path.join(
+        args.out, f"phases_{args.chan_a}_{args.chan_b}_{args.mode}_m{m}.png"
+    )
+    fig.tight_layout()
+    fig.savefig(out_png, dpi=220)
+    print("Saved:", out_png)
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\mfg_pair.py ---
+"""
+Pairwise multi-feature HCR / PCA analysis for EEG channels.
+
+- Supports both Kaggle CSV (continuous signals) and mfgin ROI .mat files.
+- For ROI .mat:
+    * uses fixed window inside trials (configured in io.load_mfgin_mat),
+    * processes each trial separately,
+    * averages HCR coefficients and Pearson correlation over trials.
+- For CSV:
+    * treats the whole series as a single "trial".
+
+Outputs:
+- Simple Granger-like plot (PC1-PC3 vs lag >= 0) for A -> B.
+- DICC-style curves (direct / indirect / common cause) for lag >= 0.
+- Full 4-row panel:
+    1) trial-based hexbin plots at selected lags,
+    2) reconstructed joint densities from HCR,
+    3) coefficient matrices a[j, k] at selected lags,
+    4) features + Pearson + GC(lag).
+"""
+
+import os
+import argparse
+from typing import Tuple
+
+import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.ticker import MaxNLocator  # noqa: E402
+
+from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src.mfg.hcr import hcr_coeffs_over_lags
+from src.mfg.pca_features import pca_over_lags, select_r
+from src.mfg.density import coeffs_vec_to_matrix, reconstruct_density_model
+from src.mfg.diagnostics import pearson_over_lags
+from src.mfg.config import load_config
+from src.mfg.viz import plot_granger_simple, plot_granger_dicc
+from src.mfg.io import load_pair_for_analysis
+
+
+_cfg = load_config()
+FS_DEFAULT, MAXLAG_MS, LAG_STEP_MS = _cfg.fs, _cfg.maxlag_ms, _cfg.lag_step_ms
+M = _cfg.m
+AR_ORDER, EMA_HALF_LIFE_S, STUDENT_NU = (
+    _cfg.ar_order,
+    _cfg.ema_half_life_s,
+    _cfg.student_nu,
+)
+
+PANEL_LAGS_MS = [200, 0, -200]
+DISPLAY_FEATURES = 4
+SMOOTH_MS = 10
+
+
+def hexbin_for_lag_trials(
+    y_trials: np.ndarray,
+    z_trials: np.ndarray,
+    lag_ms: float,
+    fs: float,
+    ax: plt.Axes,
+    title: str,
+) -> None:
+    """
+    Draw a hexbin scatter for many trials at a given lag.
+
+    y_trials, z_trials: shape (n_trials, L), values in [0, 1].
+    lag_ms can be negative.
+    """
+    y_trials = np.asarray(y_trials, float)
+    z_trials = np.asarray(z_trials, float)
+    if y_trials.shape != z_trials.shape:
+        raise ValueError(
+            f"Shape mismatch: y_trials={y_trials.shape}, z_trials={z_trials.shape}"
+        )
+
+    n_trials, n = y_trials.shape
+    lag_samples = int(round(lag_ms * fs / 1000.0))
+
+    ya_list = []
+    zb_list = []
+
+    if lag_samples == 0:
+        for tr in range(n_trials):
+            ya_list.append(y_trials[tr])
+            zb_list.append(z_trials[tr])
+    elif lag_samples > 0:
+        # A earlier -> B later
+        for tr in range(n_trials):
+            if n <= lag_samples:
+                continue
+            ya_list.append(y_trials[tr, : n - lag_samples])
+            zb_list.append(z_trials[tr, lag_samples:])
+    else:
+        # A later, B earlier
+        L = -lag_samples
+        for tr in range(n_trials):
+            if n <= L:
+                continue
+            ya_list.append(y_trials[tr, L:])
+            zb_list.append(z_trials[tr, : n - L])
+
+    if not ya_list:
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_title(title + " (no samples)", fontsize=10)
+        ax.set_xticks([0.0, 0.5, 1.0])
+        ax.set_yticks([0.0, 0.5, 1.0])
+        return
+
+    ya = np.concatenate(ya_list)
+    zb = np.concatenate(zb_list)
+
+    gridsize = int(np.clip(ya.size // 900, 60, 160))
+    ax.hexbin(
+        ya,
+        zb,
+        gridsize=gridsize,
+        cmap="Greys",
+        bins="log",
+        mincnt=1,
+        linewidths=0.0,
+    )
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_title(title, fontsize=12)
+    ax.set_xticks([0.0, 0.5, 1.0])
+    ax.set_yticks([0.0, 0.5, 1.0])
+
+
+def moving_avg(x: np.ndarray, win: int) -> np.ndarray:
+    """Symmetric moving average (odd window, edge-padded)."""
+    if win <= 1:
+        return np.asarray(x, float)
+
+    win = int(win)
+    if win % 2 == 0:
+        win += 1
+    pad = win // 2
+
+    x = np.asarray(x, float)
+    xpad = np.r_[np.full(pad, x[0]), x, np.full(pad, x[-1])]
+    return np.convolve(xpad, np.ones(win) / win, mode="valid")
+
+
+def nearest_idx_ms(ms_array: np.ndarray, target_ms: float) -> int:
+    """Return index of ms_array closest to target_ms."""
+    return int(np.argmin(np.abs(ms_array - float(target_ms))))
+
+
+def reshape_trials_from_meta(
+    a_1d: np.ndarray,
+    b_1d: np.ndarray,
+    meta: dict,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Reshape flattened ROI signals back to (n_trials, trial_len)."""
+    n_trials = int(meta["n_trials"])
+    trial_len = int(meta["trial_len"])
+
+    if a_1d.size != n_trials * trial_len or b_1d.size != n_trials * trial_len:
+        raise ValueError(
+            f"Flattened length mismatch for ROI: "
+            f"{a_1d.size} / {b_1d.size} vs n_trials*trial_len = {n_trials*trial_len}"
+        )
+
+    a_trials = np.asarray(a_1d, float).reshape(n_trials, trial_len)
+    b_trials = np.asarray(b_1d, float).reshape(n_trials, trial_len)
+    return a_trials, b_trials
+
+
+def main() -> None:
+    plt.rcParams.update(
+        {
+            "font.size": 11,
+            "axes.titlesize": 12,
+            "axes.labelsize": 11,
+            "axes.grid": False,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.titlepad": 6,
+            "xtick.labelsize": 9,
+            "ytick.labelsize": 9,
+        }
+    )
+
+    parser = argparse.ArgumentParser(
+        description="Multi-feature HCR/PCA analysis for a pair of EEG channels."
+    )
+    parser.add_argument("--file", required=True, help="CSV or MAT file")
+    parser.add_argument("--chan-a", required=True, help="reason (A)")
+    parser.add_argument("--chan-b", required=True, help="result (B)")
+    parser.add_argument("--mode", choices=["corr", "gc"], default="corr")
+    parser.add_argument("--out", required=True, help="Output directory for plots")
+    args = parser.parse_args()
+    os.makedirs(args.out, exist_ok=True)
+
+    # 1) Unified loader: supports CSV and mfgin ROI .mat
+    a_1d, b_1d, fs, meta = load_pair_for_analysis(
+        args.file,
+        args.chan_a,
+        args.chan_b,
+        fs_fallback=FS_DEFAULT,
+    )
+
+    if meta.get("type") == "roi":
+        a_trials, b_trials = reshape_trials_from_meta(a_1d, b_1d, meta)
+    else:
+        a_trials = np.asarray(a_1d, float)[None, :]
+        b_trials = np.asarray(b_1d, float)[None, :]
+
+    if a_trials.shape != b_trials.shape:
+        raise ValueError(
+            f"A and B must have the same shape, got {a_trials.shape} vs {b_trials.shape}"
+        )
+
+    n_trials, seg_len = a_trials.shape
+
+    # 2) Max lag constrained by trial length
+    min_pairs = 10
+    maxlag_samples_data = max(1, seg_len - min_pairs)
+    maxlag_ms_data = int(1000.0 * maxlag_samples_data / fs)
+    maxlag_ms = min(MAXLAG_MS, maxlag_ms_data)
+
+    # 3) Per-trial normalized arrays for visualization (A -> B inputs)
+    y_trials = np.empty_like(a_trials, float)
+    z_trials = np.empty_like(b_trials, float)
+
+    coeffs_ab_list = []
+    coeffs_ba_list = []
+    pearson_ab_list = []
+    pearson_ba_list = []
+
+    lag_samples_ref = None
+
+    for tr in range(n_trials):
+        a_raw = a_trials[tr]
+        b_raw = b_trials[tr]
+
+        if args.mode == "corr":
+            # "Correlation-like": both mapped to U(0,1) via Gaussian CDF
+            a_reason = normalize_gauss(a_raw)
+            b_reason = normalize_gauss(b_raw)
+            a_result = a_reason
+            b_result = b_reason
+        else:
+            # "GC-like": reason uses EDF, result uses prewhiten+Student->U(0,1)
+            a_reason = normalize_edf(a_raw)
+            b_reason = normalize_edf(b_raw)
+
+            a_result = pnorm_student(a_raw, fs, AR_ORDER, EMA_HALF_LIFE_S, STUDENT_NU)
+            b_result = pnorm_student(b_raw, fs, AR_ORDER, EMA_HALF_LIFE_S, STUDENT_NU)
+
+        # Store A->B pair for hexbin panels
+        y_trials[tr] = a_reason
+        z_trials[tr] = b_result
+
+        # A -> B
+        coeffs_ab_tr, lag_samples_tr = hcr_coeffs_over_lags(
+            a_reason, b_result, fs, maxlag_ms, LAG_STEP_MS, M, subtract_marginals=True
+        )
+        pearson_ab_tr, lag_samples_p = pearson_over_lags(
+            a_reason, b_result, fs, maxlag_ms, LAG_STEP_MS
+        )
+
+        # B -> A
+        coeffs_ba_tr, lag_samples_tr2 = hcr_coeffs_over_lags(
+            b_reason, a_result, fs, maxlag_ms, LAG_STEP_MS, M, subtract_marginals=True
+        )
+        pearson_ba_tr, lag_samples_p2 = pearson_over_lags(
+            b_reason, a_result, fs, maxlag_ms, LAG_STEP_MS
+        )
+
+        # Lag-grid consistency checks
+        if lag_samples_ref is None:
+            lag_samples_ref = lag_samples_tr
+        else:
+            if not np.array_equal(lag_samples_ref, lag_samples_tr):
+                raise RuntimeError("Inconsistent lag_samples across trials (HCR AB)")
+
+        if not np.array_equal(lag_samples_tr, lag_samples_tr2):
+            raise RuntimeError("AB and BA lag grids differ (HCR)")
+        if not np.array_equal(lag_samples_p, lag_samples_p2):
+            raise RuntimeError("Pearson AB and BA lag grids differ")
+        if not np.array_equal(lag_samples_ref, lag_samples_p):
+            raise RuntimeError("HCR and Pearson lag grids differ")
+
+        coeffs_ab_list.append(coeffs_ab_tr)
+        coeffs_ba_list.append(coeffs_ba_tr)
+        pearson_ab_list.append(pearson_ab_tr)
+        pearson_ba_list.append(pearson_ba_tr)
+
+    # 4) Average across trials
+    coeffs_ab = np.mean(np.stack(coeffs_ab_list, axis=0), axis=0)
+    coeffs_ba = np.mean(np.stack(coeffs_ba_list, axis=0), axis=0)
+    pearson_ab_pos = np.mean(np.stack(pearson_ab_list, axis=0), axis=0)
+    pearson_ba_pos = np.mean(np.stack(pearson_ba_list, axis=0), axis=0)
+    lag_samples = np.asarray(lag_samples_ref, int)
+
+    # 5) PCA on averaged coeffs
+    _, a_ab, eig_ab = pca_over_lags(coeffs_ab)
+    r_ab = select_r(eig_ab, 0.90, DISPLAY_FEATURES)
+
+    _, a_ba, eig_ba = pca_over_lags(coeffs_ba)
+    r_ba = select_r(eig_ba, 0.90, DISPLAY_FEATURES)
+
+    r = int(min(DISPLAY_FEATURES, r_ab, r_ba))
+    if r <= 0:
+        raise RuntimeError("PCA returned r=0 features; check input signals / config.")
+
+    frac_ab = eig_ab / (eig_ab.sum() + 1e-12)
+    frac_ba = eig_ba / (eig_ba.sum() + 1e-12)
+    lambdas_frac = 0.5 * (frac_ab[:r] + frac_ba[:r])
+
+    ms_pos = lag_samples * 1000.0 / fs  # includes 0 ms
+
+    scores_ab_raw = a_ab[:r]  # shape (r, n_lags)
+    scores_ba_raw = a_ba[:r]  # shape (r, n_lags)
+
+    # Align PCA signs between A->B and B->A (mirror over 0)
+    for k in range(r):
+        if np.corrcoef(scores_ab_raw[k], scores_ba_raw[k, ::-1])[0, 1] < 0:
+            scores_ba_raw[k] *= -1
+
+    # ---- IMPORTANT FIX: build symmetric axis WITHOUT duplicating 0 ms ----
+    # Negative lags: take BA side reversed, excluding the 0-lag point
+    ms_neg = -ms_pos[:0:-1]  # e.g. [-1000..-2] (no -0)
+    ms_sym = np.concatenate((ms_neg, ms_pos))  # single 0
+
+    scores_sym_raw = np.concatenate((scores_ba_raw[:, :0:-1], scores_ab_raw), axis=1)
+
+    # Pearson should also be directional: BA on negative, AB on positive
+    pearson_sym = np.concatenate((pearson_ba_pos[:0:-1], pearson_ab_pos))
+
+    # Fix sign of the first feature to agree with Pearson at 0 lag
+    idx_zero = nearest_idx_ms(ms_sym, 0.0)
+    if scores_sym_raw[0, idx_zero] * pearson_sym[idx_zero] < 0:
+        scores_sym_raw[0] *= -1
+
+    # GC(delta) = ||a(delta)||_2 (always non-negative)
+    gc_sym = np.sqrt((scores_sym_raw**2).sum(axis=0))
+
+    # 6) Simple PC1-PC3 plot for lag >= 0 (A -> B)
+    simple_out = os.path.join(args.out, f"pair_{args.chan_a}_{args.chan_b}_simple.png")
+    scores_pos = scores_ab_raw[: min(3, r)]
+    plot_granger_simple(
+        lag_samples=lag_samples,
+        scores=scores_pos,
+        fs=fs,
+        title=f"{args.chan_a} -> {args.chan_b} (lag ≥ 0)",
+        outpath=simple_out,
+    )
+
+    # Smoothing window in units of lag steps
+    win = max(1, int(round(SMOOTH_MS / LAG_STEP_MS)))
+
+    # 7) DICC-style curves: only non-negative lags
+    mask_pos = ms_sym >= 0.0
+    ms_pos_sec_dicc = ms_sym[mask_pos] / 1000.0
+    scores_dicc = scores_sym_raw[: min(3, r), :][:, mask_pos]
+    scores_dicc_disp = scores_dicc.copy()
+    for k in range(scores_dicc_disp.shape[0]):
+        max_abs = float(np.max(np.abs(scores_dicc_disp[k])) or 1.0)
+        scores_dicc_disp[k] = moving_avg(scores_dicc_disp[k] / max_abs, win)
+
+    dicc_out = os.path.join(args.out, f"pair_{args.chan_a}_{args.chan_b}_dicc.png")
+    plot_granger_dicc(
+        t=ms_pos_sec_dicc,
+        scores=scores_dicc_disp,
+        title=f"{args.chan_a} -> {args.chan_b}",
+        outpath=dicc_out,
+    )
+
+    # 8) Full 4-row panel
+    scores_disp = scores_sym_raw.copy()
+    for k in range(r):
+        max_abs = float(np.max(np.abs(scores_disp[k])) or 1.0)
+        scores_disp[k] = moving_avg(scores_disp[k] / max_abs, win)
+    pearson_disp = moving_avg(pearson_sym, win)
+
+    fig = plt.figure(figsize=(14, 10))
+    grid = fig.add_gridspec(4, 3, height_ratios=[1.05, 1.2, 1.1, 1.5])
+
+    titles = [
+        f"{args.chan_a} leads by 200 ms",
+        "same time",
+        f"{args.chan_a} lags by 200 ms",
+    ]
+    for j, lag_ms in enumerate(PANEL_LAGS_MS):
+        axis = fig.add_subplot(grid[0, j])
+        hexbin_for_lag_trials(y_trials, z_trials, lag_ms, fs, axis, titles[j])
+
+    from scipy.ndimage import gaussian_filter  # local import
+
+    densities = []
+    for lag_ms in PANEL_LAGS_MS:
+        if lag_ms < 0:
+            idx = nearest_idx_ms(ms_pos, abs(lag_ms))
+            mat_coeffs = coeffs_vec_to_matrix(coeffs_ba[:, idx], M)
+        else:
+            idx = nearest_idx_ms(ms_pos, lag_ms)
+            mat_coeffs = coeffs_vec_to_matrix(coeffs_ab[:, idx], M)
+
+        u, v, rho = reconstruct_density_model(
+            mat_coeffs,
+            M,
+            grid_n=192,
+            renormalize=True,
+            clip_q=0.99,
+        )
+        rho = gaussian_filter(rho, sigma=0.6, mode="nearest")
+        densities.append((u, v, rho))
+
+    vmin = min(arr.min() for _, _, arr in densities)
+    vmax = max(arr.max() for _, _, arr in densities)
+    levels = MaxNLocator(nbins=9).tick_values(vmin, vmax)
+
+    for j, (u, v, rho) in enumerate(densities):
+        axis = fig.add_subplot(grid[1, j])
+        cf = axis.contourf(u, v, rho, levels=levels, cmap="Spectral_r")
+        axis.contour(u, v, rho, levels=levels, colors="k", linewidths=0.35, alpha=0.55)
+        axis.set_xlim(0, 1)
+        axis.set_ylim(0, 1)
+        axis.set_title(f"density at lag={PANEL_LAGS_MS[j]} ms", fontsize=11)
+        cb = fig.colorbar(cf, ax=axis, fraction=0.035, pad=0.01)
+        cb.ax.tick_params(labelsize=8)
+
+    mats = []
+    for lag_ms in PANEL_LAGS_MS:
+        if lag_ms < 0:
+            idx = nearest_idx_ms(ms_pos, abs(lag_ms))
+            mats.append(coeffs_vec_to_matrix(coeffs_ba[:, idx], M))
+        else:
+            idx = nearest_idx_ms(ms_pos, lag_ms)
+            mats.append(coeffs_vec_to_matrix(coeffs_ab[:, idx], M))
+
+    lim = float(np.percentile(np.abs(np.stack(mats)), 98))
+    vmin_h, vmax_h = -lim, lim
+
+    for j, mat_coeffs in enumerate(mats):
+        axis = fig.add_subplot(grid[2, j])
+        im = axis.imshow(
+            mat_coeffs,
+            origin="lower",
+            cmap="RdYlBu_r",
+            vmin=vmin_h,
+            vmax=vmax_h,
+            interpolation="nearest",
+            aspect="auto",
+        )
+        cb = fig.colorbar(im, ax=axis, fraction=0.035, pad=0.01)
+        cb.ax.tick_params(labelsize=8)
+        axis.set_title(f"coeffs a[j,k] at {PANEL_LAGS_MS[j]} ms", fontsize=11)
+        axis.set_xlabel("k")
+        axis.set_ylabel("j")
+
+    axis = fig.add_subplot(grid[3, :])
+    axis.grid(True, alpha=0.15)
+    axis.plot(ms_sym, pearson_disp, label="correlation", linewidth=1.2, zorder=2)
+
+    for k in range(r):
+        label = f"feature {k+1} (λ={lambdas_frac[k]:.3f})"
+        axis.plot(ms_sym, scores_disp[k], label=label, linewidth=1.0, zorder=2)
+
+    axis.set_xlim(-maxlag_ms, maxlag_ms)
+    axis.set_ylim(-1.05, 1.05)
+    axis.set_xlabel("lag [ms]")
+    axis.set_ylabel("value (features, corr)")
+    axis.axvline(0, color="k", lw=0.7)
+    axis.axvline(200, color="k", lw=0.5, ls="--")
+    axis.axvline(-200, color="k", lw=0.5, ls="--")
+
+    axis2 = axis.twinx()
+    axis2.plot(ms_sym, gc_sym, color="k", linewidth=2.0, label="GC(lag)", zorder=3)
+    axis2.set_ylabel("GC(lag)")
+    axis2.set_ylim(0.0, 1.05 * float(np.max(gc_sym) or 1.0))
+
+    lines_left, labels_left = axis.get_legend_handles_labels()
+    lines_right, labels_right = axis2.get_legend_handles_labels()
+    axis.legend(
+        lines_left + lines_right,
+        labels_left + labels_right,
+        loc="upper center",
+        ncol=5,
+        bbox_to_anchor=(0.5, 1.15),
+        frameon=False,
+    )
+
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    fig.suptitle(f"{args.chan_a} to {args.chan_b}: HCR+PCA panel", y=0.995)
+
+    out_png = os.path.join(args.out, f"pair_{args.chan_a}_{args.chan_b}.png")
+    fig.savefig(out_png, dpi=220)
+
+    print(
+        f"Saved: {out_png} | r_ab={r_ab}, r_ba={r_ba}, r_used={r} | "
+        f"n_trials={n_trials}, seg_len={seg_len}, maxlag_ms={maxlag_ms}"
+    )
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\scripts\viz_event_bases.py ---
+#!/usr/bin/env python3
+"""
+Visualize per-phase (event) all-pairs PCA bases saved as .npz.
+
+Expected keys in each .npz:
+- ch_names: list/array of channel names, length C
+- mean:     (C, C, K)
+- U:        (C, C, r, K)  where K = m*m
+- eigvals:  (C, C, r)
+- pk:       phase key string (optional; otherwise inferred from filename)
+
+Usage examples:
+  python viz_event_bases.py --glob "out/basis/*_*.npz" --pair "Ch1->Ch2" --outdir viz/
+  python viz_event_bases.py --glob "out/basis/*_*.npz" --pair "0->3" --outdir viz/ --r 3
+"""
+
+from __future__ import annotations
+import argparse
+import glob
+from pathlib import Path
+import re
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def infer_phase_key(path: Path) -> str:
+    # tries to extract "..._HandStart__FirstDigitTouch.npz" -> "HandStart__FirstDigitTouch"
+    m = re.search(r"_([A-Za-z]+__[_A-Za-z]+)\.npz$", path.name)
+    if m:
+        return m.group(1)
+    return path.stem
+
+
+def parse_pair(pair: str, ch_names: list[str]) -> tuple[int, int]:
+    pair = pair.strip()
+    if "->" not in pair:
+        raise ValueError("pair must be like 'A->B' or '0->3'")
+    a, b = [x.strip() for x in pair.split("->", 1)]
+
+    def to_idx(x: str) -> int:
+        if x.isdigit():
+            return int(x)
+        if x in ch_names:
+            return ch_names.index(x)
+        raise ValueError(f"Unknown channel '{x}'. Available example: {ch_names[:5]}...")
+
+    i = to_idx(a)
+    j = to_idx(b)
+    return i, j
+
+
+def reshape_mm(vec: np.ndarray) -> np.ndarray:
+    K = vec.shape[-1]
+    m = int(round(K**0.5))
+    if m * m != K:
+        raise ValueError(f"K={K} is not a perfect square; cannot reshape to m×m.")
+    return vec.reshape(m, m)
+
+
+def save_pc_grid(
+    out_png: Path, U_ij: np.ndarray, eig_ij: np.ndarray, title: str
+) -> None:
+    """
+    U_ij: (r, K)
+    eig_ij: (r,)
+    """
+    r = U_ij.shape[0]
+    fig, axes = plt.subplots(1, r, figsize=(4.2 * r, 4.0))
+    if r == 1:
+        axes = [axes]
+
+    for k in range(r):
+        mat = reshape_mm(U_ij[k])
+        vmax = np.quantile(np.abs(mat), 0.98) if np.isfinite(mat).any() else 1.0
+        im = axes[k].imshow(mat, origin="lower", vmin=-vmax, vmax=vmax)
+        axes[k].set_title(f"PC{k+1}\nλ={eig_ij[k]:.3g}", fontsize=10)
+        axes[k].set_xticks([])
+        axes[k].set_yticks([])
+        fig.colorbar(im, ax=axes[k], fraction=0.046, pad=0.04)
+
+    fig.suptitle(title, y=0.98)
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    fig.savefig(out_png, dpi=200)
+    plt.close(fig)
+
+
+def save_mean(out_png: Path, mean_ij: np.ndarray, title: str) -> None:
+    mat = reshape_mm(mean_ij)
+    vmax = np.quantile(np.abs(mat), 0.98) if np.isfinite(mat).any() else 1.0
+
+    plt.figure(figsize=(4.6, 4.0))
+    im = plt.imshow(mat, origin="lower", vmin=-vmax, vmax=vmax)
+    plt.colorbar(im, label="mean coeff")
+    plt.title(title)
+    plt.xticks([])
+    plt.yticks([])
+    plt.tight_layout()
+    plt.savefig(out_png, dpi=200)
+    plt.close()
+
+
+def save_eigvals_compare(
+    out_png: Path, phase_to_eigs: dict[str, np.ndarray], title: str
+) -> None:
+    phases = list(phase_to_eigs.keys())
+    R = max(len(v) for v in phase_to_eigs.values())
+
+    # bar-like plot: each phase is a line of eigenvalues
+    plt.figure(figsize=(7.5, 4.5))
+    for ph in phases:
+        y = phase_to_eigs[ph]
+        x = np.arange(1, len(y) + 1)
+        plt.plot(x, y, marker="o", label=ph)
+
+    plt.xlabel("component")
+    plt.ylabel("eigenvalue")
+    plt.title(title)
+    plt.xticks(np.arange(1, R + 1))
+    plt.legend(fontsize=8, ncol=2)
+    plt.tight_layout()
+    plt.savefig(out_png, dpi=200)
+    plt.close()
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--glob", required=True, help="Glob for .npz files, e.g. out/basis/*_*.npz"
+    )
+    ap.add_argument("--pair", required=True, help="Channel pair like 'A->B' or '0->3'")
+    ap.add_argument("--outdir", required=True, help="Output directory for PNGs")
+    ap.add_argument(
+        "--r",
+        type=int,
+        default=None,
+        help="How many PCs to visualize (default: all in file)",
+    )
+    args = ap.parse_args()
+
+    paths = [Path(p) for p in sorted(glob.glob(args.glob))]
+    if not paths:
+        raise RuntimeError("No .npz files matched.")
+
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    # load first file for channel names + pair parsing
+    D0 = np.load(paths[0], allow_pickle=True)
+    ch_names = list(D0["ch_names"])
+    i, j = parse_pair(args.pair, ch_names)
+
+    phase_to_eigs = {}
+    for p in paths:
+        D = np.load(p, allow_pickle=True)
+        phase = str(D["pk"]) if "pk" in D else infer_phase_key(p)
+
+        mean = D["mean"]  # (C,C,K)
+        U = D["U"]  # (C,C,r,K)
+        eigvals = D["eigvals"]  # (C,C,r)
+
+        r_file = U.shape[2]
+        r = min(r_file, args.r) if args.r is not None else r_file
+
+        U_ij = np.array(U[i, j, :r, :], float)  # (r,K)
+        eig_ij = np.array(eigvals[i, j, :r], float)  # (r,)
+        mean_ij = np.array(mean[i, j, :], float)  # (K,)
+
+        pair_label = f"{ch_names[i]} -> {ch_names[j]}"
+        save_pc_grid(
+            outdir / f"pcs_{phase}_{i}_{j}.png",
+            U_ij,
+            eig_ij,
+            title=f"{phase} | {pair_label} | PC loadings",
+        )
+        save_mean(
+            outdir / f"mean_{phase}_{i}_{j}.png",
+            mean_ij,
+            title=f"{phase} | {pair_label} | mean vector",
+        )
+
+        phase_to_eigs[phase] = eig_ij
+
+    save_eigvals_compare(
+        outdir / f"eigvals_compare_{i}_{j}.png",
+        phase_to_eigs,
+        title=f"Eigenvalues by phase | {ch_names[i]} -> {ch_names[j]}",
+    )
+
+    print(f"[OK] Saved visualizations to: {outdir}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+--- File: .\src\mfg\basis.py ---
+import numpy as np
+
+
+def legendre_orthonormal(x: np.ndarray, m: int) -> np.ndarray:
+    """
+    Orthonormal Legendre basis on [0, 1].
+
+        f_j(x) = sqrt(2j+1) * P_j(2x - 1),   j = 0..m
+
+    where P_j is the standard Legendre polynomial on [-1, 1].
+
+    Returns F with shape (n, m+1), where F[i, j] = f_j(x[i]).
+    Input is flattened to 1D.
+    """
+    if m < 0:
+        raise ValueError(f"legendre_orthonormal: m must be >= 0, got {m}")
+
+    x = np.asarray(x, float).ravel()
+    if x.size == 0:
+        return np.empty((0, m + 1), dtype=float)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("legendre_orthonormal: input contains NaN/inf")
+
+    # Optional: enforce theory domain (usually satisfied because normalize_* clips to (0,1))
+    # if np.min(x) < 0.0 or np.max(x) > 1.0:
+    #     raise ValueError("legendre_orthonormal: x must be in [0,1]")
+
+    u = 2.0 * x - 1.0  # map [0,1] -> [-1,1]
+    n = x.size
+
+    # Compute P_0..P_m via recurrence:
+    # P_0(u)=1
+    # P_1(u)=u
+    # (k+1)P_{k+1}(u) = (2k+1)uP_k(u) - kP_{k-1}(u)
+    P = np.empty((n, m + 1), dtype=float)
+    P[:, 0] = 1.0
+    if m >= 1:
+        P[:, 1] = u
+    for k in range(1, m):
+        P[:, k + 1] = ((2.0 * k + 1.0) * u * P[:, k] - k * P[:, k - 1]) / (k + 1.0)
+
+    # Orthonormal scaling on [0,1]
+    scales = np.sqrt(2.0 * np.arange(m + 1) + 1.0)  # (m+1,)
+    F = P * scales[None, :]
+    return F
+
+
+--- File: .\src\mfg\config.py ---
+from dataclasses import dataclass, asdict
+from typing import Any
+
+
+@dataclass(frozen=True)
+class Config:
+    """Global configuration for MFG EEG analysis."""
+
+    fs: int = 500
+    maxlag_ms: int = 1000
+    lag_step_ms: int = 2
+    m: int = 10
+    subtract_marginals: bool = True
+    ar_order: int = 10
+    ema_half_life_s: float = 1.0
+    student_nu: int = 10
+    pca_var_thresh: float = 0.90
+    pca_max_r: int = 4
+
+
+def load_config(**overrides: Any) -> Config:
+    """
+    Create a Config instance, optionally overriding selected fields:
+
+        cfg = load_config(fs=128, maxlag_ms=500)
+
+    """
+    base = asdict(Config())
+    base.update(overrides)
+    return Config(**base)
+
+
+--- File: .\src\mfg\density.py ---
+"""
+Density reconstruction from HCR polynomial coefficients.
+
+We work in the Legendre-orthonormal basis on [0, 1]:
+    fy_j(y), fz_k(z),  j, k = 0..m
+
+Joint density distortion is represented by a coefficient matrix M:
+
+    contrib(y, z) = sum_{j,k} M[j,k] * fy_j(y) * fz_k(z)
+
+In practice we:
+- remove marginal contributions (j=0 or k=0),
+- either return just the contribution (distortion),
+- or return the full model: rho(y,z) ≈ 1 + contrib(y,z),
+  clipped to be non-negative and optionally renormalized.
+"""
+
+from typing import Tuple
+
+import numpy as np
+
+from .basis import legendre_orthonormal
+
+
+def coeffs_vec_to_matrix(c: np.ndarray, m: int) -> np.ndarray:
+    """
+    Reshape a flattened coefficient vector into (m+1, m+1) matrix.
+
+    Parameters
+    ----------
+    c : np.ndarray, shape (K,)
+        Flattened polynomial coefficients, usually K = (m+1)^2.
+    m : int
+        Maximum polynomial degree in each dimension.
+
+    Returns
+    -------
+    M : np.ndarray, shape (m+1, m+1)
+        Coefficient matrix with M[j, k] corresponding to fy_j * fz_k.
+    """
+    c = np.asarray(c, float).ravel()
+    expected = (m + 1) * (m + 1)
+    if c.size != expected:
+        raise ValueError(
+            f"coeffs_vec_to_matrix: expected {(m + 1)}^2={expected} elements "
+            f"for m={m}, got {c.size}"
+        )
+    return c.reshape((m + 1, m + 1))
+
+
+def _contrib_from_coeffs(
+    M: np.ndarray, m: int, grid_n: int
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute raw contribution f(y) M f(z)^T on a regular [0,1] grid.
+
+    Parameters
+    ----------
+    M : np.ndarray, shape (m+1, m+1)
+        Coefficient matrix for joint distortion.
+    m : int
+        Maximum polynomial degree in each dimension.
+    grid_n : int
+        Number of grid points per axis for y,z in [0, 1].
+
+    Returns
+    -------
+    uy : np.ndarray, shape (grid_n,)
+        Grid points for the first variable (y).
+    uz : np.ndarray, shape (grid_n,)
+        Grid points for the second variable (z).
+    contrib : np.ndarray, shape (grid_n, grid_n)
+        Distortion contribution evaluated on the grid.
+    """
+    M = np.asarray(M, float)
+    if M.shape != (m + 1, m + 1):
+        raise ValueError(
+            f"_contrib_from_coeffs: expected M shape {(m + 1, m + 1)}, got {M.shape}"
+        )
+
+    u = np.linspace(0.0, 1.0, int(grid_n), endpoint=True)
+
+    # Legendre basis on [0,1]: F(y) and F(z)
+    Fy = legendre_orthonormal(u, m)  # (grid_n, m+1)
+    Fz = legendre_orthonormal(u, m)  # (grid_n, m+1)
+
+    Ms = M.copy()
+
+    # Remove marginals: keep only j>0, k>0 (we already modeled
+    # marginals separately / subtracted them at HCR stage).
+    Ms[0, :] = 0.0
+    Ms[:, 0] = 0.0
+
+    # contrib(y,z) = Fy(y,:) @ Ms @ Fz(z,:)^T
+    contrib = Fy @ Ms @ Fz.T  # (grid_n, grid_n)
+
+    return u, u, contrib
+
+
+def reconstruct_density_contrib(
+    M: np.ndarray,
+    m: int,
+    grid_n: int = 128,
+    clip_q: float | None = None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Reconstruct only the distortion contribution on a grid.
+
+    This returns the centered contribution:
+        contrib(y,z) = sum_{j>0,k>0} M[j,k] * fy_j(y) * fz_k(z)
+
+    Parameters
+    ----------
+    M : np.ndarray, shape (m+1, m+1)
+        Coefficient matrix (full, including marginals).
+    m : int
+        Maximum polynomial degree in each dimension.
+    grid_n : int, default 128
+        Grid resolution per axis.
+    clip_q : float or None, default None
+        If not None, clip contrib to symmetric quantile of |contrib|.
+        Example: clip_q=0.99 -> clip at 99th percentile of |contrib|.
+
+    Returns
+    -------
+    uy : np.ndarray, shape (grid_n,)
+    uz : np.ndarray, shape (grid_n,)
+    contrib : np.ndarray, shape (grid_n, grid_n)
+        Distortion contribution (can be positive or negative).
+    """
+    uy, uz, contrib = _contrib_from_coeffs(M, m, grid_n)
+
+    if clip_q is not None:
+        clip_q = float(clip_q)
+        if not (0.0 < clip_q <= 1.0):
+            raise ValueError("clip_q must be in (0,1], got {clip_q}")
+        s = float(np.quantile(np.abs(contrib), clip_q))
+        if s > 0.0:
+            contrib = np.clip(contrib, -s, s)
+
+    return uy, uz, contrib
+
+
+def reconstruct_density_model(
+    M: np.ndarray,
+    m: int,
+    grid_n: int = 128,
+    renormalize: bool = True,
+    clip_q: float | None = None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Reconstruct full modeled joint density on a grid.
+
+    We approximate:
+        rho(y,z) ≈ 1 + contrib(y,z),
+    where contrib comes from the HCR coefficients with marginal
+    terms removed (j>0, k>0). We enforce non-negativity and
+    optionally renormalize and clip.
+
+    Parameters
+    ----------
+    M : np.ndarray, shape (m+1, m+1)
+        Coefficient matrix (full, including marginals).
+    m : int
+        Maximum polynomial degree in each dimension.
+    grid_n : int, default 128
+        Grid resolution per axis.
+    renormalize : bool, default True
+        If True, divide rho by its mean so that average density ≈ 1
+        on the uniform grid (approx. proper normalization).
+    clip_q : float or None, default None
+        If not None, clip rho to [q_lo, q_hi] where:
+            q_lo = quantile(rho, 1-clip_q),
+            q_hi = quantile(rho, clip_q).
+        Example: clip_q=0.99 -> keep central 98% mass.
+
+    Returns
+    -------
+    uy : np.ndarray, shape (grid_n,)
+    uz : np.ndarray, shape (grid_n,)
+    rho : np.ndarray, shape (grid_n, grid_n)
+        Reconstructed density, rho >= 0.
+    """
+    uy, uz, contrib = _contrib_from_coeffs(M, m, grid_n)
+
+    # Base uniform density 1 + distortion
+    rho = 1.0 + contrib
+    rho = np.maximum(rho, 0.0)
+
+    if renormalize:
+        mean_val = float(rho.mean() or 1.0)
+        rho = rho / mean_val
+
+    if clip_q is not None:
+        clip_q = float(clip_q)
+        if not (0.0 < clip_q <= 1.0):
+            raise ValueError(f"clip_q must be in (0,1], got {clip_q}")
+        q_lo = float(np.quantile(rho, 1.0 - clip_q))
+        q_hi = float(np.quantile(rho, clip_q))
+        rho = np.clip(rho, q_lo, q_hi)
+
+    return uy, uz, rho
+
+
+--- File: .\src\mfg\diagnostics.py ---
+"""
+Diagnostic helpers for lag-based analysis (e.g. Pearson correlation over lags).
+"""
+
+import numpy as np
+
+
+def pearson_over_lags(
+    y: np.ndarray,
+    z: np.ndarray,
+    fs: int,
+    maxlag_ms: int,
+    step_ms: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Compute Pearson correlation between y(t) and z(t + lag) for non-negative lags.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape (T,)
+        First time series (reason).
+    z : np.ndarray, shape (T,)
+        Second time series (result). Must have the same length as y.
+    fs : int
+        Sampling frequency in Hz.
+    maxlag_ms : int
+        Maximum lag in milliseconds to consider (non-negative).
+    step_ms : int
+        Step in milliseconds between consecutive lags.
+
+    Returns
+    -------
+    corr : np.ndarray, shape (L,)
+        Pearson correlation values for each valid lag (L >= 0).
+        corr[i] corresponds to lag_samples[i] samples.
+    lag_samples : np.ndarray, shape (L,)
+        Lags in samples (integer), non-negative and strictly increasing.
+
+    Notes
+    -----
+    For each lag L >= 0 we compute correlation between y[:n-L] and z[L:].
+    The loop stops once the effective number of pairs n-L becomes <= 1.
+    """
+    y = np.asarray(y, float)
+    z = np.asarray(z, float)
+    if y.shape != z.shape:
+        raise ValueError(
+            f"y and z must have the same shape, got {y.shape} and {z.shape}"
+        )
+
+    n = len(y)
+
+    # Candidate lags in samples, starting from 0 ms
+    step_samples = max(1, int(round(step_ms * fs / 1000.0)))
+    maxlag_samples = int(round(maxlag_ms * fs / 1000.0))
+    lag_samples_full = np.arange(0, maxlag_samples + 1, step_samples, dtype=int)
+
+    corr_list = []
+    lags_list = []
+
+    for L in lag_samples_full:
+        n_eff = n - L
+        if n_eff <= 1:
+            # Not enough samples left to estimate correlation
+            break
+
+        a = y[:n_eff]
+        b = z[L:]
+
+        # Standardize each segment to zero mean and unit variance
+        a = (a - a.mean()) / (a.std() + 1e-12)
+        b = (b - b.mean()) / (b.std() + 1e-12)
+
+        corr_list.append(float((a * b).mean()))
+        lags_list.append(int(L))
+
+    corr = np.asarray(corr_list, dtype=float)
+    lag_samples = np.asarray(lags_list, dtype=int)
+
+    return corr, lag_samples
+
+
+--- File: .\src\mfg\global_basis.py ---
+"""
+Global PCA basis for comparing phases/windows for a fixed electrode pair.
+
+We build PCA on many coefficient-vectors (e.g. HCR mixed-only vectors over lags
+collected across multiple phase windows). This produces ONE basis that can be
+used to project per-phase mean coefficient trajectories, making PC curves
+comparable across phases.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import numpy as np
+
+
+@dataclass(frozen=True)
+class PCABasis:
+    mean: np.ndarray  # (K,)
+    V: np.ndarray  # (K, K) columns = eigenvectors
+    eigvals: np.ndarray  # (K,)
+    lag_samples: np.ndarray  # (L,)
+
+    fs: int
+    maxlag_ms: int
+    lag_step_ms: int
+    m: int
+    mixed_only: bool
+
+    chan_a: str
+    chan_b: str
+    mode: str
+    epoch_len_s: float
+
+
+def pca_from_second_moments(
+    sum_x: np.ndarray, sum_xxT: np.ndarray, n: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute PCA from accumulated moments over samples x (shape (K,)).
+
+    Inputs:
+      sum_x   = Σ x
+      sum_xxT = Σ x x^T
+      n       = number of samples
+
+    Returns:
+      mean (K,), V (K,K), eigvals (K,)
+    """
+    sum_x = np.asarray(sum_x, float).ravel()
+    sum_xxT = np.asarray(sum_xxT, float)
+
+    K = sum_x.shape[0]
+    if sum_xxT.shape != (K, K):
+        raise ValueError(f"sum_xxT must be (K,K) with K={K}, got {sum_xxT.shape}")
+    if n <= 0:
+        raise ValueError("n must be positive")
+
+    mean = sum_x / float(n)
+
+    if n == 1:
+        V = np.eye(K, dtype=float)
+        eigvals = np.zeros(K, dtype=float)
+        return mean, V, eigvals
+
+    # Cov = (Σ xx^T - n μ μ^T) / (n-1)
+    C = (sum_xxT - float(n) * np.outer(mean, mean)) / float(n - 1)
+    C = 0.5 * (C + C.T)  # enforce symmetry
+
+    eigvals, V = np.linalg.eigh(C)
+    idx = np.argsort(eigvals)[::-1]
+    eigvals = eigvals[idx]
+    V = V[:, idx]
+    return mean, V, eigvals
+
+
+def project_coeffs(coeffs: np.ndarray, basis: PCABasis, r: int) -> np.ndarray:
+    """
+    Project coefficient trajectory coeffs (K,L) onto basis -> (r,L).
+    """
+    coeffs = np.asarray(coeffs, float)
+    X = coeffs - basis.mean[:, None]
+    A = basis.V.T @ X
+    return A[: int(r)]
+
+
+--- File: .\src\mfg\granger.py ---
+import numpy as np
+
+
+def gc_scalar(scores: np.ndarray) -> np.ndarray:
+    """
+    Compute Granger-like scalar GC(lag) from PCA features.
+
+    Parameters
+    ----------
+    scores : np.ndarray, shape (r, T)
+        PCA feature time series a_v(lag) for v = 1..r.
+
+    Returns
+    -------
+    gc : np.ndarray, shape (T,)
+        GC(lag) = sqrt( sum_v a_v(lag)^2 ).
+    """
+    scores = np.asarray(scores, float)
+    if scores.ndim != 2:
+        raise ValueError("scores must be 2D array of shape (r, T)")
+    return np.sqrt((scores**2).sum(axis=0))
+
+
+--- File: .\src\mfg\hcr.py ---
+# src/mfg/hcr.py
+"""
+Hierarchical Correlation Reconstruction (HCR) over non-negative time lags.
+
+Given two normalized time series y(t), z(t) with values in (0,1), we compute
+polynomial cross-moments using an orthonormal Legendre basis on [0,1].
+
+For each lag L >= 0 (in samples):
+    M_jk(L) = E[ f_j(y_t) * f_k(z_{t+L}) ],  j,k = 0..m
+
+Optionally we subtract the product of marginals:
+    M <- M - E[f_j(y)] * E[f_k(z)]
+
+If mixed_only=True, we keep only degrees 1..m in both dimensions (drop degree-0),
+so the feature vector length becomes K = m*m (e.g. m=4 -> K=16).
+Otherwise K = (m+1)^2.
+"""
+
+from __future__ import annotations
+
+from typing import Tuple
+
+import numpy as np
+
+from .basis import legendre_orthonormal
+
+
+def hcr_coeffs_over_lags(
+    y: np.ndarray,
+    z: np.ndarray,
+    fs: int,
+    maxlag_ms: int,
+    lag_step_ms: int,
+    m: int,
+    subtract_marginals: bool = True,
+    mixed_only: bool = False,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute polynomial cross-correlation coefficients for all non-negative lags.
+
+    Parameters
+    ----------
+    y, z : np.ndarray, shape (T,)
+        Normalized time series in (0,1). Must have equal shape.
+    fs : int
+        Sampling frequency in Hz.
+    maxlag_ms : int
+        Max lag in milliseconds (>= 0).
+    lag_step_ms : int
+        Lag step in milliseconds (> 0).
+    m : int
+        Max polynomial degree (>= 0). Basis uses degrees 0..m.
+    subtract_marginals : bool
+        If True, subtract outer product of basis means to focus on dependence.
+    mixed_only : bool
+        If True, keep only degrees 1..m in both dimensions (K = m*m).
+        If False, keep full (m+1)^2 coefficients.
+
+    Returns
+    -------
+    coeffs : np.ndarray, shape (K, n_lags)
+        Stacked flattened coefficient vectors over lags.
+        Column i corresponds to lag lag_samples[i].
+    lag_samples : np.ndarray, shape (n_lags,)
+        Non-negative lags in samples.
+
+    Notes
+    -----
+    For lag L we only use pairs (y[t], z[t+L]) for t=0..(n-L-1),
+    hence the effective sample size decreases with L.
+    """
+    y = np.asarray(y, float)
+    z = np.asarray(z, float)
+
+    if y.shape != z.shape:
+        raise ValueError(
+            f"y and z must have the same shape, got {y.shape} and {z.shape}"
+        )
+    if y.ndim != 1:
+        raise ValueError(f"y and z must be 1D arrays, got y.ndim={y.ndim}")
+    if not np.all(np.isfinite(y)) or not np.all(np.isfinite(z)):
+        raise ValueError("y/z contain NaN or inf")
+    if fs <= 0:
+        raise ValueError(f"fs must be > 0, got {fs}")
+    if maxlag_ms < 0:
+        raise ValueError(f"maxlag_ms must be >= 0, got {maxlag_ms}")
+    if lag_step_ms <= 0:
+        raise ValueError(f"lag_step_ms must be > 0, got {lag_step_ms}")
+    if m < 0:
+        raise ValueError(f"m must be >= 0, got {m}")
+
+    n = int(y.size)
+
+    # Lag grid in samples
+    step_samples = int(round(lag_step_ms * fs / 1000.0))
+    step_samples = max(1, step_samples)  # safety (still keep step >= 1 sample)
+    maxlag_samples = int(round(maxlag_ms * fs / 1000.0))
+    lag_samples_full = np.arange(0, maxlag_samples + 1, step_samples, dtype=int)
+
+    # Basis features: (n, m+1)
+    Fy = legendre_orthonormal(y, m)
+    Gz = legendre_orthonormal(z, m)
+
+    # Feature dimensionality
+    K = (m * m) if mixed_only else ((m + 1) * (m + 1))
+    coeffs_list: list[np.ndarray] = []
+    lags_list: list[int] = []
+
+    for L in lag_samples_full:
+        n_eff = n - int(L)
+        if n_eff <= 1:
+            break
+
+        FyL = Fy[:n_eff]  # (n_eff, m+1)
+        GzL = Gz[L:]  # (n_eff, m+1)
+
+        # Cross-moments matrix: (m+1, m+1)
+        M = (FyL.T @ GzL) / float(n_eff)
+
+        if subtract_marginals:
+            my = FyL.mean(axis=0, keepdims=True)  # (1, m+1)
+            mz = GzL.mean(axis=0, keepdims=True)  # (1, m+1)
+            M = M - (my.T @ mz)
+
+        if mixed_only:
+            # degrees 1..m only -> (m, m) -> length m*m
+            coeffs_list.append(M[1:, 1:].reshape(-1))
+        else:
+            coeffs_list.append(M.reshape(-1))
+
+        lags_list.append(int(L))
+
+    if coeffs_list:
+        coeffs = np.stack(coeffs_list, axis=1)  # (K, n_lags)
+    else:
+        coeffs = np.zeros((K, 0), dtype=float)
+
+    lag_samples = np.asarray(lags_list, dtype=int)
+    return coeffs, lag_samples
+
+
+# Backwards-compatible alias used earlier by CLI code
+compute_hcr_lags = hcr_coeffs_over_lags
+
+
+--- File: .\src\mfg\io.py ---
+"""
+I/O utilities for EEG data used in multi-feature Granger-like analysis.
+
+This module focuses on Kaggle Grasp-and-Lift EEG:
+- data+events alignment by 'id'
+- robust reconstruction of grasp cycles from Kaggle event windows
+- fixed-length phase window bounds + slicing helpers
+- simple CSV loader + NPZ saver
+"""
+
+from __future__ import annotations
+
+from typing import List, Optional, Sequence, Tuple, Dict
+
+import numpy as np
+import pandas as pd
+
+
+# =============================================================================
+# Basic CSV loader
+# =============================================================================
+
+
+def load_eeg_csv(
+    path: str, channels: List[str] | None = None
+) -> tuple[np.ndarray, list[str]]:
+    """
+    Load an EEG CSV file with channel columns.
+
+    If channels is None -> loads all numeric columns.
+    If channels is provided -> loads selected columns in given order.
+    """
+    df = pd.read_csv(path)
+
+    if channels is None:
+        candidates = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+        X = df[candidates].to_numpy(dtype=float)
+        return X, candidates
+
+    X = df[channels].to_numpy(dtype=float)
+    return X, channels
+
+
+def save_npz(path: str, **arrays) -> None:
+    """Save multiple arrays to a compressed .npz file."""
+    np.savez_compressed(path, **arrays)
+
+
+# =============================================================================
+# Kaggle Grasp-and-Lift helpers (data + events)
+# =============================================================================
+
+KAGGLE_EVENT_COLS = [
+    "HandStart",
+    "FirstDigitTouch",
+    "BothStartLoadPhase",
+    "LiftOff",
+    "Replace",
+    "BothReleased",
+]
+
+KAGGLE_PHASES: list[tuple[str, str]] = [
+    ("HandStart", "FirstDigitTouch"),
+    ("FirstDigitTouch", "BothStartLoadPhase"),
+    ("BothStartLoadPhase", "LiftOff"),
+    ("LiftOff", "Replace"),
+    ("Replace", "BothReleased"),
+]
+
+
+def load_kaggle_data_with_events(
+    data_csv_path: str,
+    events_csv_path: str,
+    channels: Optional[Sequence[str]] = None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, list[str], list[str]]:
+    """
+    Load Kaggle EEG series (data + events) aligned by 'id'.
+
+    Returns
+    -------
+    ids : (T,)
+    X : (T, C) float
+    E : (T, 6) int8  in order KAGGLE_EVENT_COLS
+    channel_names : list[str]
+    event_names : list[str]
+    """
+    if channels is None:
+        df_data = pd.read_csv(data_csv_path)
+        if "id" not in df_data.columns:
+            raise ValueError(f"Expected 'id' column in {data_csv_path!r}")
+        channel_names = [
+            c
+            for c in df_data.columns
+            if c != "id" and pd.api.types.is_numeric_dtype(df_data[c])
+        ]
+    else:
+        channel_names = list(channels)
+        usecols = ["id"] + channel_names
+        df_data = pd.read_csv(data_csv_path, usecols=usecols)
+
+    usecols_e = ["id"] + KAGGLE_EVENT_COLS
+    df_ev = pd.read_csv(events_csv_path, usecols=usecols_e)
+
+    if "id" not in df_data.columns or "id" not in df_ev.columns:
+        raise ValueError("Both files must contain 'id' column.")
+
+    # Align by id (events can be safely reindexed to data ids)
+    df_data = df_data.set_index("id")
+    df_ev = df_ev.set_index("id").reindex(df_data.index)
+
+    if df_ev.isnull().any().any():
+        missing = df_ev[df_ev.isnull().any(axis=1)].index[:5].tolist()
+        raise ValueError(
+            "Events could not be aligned to data by id. "
+            f"Example missing ids: {missing}"
+        )
+
+    ids = df_data.index.to_numpy()
+    X = df_data[channel_names].to_numpy(dtype=float)
+    E = df_ev[KAGGLE_EVENT_COLS].to_numpy(dtype=np.int8)
+
+    return ids, X, E, channel_names, list(KAGGLE_EVENT_COLS)
+
+
+def _blocks_to_centers(mask_01: np.ndarray) -> np.ndarray:
+    """
+    Kaggle labels are 1 within a time window around the event => contiguous blocks of 1s.
+    Convert each block into a single timestamp: the block center index.
+    """
+    mask = np.asarray(mask_01, dtype=np.int8) == 1
+    if mask.size == 0:
+        return np.array([], dtype=np.int64)
+
+    # Rising/falling edges of the boolean mask
+    edges = np.diff(mask.astype(np.int8), prepend=0, append=0)
+    starts = np.where(edges == 1)[0]
+    ends = np.where(edges == -1)[0] - 1  # inclusive end
+
+    centers = ((starts + ends) // 2).astype(np.int64)
+    return centers
+
+
+def _event_centers_from_E(E: np.ndarray) -> Dict[str, np.ndarray]:
+    """Return centers per event column as sorted int arrays."""
+    if E.ndim != 2 or E.shape[1] != len(KAGGLE_EVENT_COLS):
+        raise ValueError("E must be (T, 6) in KAGGLE_EVENT_COLS order.")
+    out: Dict[str, np.ndarray] = {}
+    for i, name in enumerate(KAGGLE_EVENT_COLS):
+        out[name] = _blocks_to_centers(E[:, i])
+    return out
+
+
+def extract_grasp_cycles(
+    E: np.ndarray,
+    fs: int,
+    max_cycle_s: float = 5.0,
+) -> list[dict[str, int]]:
+    """
+    Reconstruct grasp cycles from Kaggle frame-wise event windows.
+
+    Key design:
+    - Use *centers of 1-blocks* (neutral timestamp inside Kaggle ±150ms window).
+    - Anchor each cycle at HandStart center.
+    - Hard boundary: next HandStart center defines the end of current cycle search.
+    - Also enforce max_cycle_s to reject weird long matches.
+
+    Returns list of dicts: {event_name: frame_index}
+    """
+    centers = _event_centers_from_E(E)
+    hs = centers["HandStart"]
+    if hs.size == 0:
+        return []
+
+    max_gap = int(round(max_cycle_s * fs))
+    T = int(E.shape[0])
+
+    cycles: list[dict[str, int]] = []
+
+    for k, hs_t in enumerate(hs):
+        hs_t = int(hs_t)
+        next_hs = int(hs[k + 1]) if (k + 1) < hs.size else T
+
+        times: dict[str, int] = {"HandStart": hs_t}
+        cur = hs_t
+
+        ok = True
+        for name in KAGGLE_EVENT_COLS[1:]:
+            arr = centers[name]
+            j = int(np.searchsorted(arr, cur + 1))
+            if j >= arr.size:
+                ok = False
+                break
+
+            t = int(arr[j])
+            # Must belong to this cycle (before next HandStart)
+            if t >= next_hs:
+                ok = False
+                break
+
+            times[name] = t
+            cur = t
+
+        if not ok:
+            continue
+
+        # Optional duration sanity
+        if (times["BothReleased"] - times["HandStart"]) > max_gap:
+            continue
+
+        cycles.append(times)
+
+    return cycles
+
+
+def phase_window_bounds(
+    T: int,
+    t_start: int,
+    t_end: int,
+    fs: int,
+    epoch_len_s: float,
+) -> tuple[int, int] | None:
+    """
+    Return (a,b) bounds of a fixed-length window centered in [t_start, t_end).
+
+    Guarantees b-a == round(epoch_len_s * fs).
+    Returns None if window would go outside [0, T).
+    """
+    if t_end <= t_start:
+        return None
+
+    L = int(round(float(epoch_len_s) * float(fs)))
+    if L <= 0:
+        return None
+
+    center = (int(t_start) + int(t_end)) // 2
+    a = int(center - (L // 2))
+    b = int(a + L)
+
+    if a < 0 or b > int(T):
+        return None
+
+    return a, b
+
+
+def slice_phase_window(
+    X: np.ndarray,
+    t_start: int,
+    t_end: int,
+    fs: int,
+    epoch_len_s: float = 2.0,
+    *,
+    align: str = "center",  # "center" | "start" | "end"
+    clip_to_phase: bool = False,
+) -> np.ndarray:
+    """
+    Extract a window for a phase. By default returns a fixed-length window.
+
+    align="center": window centered in [t_start, t_end)
+    align="start" : window starts at t_start
+    align="end"   : window ends at t_end
+
+    If clip_to_phase=True, the window is forced to stay within [t_start, t_end).
+    WARNING: this may shorten the window and should NOT be used for PCA/basis comparability.
+    """
+    T = int(X.shape[0])
+    C = int(X.shape[1])
+    if t_end <= t_start:
+        return np.empty((0, C), dtype=float)
+
+    L = int(round(float(epoch_len_s) * float(fs)))
+    if L <= 0:
+        return np.empty((0, C), dtype=float)
+
+    align = str(align).lower().strip()
+    if align not in ("center", "start", "end"):
+        raise ValueError(f"slice_phase_window: invalid align={align!r}")
+
+    if align == "center":
+        center = (int(t_start) + int(t_end)) // 2
+        a = int(center - (L // 2))
+        b = int(a + L)
+    elif align == "start":
+        a = int(t_start)
+        b = int(a + L)
+    else:  # "end"
+        b = int(t_end)
+        a = int(b - L)
+
+    if clip_to_phase:
+        a = max(a, int(t_start))
+        b = min(b, int(t_end))
+
+    # Clip to signal bounds
+    a = max(a, 0)
+    b = min(b, T)
+
+    if b <= a:
+        return np.empty((0, C), dtype=float)
+
+    return np.asarray(X[a:b], float)
+
+
+--- File: .\src\mfg\normalize.py ---
+"""
+Normalization utilities for EEG time series.
+
+Provides:
+- normalize_gauss: Gaussian CDF mapping to (0,1)
+- normalize_edf: empirical CDF (rank) mapping to (0,1)
+- pnorm_student: AR(p) residual -> EMA variance -> Student-t CDF mapping to (0,1)
+
+IMPORTANT:
+We clip outputs away from exact 0 and 1 to avoid numerical issues in
+Legendre basis evaluation.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+from scipy.stats import norm, t, rankdata
+from statsmodels.tsa.tsatools import lagmat
+
+
+def _clip01(u: np.ndarray, eps: float = 1e-6) -> np.ndarray:
+    return np.clip(np.asarray(u, float), eps, 1.0 - eps)
+
+
+def normalize_gauss(x: np.ndarray) -> np.ndarray:
+    """
+    x -> z-score -> Gaussian CDF -> (0,1)
+    """
+    x = np.asarray(x, float)
+    if x.ndim != 1:
+        raise ValueError(f"normalize_gauss expects 1D input, got shape {x.shape}")
+
+    if not np.all(np.isfinite(x)):
+        raise ValueError("normalize_gauss: input contains NaN/inf")
+
+    mu = float(np.mean(x))
+    sd = float(np.std(x))
+    if sd <= 1e-12:
+        return np.full_like(x, 0.5, dtype=float)
+
+    z = (x - mu) / (sd + 1e-12)
+    return _clip01(norm.cdf(z))
+
+
+def normalize_edf(x: np.ndarray) -> np.ndarray:
+    """
+    x -> ranks -> (0,1) via empirical CDF.
+    Uses average ranks for ties to avoid time-order artifacts.
+    """
+    x = np.asarray(x, float)
+    if x.ndim != 1:
+        raise ValueError(f"normalize_edf expects 1D input, got shape {x.shape}")
+
+    if not np.all(np.isfinite(x)):
+        raise ValueError("normalize_edf: input contains NaN/inf")
+
+    # ranks in {1..n}, average ranks for ties
+    ranks = rankdata(x, method="average")
+    u = ranks / (len(x) + 1.0)
+    return _clip01(u)
+
+
+def pnorm_student(
+    x: np.ndarray,
+    fs: int,
+    ar_order: int = 10,
+    ema_half_life_s: float = 1.0,
+    student_nu: int = 10,
+) -> np.ndarray:
+    """
+    AR(p) one-step prediction -> residuals -> EMA variance -> Student-t CDF -> (0,1).
+
+    Notes:
+    - First ar_order samples are set to 0.5 (no AR prediction possible).
+    - EMA variance uses past residual energy (res[i-1]^2) to avoid look-ahead.
+    """
+    x = np.asarray(x, float)
+
+    if x.ndim != 1:
+        raise ValueError(f"pnorm_student expects 1D input, got shape {x.shape}")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("pnorm_student: input contains NaN/inf")
+    if fs <= 0:
+        raise ValueError(f"pnorm_student: fs must be positive, got {fs}")
+    if ar_order < 1:
+        return _clip01(normalize_edf(x))
+
+    if len(x) <= ar_order:
+        return np.full_like(x, 0.5, dtype=float)
+
+    X = lagmat(x, maxlag=ar_order, trim="both")  # (T-p, p)
+    y = x[ar_order:]  # (T-p,)
+
+    X_design = np.c_[np.ones(len(X)), X]  # (T-p, p+1)
+
+    beta, _, _, _ = np.linalg.lstsq(X_design, y, rcond=None)
+    y_hat = X_design @ beta
+    res = y - y_hat
+
+    half_life = max(float(ema_half_life_s), 1e-6)
+    alpha = 1.0 - np.exp(-np.log(2.0) / (half_life * float(fs)))
+
+    s2 = np.empty_like(res)
+    v0 = float(np.var(res))
+    s2[0] = v0 if v0 > 0 else 1.0
+
+    for i in range(1, len(res)):
+        s2[i] = (1.0 - alpha) * s2[i - 1] + alpha * (res[i - 1] ** 2)
+
+    s = np.sqrt(s2) + 1e-9
+    u_tail = t.cdf(res / s, df=int(student_nu))
+
+    u = np.r_[np.full(ar_order, 0.5), u_tail]
+    return _clip01(u)
+
+
+--- File: .\src\mfg\pca_features.py ---
+"""
+PCA over HCR coefficient trajectories across lags.
+
+Given HCR coefficients over lags:
+    coeffs[k, t],  k = 0..K-1, t = 0..T-1
+
+we perform PCA in the K-dimensional coefficient space, using lags t
+as "samples". This yields:
+
+- eigenvectors V[:, i] describing orthogonal directions in coefficient space,
+- scores A[i, t] = projection of coeffs at lag t onto component i,
+- eigenvalues eigvals[i] = variance explained by component i.
+"""
+
+from typing import Tuple
+
+import numpy as np
+
+
+def pca_over_lags(coeffs: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Perform PCA on coefficient trajectories over lags.
+
+    Parameters
+    ----------
+    coeffs : np.ndarray, shape (K, T)
+        HCR coefficients over lags:
+            K = (m + 1)^2  (flattened polynomial coefficients),
+            T = number of lags.
+        Each column corresponds to one lag, each row to one coefficient.
+
+    Returns
+    -------
+    V : np.ndarray, shape (K, K)
+        Eigenvectors in coefficient space. Column i is the i-th principal
+        component direction.
+    A : np.ndarray, shape (K, T)
+        Scores over lags: A = V.T @ X, where
+            X = coeffs - mean(coeffs, axis=1, keepdims=True)
+        Row i contains the time course (over lags) of component i.
+    eigvals : np.ndarray, shape (K,)
+        Eigenvalues (variances) for each component, sorted descending.
+
+    Notes
+    -----
+    - This is standard covariance-based PCA:
+          C = X X^T / (T - 1),
+      with eigen-decomposition C v_i = eigvals[i] v_i.
+    """
+    coeffs = np.asarray(coeffs, float)
+
+    if coeffs.ndim != 2:
+        raise ValueError(
+            f"pca_over_lags expects a 2D array (K, T), got shape {coeffs.shape}"
+        )
+
+    K, T = coeffs.shape
+    if T < 1:
+        # Degenerate case: no lags
+        V = np.eye(K, dtype=float)
+        A = np.zeros((K, 0), dtype=float)
+        eigvals = np.zeros(K, dtype=float)
+        return V, A, eigvals
+
+    # Center across lags: remove mean per coefficient (row-wise)
+    X = coeffs - coeffs.mean(axis=1, keepdims=True)
+
+    if T == 1:
+        # With a single sample, covariance degenerates: all variance is zero.
+        C = np.zeros((K, K), dtype=float)
+    else:
+        C = X @ X.T / float(T - 1)
+
+    # Symmetric covariance -> eigh
+    eigvals, V = np.linalg.eigh(C)
+
+    # Sort eigenvalues and eigenvectors in descending order
+    idx = np.argsort(eigvals)[::-1]
+    eigvals = eigvals[idx]
+    V = V[:, idx]
+
+    # Scores: projection of centered data on eigenvectors
+    A = V.T @ X  # shape (K, T)
+
+    return V, A, eigvals
+
+
+def select_r(eigvals: np.ndarray, var_thresh: float = 0.9, max_r: int = 6) -> int:
+    """
+    Select the number of principal components to keep.
+
+    The rule is:
+      - compute cumulative explained variance,
+      - take the smallest r such that cumulative variance >= var_thresh,
+      - cap r by max_r.
+
+    Parameters
+    ----------
+    eigvals : np.ndarray, shape (K,)
+        Eigenvalues from PCA, sorted in descending order.
+    var_thresh : float, default 0.9
+        Target fraction of explained variance (between 0 and 1).
+    max_r : int, default 6
+        Hard upper bound on the number of components.
+
+    Returns
+    -------
+    r : int
+        Number of components to use (1 <= r <= min(K, max_r)).
+
+    Notes
+    -----
+    - If all eigenvalues are zero or negative (numerical edge case),
+      we fall back to r = min(K, max_r).
+    """
+    eigvals = np.asarray(eigvals, float)
+
+    if eigvals.ndim != 1:
+        raise ValueError(
+            f"select_r expects a 1D array of eigenvalues, got shape {eigvals.shape}"
+        )
+
+    K = eigvals.size
+    if K == 0:
+        return 0
+
+    total = float(eigvals.sum())
+    if total <= 0.0:
+        # No meaningful variance; all components are equivalent.
+        return min(max_r, K)
+
+    cvar = np.cumsum(eigvals) / total
+    # np.searchsorted returns index where var_thresh would be inserted
+    # to keep order -> first index with cvar >= var_thresh
+    idx = int(np.searchsorted(cvar, float(var_thresh)))
+    r = idx + 1  # components are 1-based in this sense
+
+    r = max(1, min(r, max_r, K))
+    return r
+
+
+--- File: .\src\mfg\viz.py ---
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def plot_features(
+    ms: np.ndarray, scores: np.ndarray, gc: np.ndarray, title: str, outpath: str
+) -> None:
+    """
+    Plot PC features and GC as functions of lag in milliseconds.
+
+    Parameters
+    ----------
+    ms : array_like, shape (T,)
+        Lag values in milliseconds.
+    scores : array_like, shape (r, T)
+        Feature curves (e.g. PCA projections) for r components.
+    gc : array_like, shape (T,)
+        Granger-like scalar curve evaluated on the same lag grid.
+    title : str
+        Plot title.
+    outpath : str
+        Path to the output PNG file.
+    """
+    ms = np.asarray(ms, float)
+    scores = np.asarray(scores, float)
+    gc = np.asarray(gc, float)
+
+    if scores.ndim == 1:
+        scores = scores[None, :]
+    r, T = scores.shape
+    assert ms.shape[0] == T, "plot_features: ms and scores must match in length"
+    assert gc.shape[0] == T, "plot_features: gc and scores must match in length"
+
+    plt.figure(figsize=(10, 4))
+    for i in range(r):
+        plt.plot(ms, scores[i], label=f"PC{i+1}", linewidth=1.0)
+    plt.plot(ms, gc, label="GC(lag)", linewidth=2.0, color="k")
+
+    plt.axvline(0.0, color="k", lw=0.5)
+    plt.axhline(0.0, color="k", lw=0.5)
+    plt.xlabel("lag [ms]")
+    plt.ylabel("projection / GC")
+    plt.title(title)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(outpath, dpi=160)
+    plt.close()
+
+
+def plot_gc_matrix(
+    gc_mat: np.ndarray,
+    ch_names: list[str],
+    title: str,
+    outpath: str,
+    *,
+    vmin: float | None = None,
+    vmax: float | None = None,
+    cmap: str = "viridis",
+) -> None:
+    gc_mat = np.asarray(gc_mat, float)
+    n = gc_mat.shape[0]
+    assert gc_mat.shape == (n, n), "plot_gc_matrix: gc_mat must be square"
+    assert len(ch_names) == n, "plot_gc_matrix: ch_names length must match gc_mat"
+
+    plt.figure(figsize=(7, 6))
+    im = plt.imshow(
+        gc_mat,
+        origin="lower",
+        interpolation="nearest",
+        vmin=vmin,
+        vmax=vmax,
+        cmap=cmap,
+    )
+    cbar = plt.colorbar(im)
+    cbar.set_label("GC summary")
+
+    plt.xticks(range(n), ch_names, rotation=90, fontsize=8)
+    plt.yticks(range(n), ch_names, fontsize=8)
+    plt.title(title)
+    plt.tight_layout()
+    plt.savefig(outpath, dpi=160)
+    plt.close()
+
+
+def plot_pc_features(
+    lags,
+    scores: np.ndarray,
+    title: str,
+    outpath: str | None = None,
+    gc: np.ndarray | None = None,
+    lags_in_ms: bool = True,
+    normalize_each: bool = True,
+) -> None:
+    """
+    Plot PC features vs lag, with optional GC overlay.
+
+    Parameters
+    ----------
+    lags : array_like, shape (T,)
+        Lag grid in milliseconds or seconds (see lags_in_ms).
+    scores : array_like, shape (r, T)
+        Feature curves (e.g. PCA components).
+    title : str
+        Plot title.
+    outpath : str or None
+        If given, save to this path. Otherwise show interactively.
+    gc : array_like, shape (T,), optional
+        Optional scalar GC curve to overlay (normalized to [0,1]).
+    lags_in_ms : bool, default True
+        If True, x-axis is interpreted as milliseconds. Otherwise as seconds.
+    normalize_each : bool, default True
+        If True, each feature is divided by its max absolute value.
+    """
+    scores = np.asarray(scores, float)
+    if scores.ndim == 1:
+        scores = scores[None, :]
+    r, T = scores.shape
+
+    x = np.asarray(lags, float)
+    assert x.shape[0] == T, "plot_pc_features: lags and scores must match in length"
+
+    xlabel = "lag [ms]" if lags_in_ms else "lag [s]"
+
+    Y = scores.copy()
+    if normalize_each:
+        for i in range(r):
+            m = float(np.max(np.abs(Y[i])) or 1.0)
+            Y[i] /= m
+
+    plt.figure(figsize=(10, 4))
+    for i in range(min(3, r)):
+        plt.plot(x, Y[i], label=f"PC{i+1}", linewidth=1.4)
+
+    if gc is not None:
+        gc = np.asarray(gc, float)
+        assert gc.shape[0] == T, "plot_pc_features: gc must match lags length"
+        gc_norm = gc / (np.max(gc) or 1.0)
+        plt.plot(x, gc_norm, "k", label="GC", linewidth=2.0)
+
+    plt.axhline(0.0, color="k", lw=0.7, alpha=0.7)
+    plt.grid(True, alpha=0.3)
+    plt.xlabel(xlabel)
+    plt.ylabel("projection / GC (norm.)")
+    plt.title(title)
+    plt.legend()
+    plt.tight_layout()
+
+    if outpath is not None:
+        plt.savefig(outpath, dpi=160)
+        plt.close()
+    else:
+        plt.show()
+
+
+def plot_granger_simple(
+    lag_samples: np.ndarray,
+    scores: np.ndarray,
+    fs: float,
+    title: str,
+    outpath: str | None = None,
+) -> None:
+    """
+    Simple PC1-PC3 vs lag >= 0, x-axis in seconds.
+
+    Parameters
+    ----------
+    lag_samples : array_like, shape (T,)
+        Lag offsets in samples (>= 0).
+    scores : array_like, shape (r, T) or (T,)
+        PCA scores over lags (A_ab or subset).
+    fs : float
+        Sampling frequency in Hz (used to convert samples to seconds).
+    title : str
+        Plot title.
+    outpath : str or None
+        If given, save to this path. Otherwise show interactively.
+    """
+    scores = np.asarray(scores, float)
+    if scores.ndim == 1:
+        scores = scores[None, :]
+    r, T = scores.shape
+
+    x = np.asarray(lag_samples, float) / float(fs)
+    assert x.shape[0] == T, "plot_granger_simple: lag_samples and scores must match"
+
+    plt.figure(figsize=(10, 4))
+    for i in range(min(3, r)):
+        plt.plot(x, scores[i], label=f"PC{i+1}", linewidth=1.4)
+
+    plt.xlabel("lag [s]")
+    plt.ylabel("projection")
+    plt.title(title)
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+
+    if outpath is not None:
+        plt.savefig(outpath, dpi=160)
+        plt.close()
+    else:
+        plt.show()
+
+
+def plot_granger_dicc(
+    t: np.ndarray,
+    scores: np.ndarray,
+    title: str,
+    outpath: str | None = None,
+    ylim: tuple[float, float] | None = None,
+    xlabel: str = "lag [s]",
+) -> None:
+    """
+    Granger-like curves for the first three PCA features (DICC-style).
+
+    Parameters
+    ----------
+    t : array_like, shape (T,)
+        Time / lag axis in seconds (typically lag >= 0).
+    scores : array_like, shape (r, T) or (T,)
+        Feature curves over time; first three are plotted if available.
+    title : str
+        Plot title.
+    outpath : str or None
+        If given, save to this path. Otherwise show interactively.
+    ylim : tuple(float, float) or None
+        Optional y-limits for the main axis.
+    xlabel : str, default "lag [s]"
+        Label for the x-axis (no special symbols by default).
+    """
+    scores = np.asarray(scores, float)
+    if scores.ndim == 1:
+        scores = scores[None, :]
+    r, T = scores.shape
+
+    x = np.asarray(t, float)
+    assert x.shape[0] == T, "plot_granger_dicc: time axis and scores must match"
+
+    labels = ["direct", "indirect", "common cause"]
+    colors = ["tab:blue", "tab:orange", "tab:green"]
+
+    plt.figure(figsize=(4.5, 3))
+    for i in range(min(3, r)):
+        plt.plot(x, scores[i], label=labels[i], linewidth=1.4, color=colors[i])
+
+    plt.xlabel(xlabel)
+    plt.ylabel("projection")
+    plt.title(title)
+    if ylim is not None:
+        plt.ylim(*ylim)
+    plt.axhline(0.0, color="k", lw=0.5, alpha=0.5)
+    plt.grid(True, alpha=0.25)
+    plt.tight_layout()
+
+    if outpath is not None:
+        plt.savefig(outpath, dpi=200)
+        plt.close()
+    else:
+        plt.show()
+
+

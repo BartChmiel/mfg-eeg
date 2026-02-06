@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from typing import Any
 import matplotlib
 
 matplotlib.use("Agg")
@@ -53,6 +54,22 @@ PHASES = [
 
 
 _RX = re.compile(r"subj(?P<subj>\d+)_series(?P<series>\d+)_data\.csv$", re.IGNORECASE)
+
+
+def _load_allpairs_basis(path: str) -> dict[str, Any]:
+    D = np.load(path, allow_pickle=True)
+    return {
+        "ch_names": list(D["ch_names"]),
+        "mean": D["mean"],  # (C,C,K)
+        "U": D["U"],  # (C,C,r,K)
+        "eigvals": D["eigvals"],  # (C,C,r)
+        "lags_ms": list(map(int, D["lags_ms"])),
+        "lag_samples": list(map(int, D["lag_samples"])),
+        "fs": int(D["fs"]),
+        "m": int(D["m"]),
+        "mode": str(D["mode"]),
+        "epoch_len_s": float(D["epoch_len_s"]),
+    }
 
 
 def _parse_subj_series(p: Path) -> Tuple[Optional[int], Optional[int]]:
@@ -196,6 +213,8 @@ def _run_group(
     lags_ms: List[int],
     summary: str,
     metric: str,
+    basis_allpairs: Optional[str],
+    pca_r: int,
 ) -> None:
     cfg = load_config()
     fs = int(cfg.fs)
@@ -328,6 +347,96 @@ def _run_group(
             continue
 
         coeffs_mean = coeffs_sum[pi] / n_eff_sum[pi][:, None, None, None]  # (L,C,C,K)
+        if basis_allpairs is not None:
+            B = _load_allpairs_basis(basis_allpairs)
+
+            # sanity checks
+            if B["fs"] != fs:
+                raise ValueError("Basis fs mismatch.")
+            if B["mode"] != mode:
+                raise ValueError("Basis mode mismatch.")
+            if abs(B["epoch_len_s"] - float(epoch_len_s)) > 1e-9:
+                raise ValueError("Basis epoch_len_s mismatch.")
+            if B["m"] != int(m):
+                raise ValueError("Basis m mismatch.")
+            if list(B["ch_names"]) != list(ch_names0):
+                raise ValueError("Basis channel order mismatch (ch_names).")
+
+            if list(map(int, B["lag_samples"])) != list(map(int, lag_samples)):
+                raise ValueError(
+                    f"Basis lag_samples mismatch.\n"
+                    f"  basis={list(B['lag_samples'])}\n"
+                    f"  run  ={list(lag_samples)}"
+                )
+
+            r = int(pca_r)
+            U = B["U"][:, :, :r, :]  # (C,C,r,K)
+            mu = B["mean"]  # (C,C,K)
+
+            # scores: (r, L, C, C)
+            scores = np.zeros((r, L, C, C), dtype=float)
+
+            for li in range(L):
+                Xlag = coeffs_mean[li]  # (C,C,K)
+                Xc = Xlag - mu  # (C,C,K)
+                S = np.einsum("cdrk,cdk->cdr", U, Xc)  # (C,C,r)
+                for pc in range(r):
+                    scores[pc, li] = S[:, :, pc]
+
+            # Plot as a grid r x L (recommended for paper)
+            fig, axes = plt.subplots(
+                r, L, figsize=(4.2 * L, 4.0 * r), sharex=True, sharey=True
+            )
+            if r == 1:
+                axes = np.array([axes])
+
+            for pc in range(r):
+                for li, ms in enumerate(lags_ms):
+                    ax = axes[pc, li]
+                    mat = np.array(scores[pc, li], float)
+                    np.fill_diagonal(mat, 0.0)
+                    vmax = _robust_vmax(np.abs(mat))
+                    im = ax.imshow(mat, origin="lower", vmin=-vmax, vmax=vmax)
+                    ax.set_title(f"PC{pc+1} | lag={ms} ms", fontsize=10)
+                    ax.set_xticks([])
+                    ax.set_yticks([])
+
+            title = (
+                f"{ev0}__{ev1} | group={group_name} | mode={mode} | m={m} | "
+                f"pca_r={r} | lags_ms={lags_ms} | files={n_files_used} windows={n_windows_total}"
+            )
+            fig.suptitle(title, y=0.995)
+            fig.tight_layout(rect=[0, 0, 1, 0.97])
+
+            out_png = group_out / (
+                f"phasegrid_{ev0}__{ev1}_{mode}_m{m}_pca_r{r}_lags{'-'.join(map(str,lags_ms))}.png"
+            )
+            fig.savefig(out_png, dpi=220)
+            plt.close(fig)
+            print("Saved:", str(out_png))
+
+            # Optional: top edges per (pc, lag)
+            for pc in range(r):
+                for li, ms in enumerate(lags_ms):
+                    mat = np.array(scores[pc, li], float)
+                    np.fill_diagonal(mat, 0.0)
+                    out_txt = group_out / (
+                        f"phase_top_edges_{ev0}__{ev1}_{mode}_m{m}_pc{pc+1}_lag{ms}ms.txt"
+                    )
+                    with open(out_txt, "w", encoding="utf-8") as f:
+                        f.write(f"phase={ev0}__{ev1}\n")
+                        f.write(f"group={group_name}\n")
+                        f.write(f"mode={mode} m={m} pca_r={r} pc={pc+1} lag_ms={ms}\n")
+                        f.write(f"epoch_len_s={epoch_len_s} fs={fs}\n")
+                        f.write(
+                            f"files={n_files_used} cycles_total={n_cycles_total} windows_total={n_windows_total}\n"
+                        )
+                        f.write(f"config={asdict(cfg)}\n\n")
+                    _save_top_edges(str(out_txt), mat, ch_names0, topk=40)
+                    print("Saved:", str(out_txt))
+
+            continue
+
         energy_per_lag = np.sqrt(np.sum(coeffs_mean**2, axis=-1))  # (L,C,C)
 
         chi2_stat = n_eff_sum[pi][:, None, None] * np.sum(
@@ -420,6 +529,13 @@ def main() -> None:
         "--metric", choices=["energy", "chi2", "neglog10p"], default="neglog10p"
     )
 
+    ap.add_argument(
+        "--basis-allpairs",
+        default=None,
+        help="If set, run PCA-projection mode using an all-pairs basis .npz",
+    )
+
+    ap.add_argument("--pca-r", type=int, default=3)
     ap.add_argument("--subjects", type=int, nargs="*", default=None)
     ap.add_argument("--series", type=int, nargs="*", default=None)
     ap.add_argument("--max-files", type=int, default=None)
@@ -455,6 +571,8 @@ def main() -> None:
             lags_ms=list(args.lags_ms),
             summary=str(args.summary),
             metric=str(args.metric),
+            basis_allpairs=args.basis_allpairs,
+            pca_r=int(args.pca_r),
         )
         return
 
@@ -480,6 +598,8 @@ def main() -> None:
             lags_ms=list(args.lags_ms),
             summary=str(args.summary),
             metric=str(args.metric),
+            basis_allpairs=args.basis_allpairs,
+            pca_r=int(args.pca_r),
         )
 
 

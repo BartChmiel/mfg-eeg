@@ -141,6 +141,7 @@ def run_one_phase(
     fs = cfg.fs
 
     ids, X, E, ch_names, _ = load_kaggle_data_with_events(data_csv, events_csv)
+    T = X.shape[0]
     cycles = extract_grasp_cycles(E, fs=fs, max_cycle_s=max_cycle_s)
     if len(cycles) < min_cycles:
         print(f"[WARN] cycles={len(cycles)} < min_cycles={min_cycles} for {ev0}->{ev1}")

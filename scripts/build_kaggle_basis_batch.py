@@ -324,10 +324,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-# python scripts/build_kaggle_basis_batch.py `
-#   --root data/grasp-and-lift-eeg-detection/train `
-#   --chan-a Fp1 --chan-b Fp2 `
-#   --mode gc --epoch-len-s 2.0 --m 4 `
-#   --out out/basis_Fp1_Fp2_gc_e2s_m4_batch.npz
