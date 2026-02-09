@@ -119,6 +119,8 @@ def load_kaggle_data_with_events(
     X = df_data[channel_names].to_numpy(dtype=float)
     E = df_ev[KAGGLE_EVENT_COLS].to_numpy(dtype=np.int8)
 
+    X -= np.mean(X, axis=1, keepdims=True)
+
     return ids, X, E, channel_names, list(KAGGLE_EVENT_COLS)
 
 
