@@ -16,11 +16,6 @@ import numpy as np
 import pandas as pd
 
 
-# =============================================================================
-# Basic CSV loader
-# =============================================================================
-
-
 def load_eeg_csv(
     path: str, channels: List[str] | None = None
 ) -> tuple[np.ndarray, list[str]]:
@@ -45,10 +40,6 @@ def save_npz(path: str, **arrays) -> None:
     """Save multiple arrays to a compressed .npz file."""
     np.savez_compressed(path, **arrays)
 
-
-# =============================================================================
-# Kaggle Grasp-and-Lift helpers (data + events)
-# =============================================================================
 
 KAGGLE_EVENT_COLS = [
     "HandStart",
@@ -104,7 +95,6 @@ def load_kaggle_data_with_events(
     if "id" not in df_data.columns or "id" not in df_ev.columns:
         raise ValueError("Both files must contain 'id' column.")
 
-    # Align by id (events can be safely reindexed to data ids)
     df_data = df_data.set_index("id")
     df_ev = df_ev.set_index("id").reindex(df_data.index)
 
@@ -119,6 +109,7 @@ def load_kaggle_data_with_events(
     X = df_data[channel_names].to_numpy(dtype=float)
     E = df_ev[KAGGLE_EVENT_COLS].to_numpy(dtype=np.int8)
 
+    # CAR - common average reference
     X -= np.mean(X, axis=1, keepdims=True)
 
     return ids, X, E, channel_names, list(KAGGLE_EVENT_COLS)
@@ -133,7 +124,6 @@ def _blocks_to_centers(mask_01: np.ndarray) -> np.ndarray:
     if mask.size == 0:
         return np.array([], dtype=np.int64)
 
-    # Rising/falling edges of the boolean mask
     edges = np.diff(mask.astype(np.int8), prepend=0, append=0)
     starts = np.where(edges == 1)[0]
     ends = np.where(edges == -1)[0] - 1  # inclusive end
@@ -194,7 +184,6 @@ def extract_grasp_cycles(
                 break
 
             t = int(arr[j])
-            # Must belong to this cycle (before next HandStart)
             if t >= next_hs:
                 ok = False
                 break
@@ -205,7 +194,6 @@ def extract_grasp_cycles(
         if not ok:
             continue
 
-        # Optional duration sanity
         if (times["BothReleased"] - times["HandStart"]) > max_gap:
             continue
 
@@ -251,7 +239,7 @@ def slice_phase_window(
     fs: int,
     epoch_len_s: float = 2.0,
     *,
-    align: str = "center",  # "center" | "start" | "end"
+    align: str = "center",
     clip_to_phase: bool = False,
 ) -> np.ndarray:
     """
@@ -292,7 +280,6 @@ def slice_phase_window(
         a = max(a, int(t_start))
         b = min(b, int(t_end))
 
-    # Clip to signal bounds
     a = max(a, 0)
     b = min(b, T)
 

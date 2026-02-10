@@ -129,11 +129,16 @@ def _robust_vmax(A: np.ndarray) -> float:
 
 
 def _save_top_edges(
-    path: str, mat: np.ndarray, ch_names: List[str], topk: int = 40
+    path: str,
+    mat: np.ndarray,
+    ch_names: List[str],
+    topk: int = 40,
+    sort_abs: bool = False,
 ) -> None:
     A = np.array(mat, float)
     np.fill_diagonal(A, -np.inf)
-    flat_idx = np.argsort(A.ravel())[::-1]
+    score = np.abs(A) if sort_abs else A
+    flat_idx = np.argsort(score.ravel())[::-1]
     with open(path, "a", encoding="utf-8") as f:
         k = 0
         for idx in flat_idx:
@@ -432,7 +437,9 @@ def _run_group(
                             f"files={n_files_used} cycles_total={n_cycles_total} windows_total={n_windows_total}\n"
                         )
                         f.write(f"config={asdict(cfg)}\n\n")
-                    _save_top_edges(str(out_txt), mat, ch_names0, topk=40)
+                    _save_top_edges(
+                        str(out_txt), mat, ch_names0, topk=40, sort_abs=True
+                    )
                     print("Saved:", str(out_txt))
 
             continue

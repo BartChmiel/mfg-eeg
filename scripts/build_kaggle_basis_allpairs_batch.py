@@ -225,7 +225,8 @@ def main() -> None:
     # Streaming moments per pair: sum_x and sum_xxT
     sum_x = np.zeros((C, C, K), dtype=float)
     sum_xxT = np.zeros((C, C, K, K), dtype=float)
-    n_samples = np.zeros((C, C), dtype=np.int64)
+    # n_samples = np.zeros((C, C), dtype=np.int64)
+    w_sum = np.zeros((C, C), dtype=float)
 
     n_files_used = 0
     n_cycles_total = 0
@@ -308,11 +309,17 @@ def main() -> None:
                     )
                     Xpair = M.reshape(C, C, K)  # (C,C,K)
 
-                    # Accumulate per pair: each (window,lag) is one sample in R^K
-                    sum_x += Xpair
-                    # Outer products per pair (vectorized)
-                    sum_xxT += np.einsum("cdk,cdl->cdkl", Xpair, Xpair)
-                    n_samples += 1
+                    # # Accumulate per pair: each (window,lag) is one sample in R^K
+                    # sum_x += Xpair
+                    # # Outer products per pair (vectorized)
+                    # sum_xxT += np.einsum("cdk,cdl->cdkl", Xpair, Xpair)
+                    # n_samples += 1
+
+                    # Weighted accumulation per pair: weight by n_eff (effective window length)
+                    w = float(n_eff)
+                    sum_x += w * Xpair
+                    sum_xxT += w * np.einsum("cdk,cdl->cdkl", Xpair, Xpair)
+                    w_sum += w
 
                 n_windows_total += 1
 
@@ -323,12 +330,15 @@ def main() -> None:
 
     for i in range(C):
         for j in range(C):
-            if n_samples[i, j] < 2:
+            # if n_samples[i, j] < 2:
+            if w_sum[i, j] <= 0.0:
                 # leave zeros
                 continue
 
-            mu = sum_x[i, j] / float(n_samples[i, j])
-            Exx = sum_xxT[i, j] / float(n_samples[i, j])
+            # mu = sum_x[i, j] / float(n_samples[i, j])
+            # Exx = sum_xxT[i, j] / float(n_samples[i, j])
+            mu = sum_x[i, j] / float(w_sum[i, j])
+            Exx = sum_xxT[i, j] / float(w_sum[i, j])
             Cov = Exx - np.outer(mu, mu)
 
             # Symmetrize tiny numerical asymmetry
@@ -364,7 +374,8 @@ def main() -> None:
         n_files=int(n_files_used),
         n_cycles_total=int(n_cycles_total),
         n_windows_total=int(n_windows_total),
-        n_samples_per_pair=n_samples,
+        # n_samples_per_pair=n_samples,
+        weight_sum_per_pair=w_sum,
         config=str(asdict(cfg)),
     )
 
