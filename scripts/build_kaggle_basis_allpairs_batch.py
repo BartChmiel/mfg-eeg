@@ -29,10 +29,10 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from src.mfg.config import load_config
-from src.mfg.basis import legendre_orthonormal
-from src.mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
-from src.mfg.io import (
+from src_mfg.config import load_config
+from src_mfg.basis import legendre_orthonormal
+from src_mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
+from src_mfg.io import (
     load_kaggle_data_with_events,
     extract_grasp_cycles,
     phase_window_bounds,
