@@ -1,139 +1,69 @@
-"""
-PCA over HCR coefficient trajectories across lags.
-
-Given HCR coefficients over lags:
-    coeffs[k, t],  k = 0..K-1, t = 0..T-1
-
-we perform PCA in the K-dimensional coefficient space, using lags t
-as "samples". This yields:
-
-- eigenvectors V[:, i] describing orthogonal directions in coefficient space,
-- scores A[i, t] = projection of coeffs at lag t onto component i,
-- eigenvalues eigvals[i] = variance explained by component i.
-"""
-
 from typing import Tuple
-
 import numpy as np
 
 
 def pca_over_lags(coeffs: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Perform PCA on coefficient trajectories over lags.
+    Performs PCA on HCR coefficient trajectories.
 
-    Parameters
-    ----------
-    coeffs : np.ndarray, shape (K, T)
-        HCR coefficients over lags:
-            K = (m + 1)^2  (flattened polynomial coefficients),
-            T = number of lags.
-        Each column corresponds to one lag, each row to one coefficient.
+    Implementation Details:
+    1. Centering: Removes the mean per coefficient across all lags to ensure zero-mean distribution.
+    2. Covariance: Computes the (K x K) covariance matrix from centered trajectories.
+    3. Eigendecomposition: Uses np.linalg.eigh for stable decomposition of the symmetric matrix.
+    4. Sorting: Orders components by descending eigenvalues (explained variance).
 
-    Returns
-    -------
-    V : np.ndarray, shape (K, K)
-        Eigenvectors in coefficient space. Column i is the i-th principal
-        component direction.
-    A : np.ndarray, shape (K, T)
-        Scores over lags: A = V.T @ X, where
-            X = coeffs - mean(coeffs, axis=1, keepdims=True)
-        Row i contains the time course (over lags) of component i.
-    eigvals : np.ndarray, shape (K,)
-        Eigenvalues (variances) for each component, sorted descending.
+    Args:
+        coeffs: np.ndarray - Input array of shape (K, T), where K is the number
+                             of coefficients and T is the number of lags.
 
-    Notes
-    -----
-    - This is standard covariance-based PCA:
-          C = X X^T / (T - 1),
-      with eigen-decomposition C v_i = eigvals[i] v_i.
+    Returns:
+        V: np.ndarray - Eigenvectors (Principal Components) of shape (K, K).
+        A: np.ndarray - Scores (projections) of shape (K, T).
+        eigvals: np.ndarray - Eigenvalues representing variance per component.
     """
     coeffs = np.asarray(coeffs, float)
-
     if coeffs.ndim != 2:
-        raise ValueError(
-            f"pca_over_lags expects a 2D array (K, T), got shape {coeffs.shape}"
-        )
+        raise ValueError(f"pca_over_lags: expected (K, T) array, got {coeffs.shape}")
 
     K, T = coeffs.shape
     if T < 1:
-        # Degenerate case: no lags
-        V = np.eye(K, dtype=float)
-        A = np.zeros((K, 0), dtype=float)
-        eigvals = np.zeros(K, dtype=float)
-        return V, A, eigvals
+        return np.eye(K), np.zeros((K, 0)), np.zeros(K)
 
-    # Center across lags: remove mean per coefficient (row-wise)
+    # Center data across lags
     X = coeffs - coeffs.mean(axis=1, keepdims=True)
 
-    if T == 1:
-        # With a single sample, covariance degenerates: all variance is zero.
-        C = np.zeros((K, K), dtype=float)
-    else:
-        C = X @ X.T / float(T - 1)
-
-    # Symmetric covariance -> eigh
+    # Compute covariance and decompose
+    C = (X @ X.T / float(T - 1)) if T > 1 else np.zeros((K, K))
     eigvals, V = np.linalg.eigh(C)
 
-    # Sort eigenvalues and eigenvectors in descending order
+    # Sort descending
     idx = np.argsort(eigvals)[::-1]
-    eigvals = eigvals[idx]
-    V = V[:, idx]
+    eigvals, V = eigvals[idx], V[:, idx]
 
-    # Scores: projection of centered data on eigenvectors
-    A = V.T @ X  # shape (K, T)
+    # Project data to score space
+    A = V.T @ X
 
     return V, A, eigvals
 
 
 def select_r(eigvals: np.ndarray, var_thresh: float = 0.9, max_r: int = 6) -> int:
     """
-    Select the number of principal components to keep.
+    Determines the number of principal components to retain based on explained variance.
 
-    The rule is:
-      - compute cumulative explained variance,
-      - take the smallest r such that cumulative variance >= var_thresh,
-      - cap r by max_r.
+    Args:
+        eigvals: np.ndarray - Sorted eigenvalues from PCA.
+        var_thresh: float - Target fraction of cumulative explained variance (0-1).
+        max_r: int - Hard upper bound on the number of components.
 
-    Parameters
-    ----------
-    eigvals : np.ndarray, shape (K,)
-        Eigenvalues from PCA, sorted in descending order.
-    var_thresh : float, default 0.9
-        Target fraction of explained variance (between 0 and 1).
-    max_r : int, default 6
-        Hard upper bound on the number of components.
-
-    Returns
-    -------
-    r : int
-        Number of components to use (1 <= r <= min(K, max_r)).
-
-    Notes
-    -----
-    - If all eigenvalues are zero or negative (numerical edge case),
-      we fall back to r = min(K, max_r).
+    Returns:
+        r: int - Optimal number of components (1 <= r <= max_r).
     """
     eigvals = np.asarray(eigvals, float)
+    if eigvals.size == 0 or np.sum(eigvals) <= 0:
+        return min(max_r, eigvals.size)
 
-    if eigvals.ndim != 1:
-        raise ValueError(
-            f"select_r expects a 1D array of eigenvalues, got shape {eigvals.shape}"
-        )
+    # Find smallest r satisfying the variance threshold
+    cvar = np.cumsum(eigvals) / np.sum(eigvals)
+    r = int(np.searchsorted(cvar, float(var_thresh))) + 1
 
-    K = eigvals.size
-    if K == 0:
-        return 0
-
-    total = float(eigvals.sum())
-    if total <= 0.0:
-        # No meaningful variance; all components are equivalent.
-        return min(max_r, K)
-
-    cvar = np.cumsum(eigvals) / total
-    # np.searchsorted returns index where var_thresh would be inserted
-    # to keep order -> first index with cvar >= var_thresh
-    idx = int(np.searchsorted(cvar, float(var_thresh)))
-    r = idx + 1  # components are 1-based in this sense
-
-    r = max(1, min(r, max_r, K))
-    return r
+    return max(1, min(r, max_r, eigvals.size))

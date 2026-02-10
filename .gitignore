@@ -4,5 +4,3 @@ __pycache__/
 .ipynb_checkpoints/
 data/
 legacy/
-szukacz.py
-found_py_files.txt

@@ -4,7 +4,21 @@ from typing import Any
 
 @dataclass(frozen=True)
 class Config:
-    """Global configuration for MFG EEG analysis."""
+    """
+    Global immutable configuration for MFG EEG analysis.
+
+    Attributes:
+        fs: Sampling frequency in Hz.
+        maxlag_ms: Maximum lag for HCR/Granger analysis.
+        lag_step_ms: Resolution of the lag grid.
+        m: Maximum degree for Legendre polynomial basis.
+        subtract_marginals: Whether to center cross-moments by marginals.
+        ar_order: Order of the Auto-Regressive model for whitening.
+        ema_half_life_s: Half-life for Exponential Moving Average variance.
+        student_nu: Degrees of freedom for Student-t CDF mapping.
+        pca_var_thresh: Cumulative variance threshold for PCA component selection.
+        pca_max_r: Hard upper limit on the number of retained PCA components.
+    """
 
     fs: int = 500
     maxlag_ms: int = 1000
@@ -20,11 +34,8 @@ class Config:
 
 def load_config(**overrides: Any) -> Config:
     """
-    Create a Config instance, optionally overriding selected fields:
-
-        cfg = load_config(fs=128, maxlag_ms=500)
-
+    Factory function to initialize Config with optional parameter overrides.
     """
-    base = asdict(Config())
-    base.update(overrides)
-    return Config(**base)
+    base_params = asdict(Config())
+    base_params.update(overrides)
+    return Config(**base_params)

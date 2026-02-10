@@ -3,14 +3,20 @@ import numpy as np
 
 def legendre_orthonormal(x: np.ndarray, m: int) -> np.ndarray:
     """
-    Orthonormal Legendre basis on [0, 1].
+    Computes an orthonormal Legendre polynomial basis on the interval [0, 1].
 
-        f_j(x) = sqrt(2j+1) * P_j(2x - 1),   j = 0..m
+    Implementation Details:
+    1. Input validation: Ensures m >= 0 and x contains only finite float values.
+    2. Domain Mapping: Linearly maps x from [0, 1] to the standard Legendre domain [-1, 1].
+    3. Recursion: Uses the three-term recurrence relation to compute polynomials P_0 through P_m.
+    4. Orthonormality: Applies a sqrt(2j + 1) scaling factor for L2 orthonormality on [0, 1].
 
-    where P_j is the standard Legendre polynomial on [-1, 1].
+    Args:
+        x: np.ndarray - Normalized input signal (expected range [0, 1]).
+        m: int - Maximum polynomial degree.
 
-    Returns F with shape (n, m+1), where F[i, j] = f_j(x[i]).
-    Input is flattened to 1D.
+    Returns:
+        np.ndarray - Matrix of shape (n, m+1) containing basis function evaluations.
     """
     if m < 0:
         raise ValueError(f"legendre_orthonormal: m must be >= 0, got {m}")
@@ -21,17 +27,11 @@ def legendre_orthonormal(x: np.ndarray, m: int) -> np.ndarray:
     if not np.all(np.isfinite(x)):
         raise ValueError("legendre_orthonormal: input contains NaN/inf")
 
-    # Optional: enforce theory domain (usually satisfied because normalize_* clips to (0,1))
-    # if np.min(x) < 0.0 or np.max(x) > 1.0:
-    #     raise ValueError("legendre_orthonormal: x must be in [0,1]")
-
-    u = 2.0 * x - 1.0  # map [0,1] -> [-1,1]
+    # Map [0, 1] -> [-1, 1]
+    u = 2.0 * x - 1.0
     n = x.size
 
-    # Compute P_0..P_m via recurrence:
-    # P_0(u)=1
-    # P_1(u)=u
-    # (k+1)P_{k+1}(u) = (2k+1)uP_k(u) - kP_{k-1}(u)
+    # Compute P_0..P_m via recurrence
     P = np.empty((n, m + 1), dtype=float)
     P[:, 0] = 1.0
     if m >= 1:
@@ -39,7 +39,6 @@ def legendre_orthonormal(x: np.ndarray, m: int) -> np.ndarray:
     for k in range(1, m):
         P[:, k + 1] = ((2.0 * k + 1.0) * u * P[:, k] - k * P[:, k - 1]) / (k + 1.0)
 
-    # Orthonormal scaling on [0,1]
-    scales = np.sqrt(2.0 * np.arange(m + 1) + 1.0)  # (m+1,)
-    F = P * scales[None, :]
-    return F
+    # Apply orthonormal scaling
+    scales = np.sqrt(2.0 * np.arange(m + 1) + 1.0)
+    return P * scales[None, :]

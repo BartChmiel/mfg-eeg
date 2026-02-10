@@ -1,24 +1,18 @@
-"""
-Global PCA basis for comparing phases/windows for a fixed electrode pair.
-
-We build PCA on many coefficient-vectors (e.g. HCR mixed-only vectors over lags
-collected across multiple phase windows). This produces ONE basis that can be
-used to project per-phase mean coefficient trajectories, making PC curves
-comparable across phases.
-"""
-
 from __future__ import annotations
-
 from dataclasses import dataclass
 import numpy as np
 
 
 @dataclass(frozen=True)
 class PCABasis:
-    mean: np.ndarray  # (K,)
-    V: np.ndarray  # (K, K) columns = eigenvectors
-    eigvals: np.ndarray  # (K,)
-    lag_samples: np.ndarray  # (L,)
+    """
+    Standardized PCA basis container for cross-phase connectivity comparison.
+    """
+
+    mean: np.ndarray  # (K,) - Mean coefficient vector
+    V: np.ndarray  # (K, K) - Eigenvectors (columns)
+    eigvals: np.ndarray  # (K,) - Explained variance
+    lag_samples: np.ndarray  # (L,) - Lag grid in samples
 
     fs: int
     maxlag_ms: int
@@ -36,48 +30,52 @@ def pca_from_second_moments(
     sum_x: np.ndarray, sum_xxT: np.ndarray, n: int
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Compute PCA from accumulated moments over samples x (shape (K,)).
+    Computes PCA components from accumulated first and second moments.
 
-    Inputs:
-      sum_x   = Σ x
-      sum_xxT = Σ x x^T
-      n       = number of samples
-
-    Returns:
-      mean (K,), V (K,K), eigvals (K,)
+    Implementation Details:
+    1. Centering: Derives the global mean from sum_x and total sample count n.
+    2. Covariance: Calculates the (K x K) covariance matrix using the formula:
+       C = (ΣxxT - n*μμT) / (n - 1).
+    3. Symmetry: Explicitly enforces C = 0.5 * (C + C.T) to mitigate numerical drift.
+    4. Eigendecomposition: Returns sorted eigenvalues and corresponding eigenvectors.
     """
     sum_x = np.asarray(sum_x, float).ravel()
     sum_xxT = np.asarray(sum_xxT, float)
-
     K = sum_x.shape[0]
+
     if sum_xxT.shape != (K, K):
-        raise ValueError(f"sum_xxT must be (K,K) with K={K}, got {sum_xxT.shape}")
+        raise ValueError(f"sum_xxT shape mismatch: expected ({K}, {K})")
     if n <= 0:
-        raise ValueError("n must be positive")
+        raise ValueError("Sample count n must be positive")
 
     mean = sum_x / float(n)
 
     if n == 1:
-        V = np.eye(K, dtype=float)
-        eigvals = np.zeros(K, dtype=float)
-        return mean, V, eigvals
+        return mean, np.eye(K), np.zeros(K)
 
-    # Cov = (Σ xx^T - n μ μ^T) / (n-1)
+    # Calculate unbiased sample covariance
     C = (sum_xxT - float(n) * np.outer(mean, mean)) / float(n - 1)
-    C = 0.5 * (C + C.T)  # enforce symmetry
+    C = 0.5 * (C + C.T)
 
     eigvals, V = np.linalg.eigh(C)
+
+    # Sort by descending variance
     idx = np.argsort(eigvals)[::-1]
-    eigvals = eigvals[idx]
-    V = V[:, idx]
-    return mean, V, eigvals
+    return mean, V[:, idx], eigvals[idx]
 
 
 def project_coeffs(coeffs: np.ndarray, basis: PCABasis, r: int) -> np.ndarray:
     """
-    Project coefficient trajectory coeffs (K,L) onto basis -> (r,L).
+    Projects a coefficient trajectory (K, L) onto the top-r components of the basis.
+
+    Args:
+        coeffs: np.ndarray - Input HCR coefficients over lags.
+        basis: PCABasis - The global PCA basis to project onto.
+        r: int - Number of principal components to retain.
+
+    Returns:
+        np.ndarray - Projected scores of shape (r, L).
     """
-    coeffs = np.asarray(coeffs, float)
-    X = coeffs - basis.mean[:, None]
-    A = basis.V.T @ X
-    return A[: int(r)]
+    X_centered = np.asarray(coeffs, float) - basis.mean[:, None]
+    scores = basis.V.T @ X_centered
+    return scores[: int(r)]
