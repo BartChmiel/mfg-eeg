@@ -152,9 +152,6 @@ def directionality_index(flow: Counter, a: str, b: str) -> float:
     return 0.0 if denom == 0 else (ab - ba) / float(denom)
 
 
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description="MFG EEG Meta-Analysis")
     ap.add_argument(

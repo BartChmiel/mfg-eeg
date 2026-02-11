@@ -420,11 +420,9 @@ def _run_group(
 
             continue
 
-        energy_per_lag = np.sqrt(np.sum(coeffs_mean**2, axis=-1))  # (L,C,C)
+        energy_per_lag = np.sqrt(np.sum(coeffs_mean**2, axis=-1))
 
-        chi2_stat = n_eff_sum[pi][:, None, None] * np.sum(
-            coeffs_mean**2, axis=-1
-        )  # (L,C,C)
+        chi2_stat = n_eff_sum[pi][:, None, None] * np.sum(coeffs_mean**2, axis=-1)
         p = chi2.sf(chi2_stat, df=K)
         p = np.clip(p, 1e-300, 1.0)
         neglog10p = -np.log10(p)
