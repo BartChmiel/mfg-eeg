@@ -1,7 +1,6 @@
-==================================================
+
 
 SETUP ŚRODOWISKA (Windows / PowerShell)
-==================================================
 
 Utworzenie środowiska venv (Python 3.12)
 
@@ -15,7 +14,6 @@ Instalacja zależności
 
 pip install -r .\requirements.txt
 
-==================================================
 2. STRUKTURA DANYCH
 
 Projekt zakłada dane Kaggle w formacie:
@@ -32,7 +30,6 @@ subj01_series01_data.csv
 subj01_series01_events.csv
 ...
 
-==================================================
 3. GŁÓWNA ANALIZA FAZOWA (MACIERZE POŁĄCZEŃ)
 
 Batch dla całego zbioru train/
@@ -63,7 +60,6 @@ subjXX -> gdy --group-by subject
 
 ALL -> gdy --group-by all
 
-==================================================
 4. TRYB PCA DLA WSZYSTKICH PAR KANAŁÓW 
 
 4.1 Budowa globalnej bazy PCA (all-pairs)
@@ -102,7 +98,6 @@ phasegrid_*.png -> siatka PC x lag
 
 phase_top_edges__pc_lag*ms.txt -> top-k krawędzie
 
-==================================================
 5. META-ANALIZA MIĘDZY SUBJECTAMI
 
 Liczy:
@@ -130,7 +125,6 @@ python -m scripts.meta_analysis ^
 --mode gc ^
 --use-fdr
 
-==================================================
 6. NAJWAŻNIEJSZE ARGUMENTY CLI
 
 mfg_kaggle_phase_matrix_batch:
@@ -146,7 +140,6 @@ mfg_kaggle_phase_matrix_batch:
 --basis-allpairs -> ścieżka do .npz (włącza PCA)
 --pca-r -> liczba komponentów PCA
 
-==================================================
 7. SZYBKI TEST DZIAŁANIA (SMOKE TEST)
 
 Uruchomienie na 2 plikach:
@@ -167,5 +160,3 @@ Powinno utworzyć:
 out/smoke/ALL/
 
 z kilkoma plikami .png i .txt.
-
-==================================================
