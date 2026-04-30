@@ -4,3 +4,8 @@ __pycache__/
 .ipynb_checkpoints/
 data/
 legacy/
+.lprof/
+tmp*/
+out/test*/
+out/review*/
+out/pycache_check/

@@ -1,0 +1,21 @@
+phase,pc,lag_ms,n_subjects,total_subjects_in_dir,candidate_edges,reported_edges,dominant_flow_src,dominant_flow_dst,dominant_flow_count,dominant_flow_di,process_label,process_desc
+LiftOff__Replace,pc2,0,12,12,16,16,O_Vis,O_Vis,9,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+LiftOff__Replace,pc3,0,12,12,14,14,P_Space,P_Space,3,0.0,SPATIAL INTEGRATION,Integration of multisensory inputs into a coherent body/world spatial map.
+HandStart__FirstDigitTouch,pc2,50,12,12,13,13,O_Vis,O_Vis,10,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+BothStartLoadPhase__LiftOff,pc3,0,12,12,13,13,P_Space,P_Space,4,0.0,SPATIAL INTEGRATION,Integration of multisensory inputs into a coherent body/world spatial map.
+FirstDigitTouch__BothStartLoadPhase,pc3,0,12,12,13,13,P_Space,P_Space,4,0.0,SPATIAL INTEGRATION,Integration of multisensory inputs into a coherent body/world spatial map.
+LiftOff__Replace,pc3,200,12,12,13,13,P_Space,P_Space,4,0.0,SPATIAL INTEGRATION,Integration of multisensory inputs into a coherent body/world spatial map.
+LiftOff__Replace,pc3,50,12,12,13,13,O_Vis,F_Motor,3,1.0,VISUO-MOTOR TRANSFORMATION,Transformation of visual information into spatial/motor coordinates.
+LiftOff__Replace,pc2,100,12,12,12,12,O_Vis,O_Vis,10,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+BothStartLoadPhase__LiftOff,pc2,0,12,12,12,12,O_Vis,O_Vis,8,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+BothStartLoadPhase__LiftOff,pc1,200,12,12,12,12,O_Vis,O_Vis,4,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+LiftOff__Replace,pc3,150,12,12,12,12,P_Space,P_Space,4,0.0,SPATIAL INTEGRATION,Integration of multisensory inputs into a coherent body/world spatial map.
+Replace__BothReleased,pc3,0,12,12,12,12,P_Space,P_Space,4,0.0,SPATIAL INTEGRATION,Integration of multisensory inputs into a coherent body/world spatial map.
+LiftOff__Replace,pc2,150,12,12,11,11,O_Vis,O_Vis,10,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+LiftOff__Replace,pc2,200,12,12,11,11,O_Vis,O_Vis,10,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+BothStartLoadPhase__LiftOff,pc2,150,12,12,11,11,O_Vis,O_Vis,9,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+BothStartLoadPhase__LiftOff,pc2,50,12,12,11,11,O_Vis,O_Vis,8,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+FirstDigitTouch__BothStartLoadPhase,pc2,0,12,12,11,11,O_Vis,O_Vis,8,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+HandStart__FirstDigitTouch,pc2,100,12,12,11,11,O_Vis,O_Vis,8,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+FirstDigitTouch__BothStartLoadPhase,pc1,0,12,12,11,11,O_Vis,O_Vis,5,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.
+HandStart__FirstDigitTouch,pc1,50,12,12,11,11,O_Vis,O_Vis,5,0.0,VISUAL RECURRENCE / BINDING,Recurrent processing within the visual network supporting stable representation.

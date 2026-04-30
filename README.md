@@ -1,206 +1,320 @@
-.
-.
-.
-.
+# MFG EEG: Kaggle Grasp-and-Lift Article Pipeline
 
+This project analyzes the Kaggle Grasp-and-Lift EEG Detection dataset with an
+article-focused pipeline for event-locked directed lagged functional
+connectivity.
 
-SETUP ŚRODOWISKA (Windows / PowerShell)
-.
-.
-.
-.
+The project is intentionally centered on Kaggle data. Older exploratory paths
+can stay in the repository, but the GUI and recommended workflow focus on the
+results intended for the article.
 
+## What It Does
 
-Utworzenie środowiska venv (Python 3.12)
+The pipeline estimates reproducible directed lagged coupling patterns in EEG:
 
+```text
+Kaggle CSV data
+-> event alignment and common average reference
+-> grasp-cycle reconstruction
+-> phase windows and pre-event windows
+-> marginal normalization
+-> Legendre mixed-moment features
+-> all-pairs PCA projection
+-> subject-level top directed edges
+-> cross-subject meta-analysis with binomial tests and FDR
+-> sensitivity grid over meta-analysis parameters
+-> article package with tables, summaries, and provenance
+```
+
+Use this wording in the article:
+
+```text
+directional lagged innovation-coupling / directed functional connectivity
+```
+
+Avoid claiming direct anatomical causality. The `gc` mode is not classical VAR
+Granger causality; it is an innovation-transformed directional lagged
+dependence measure.
+
+## Setup
+
+Recommended on Windows PowerShell:
+
+```powershell
 uv venv --python 3.12
-
-Aktywacja środowiska
-
 .venv\Scripts\activate
-
-Instalacja zależności
-
 pip install -r .\requirements.txt
+```
 
-.
-.
-.
-.
+Standard `venv` also works:
 
-2. STRUKTURA DANYCH
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r .\requirements.txt
+```
 
-Projekt zakłada dane Kaggle w formacie:
+## Data Layout
 
-subjXX_seriesYY_data.csv
-subjXX_seriesYY_events.csv
+Place the Kaggle train files here:
 
-Przykładowa struktura katalogów:
+```text
+data/grasp-and-lift-eeg-detection/train/
+  subj01_series01_data.csv
+  subj01_series01_events.csv
+  subj01_series02_data.csv
+  subj01_series02_events.csv
+  ...
+```
 
-data/
-grasp-and-lift-eeg-detection/
-train/
-subj01_series01_data.csv
-subj01_series01_events.csv
-...
+The pipeline expects matching `_data.csv` and `_events.csv` files.
 
-.
-.
-.
-.
+Default sampling rate in code: `500 Hz`.
 
-3. GŁÓWNA ANALIZA FAZOWA (MACIERZE POŁĄCZEŃ)
+## Clean Repository Layout
 
-Batch dla całego zbioru train/
+Core article files are kept in the root project:
 
-zapis wyników osobno dla każdego subjecta:
+```text
+configs/      runtime defaults
+data/         active Kaggle data only
+docs/         methodology and project overview
+out/          final article outputs and source result folders
+scripts/      current article pipeline scripts
+src_mfg/      reusable core code
+tests/        automated checks for the current pipeline
+legacy/       old scripts, WAY paths, smoke runs, archives, and non-core outputs
+```
 
-python -m scripts.mfg_kaggle_phase_matrix_batch ^
---root data/grasp-and-lift-eeg-detection/train ^
---out out/test ^
---mode gc ^
---metric energy ^
---lags-ms 0 50 100 150 200 300 400 500 ^
---m 4 ^
---group-by subject ^
---epoch-len-s 2.0
+Anything not needed for the article path should live under `legacy/`.
 
-Wyniki:
+## GUI: Recommended Usage
 
-out/test/<GROUP>/
+Start the graphical interface:
 
-*.png -> heatmapy macierzy połączeń
+```powershell
+launch_gui.bat
+```
 
-phase_top_edges_*.txt -> ranking najsilniejszych krawędzi
+or:
 
-<GROUP>:
+```powershell
+python -m scripts.gui_app
+```
 
-subjXX -> gdy --group-by subject
+In the GUI, use `Run Full Article Pipeline`. It runs:
 
-ALL -> gdy --group-by all
+```text
+1. Build PCA Basis
+2. Phase Analysis
+3. Pre-Event EMA
+4. Meta Analysis
+5. Sensitivity Analysis
+6. Article Package
+```
 
-.
-.
-.
-.
+The GUI also provides:
 
-4. TRYB PCA DLA WSZYSTKICH PAR KANAŁÓW 
+- Recommended Kaggle article presets.
+- Setup/results readiness check.
+- File and folder pickers.
+- Step-by-step status during full pipeline runs.
+- Live logs.
+- Stop button.
+- Results browser with quick views for article package, meta tables, sensitivity,
+  phase results, and pre-event results.
+- Preview for `.png`, `.txt`, `.csv`, `.json`, `.md`, and `.npz`.
+- One final article package folder with tables and provenance.
 
-4.1 Budowa globalnej bazy PCA (all-pairs)
+## Main CLI Pipeline
 
-python -m scripts.build_kaggle_basis_allpairs_batch ^
---root data/grasp-and-lift-eeg-detection/train ^
---out out/basis_allpairs.npz ^
---mode gc ^
---epoch-len-s 2.0 ^
---m 4 ^
---lags-ms 0 50 100 150 200 ^
---pca-r 3
+You can use the GUI for normal work. The CLI commands below are the same
+article path, useful for reproducibility and debugging.
 
-Powstaje:
+### 1. Build PCA Basis
 
+```powershell
+python -m scripts.build_kaggle_basis_allpairs_batch `
+  --root data/grasp-and-lift-eeg-detection/train `
+  --out out/basis_allpairs.npz `
+  --mode gc `
+  --epoch-len-s 2.0 `
+  --m 4 `
+  --lags-ms 0 50 100 150 200 `
+  --pca-r 3
+```
+
+Output:
+
+```text
 out/basis_allpairs.npz
+```
 
-4.2 Analiza fazowa w trybie PCA
+### 2. Phase Analysis
 
-python -m scripts.mfg_kaggle_phase_matrix_batch ^
---root data/grasp-and-lift-eeg-detection/train ^
---out out/test_pca ^
---mode gc ^
---basis-allpairs out/basis_allpairs.npz ^
---pca-r 3 ^
---epoch-len-s 2.0 ^
---m 4 ^
---lags-ms 0 50 100 150 200 ^
---group-by subject
+```powershell
+python -m scripts.mfg_kaggle_phase_matrix_batch `
+  --root data/grasp-and-lift-eeg-detection/train `
+  --out out/phase_mats_pca_by_subject `
+  --mode gc `
+  --basis-allpairs out/basis_allpairs.npz `
+  --pca-r 3 `
+  --epoch-len-s 2.0 `
+  --m 4 `
+  --lags-ms 0 50 100 150 200 `
+  --topk 40 `
+  --save-npz `
+  --group-by subject
+```
 
-Wyniki PCA:
+Outputs per subject:
 
-out/test_pca/<GROUP>/
+```text
+phasegrid_*.png
+phase_top_edges_*.txt
+phasegrid_data_*.npz
+run_manifest.json
+```
 
-phasegrid_*.png -> siatka PC x lag
+### 3. Pre-Event EMA
 
-phase_top_edges__pc_lag*ms.txt -> top-k krawędzie
+This analysis checks what builds before key movement events. The default
+article window is `[-0.5 s, 0]` before the anchor event, with `0.5 s` burn-in.
 
-.
-.
-.
-.
+```powershell
+python -m scripts.mfg_kaggle_phase_matrix_experimental `
+  --root data/grasp-and-lift-eeg-detection/train `
+  --out out/experimental_kaggle_by_subject `
+  --mode gc `
+  --anchor-events HandStart LiftOff `
+  --m 4 `
+  --lags-ms 0 50 100 150 200 `
+  --pre-s 0.5 `
+  --burn-in-s 0.5 `
+  --ema-half-life-s 0.1 `
+  --summary final `
+  --save-npz `
+  --group-by subject
+```
 
-5. META-ANALIZA MIĘDZY SUBJECTAMI
+Outputs per subject:
 
-Liczy:
+```text
+event_matrix_*.png
+event_top_edges_*.txt
+event_traces_*.png
+event_data_*.npz
+run_manifest.json
+```
 
-replikowalność między subjectami
+### 4. Meta-Analysis
 
-test dwumianowy
+```powershell
+python -m scripts.meta_analysis `
+  --dir out/phase_mats_pca_by_subject `
+  --topk 10 `
+  --min-subjects 4 `
+  --mode gc `
+  --use-fdr `
+  --significant-only `
+  --out-dir out/article_meta_kaggle
+```
 
-opcjonalnie korekcję BH-FDR
+Outputs:
 
-Podstawowe uruchomienie:
+```text
+out/article_meta_kaggle/meta_report.txt
+out/article_meta_kaggle/meta_edges.csv
+out/article_meta_kaggle/meta_scenarios.csv
+out/article_meta_kaggle/meta_report.json
+```
 
-python -m scripts.meta_analysis ^
---dir out/test_pca ^
---topk 10 ^
---min-subjects 4 ^
---mode gc
+### 5. Sensitivity Analysis
 
-Z FDR:
+This checks whether key edges remain significant when meta-analysis settings
+change. Use it to avoid parameter-picked article claims.
 
-python -m scripts.meta_analysis ^
---dir out/test_pca ^
---topk 10 ^
---min-subjects 4 ^
---mode gc ^
---use-fdr
+```powershell
+python -m scripts.meta_sensitivity `
+  --dir out/phase_mats_pca_by_subject `
+  --out-dir out/article_meta_sensitivity `
+  --topk 5 10 15 `
+  --min-subjects 3 4 5 `
+  --p0-inflate 5 10 15 `
+  --mode gc `
+  --use-fdr
+```
 
-.
-.
-.
-.
+Outputs:
 
-6. NAJWAŻNIEJSZE ARGUMENTY CLI
+```text
+out/article_meta_sensitivity/sensitivity_summary.md
+out/article_meta_sensitivity/sensitivity_edges.csv
+out/article_meta_sensitivity/edge_stability.csv
+out/article_meta_sensitivity/sensitivity_manifest.json
+```
 
-mfg_kaggle_phase_matrix_batch:
+### 6. Article Package
 
---root -> katalog z danymi train/
---out -> katalog wynikowy
---mode -> gc lub corr
---epoch-len-s -> długość okna fazy (sekundy)
---m -> stopień baz Legendre
---lags-ms -> lista opóźnień w ms
---group-by -> all lub subject
---metric -> energy / chi2 / neglog10p (bez PCA)
---basis-allpairs -> ścieżka do .npz (włącza PCA)
---pca-r -> liczba komponentów PCA
+```powershell
+python -m scripts.build_article_package `
+  --phase-dir out/phase_mats_pca_by_subject `
+  --pre-event-dir out/experimental_kaggle_by_subject `
+  --meta-dir out/article_meta_kaggle `
+  --sensitivity-dir out/article_meta_sensitivity `
+  --out out/article_package
+```
 
-.
-.
-.
-.
+Outputs:
 
-7. SZYBKI TEST DZIAŁANIA (SMOKE TEST)
+```text
+out/article_package/article_summary.md
+out/article_package/package_manifest.json
+out/article_package/tables/top_scenarios.csv
+out/article_package/tables/top_edges.csv
+out/article_package/raw_meta_exports/
+out/article_package/sensitivity/
+out/article_package/documentation/
+```
 
-Uruchomienie na 2 plikach:
+## Key Parameters
 
-python -m scripts.mfg_kaggle_phase_matrix_batch ^
---root data/grasp-and-lift-eeg-detection/train ^
---out out/smoke ^
---mode gc ^
---metric energy ^
---lags-ms 0 50 100 ^
---m 4 ^
---epoch-len-s 2.0 ^
---group-by all ^
---max-files 2
+- `--mode gc`: recommended article mode; directional lagged innovation-coupling.
+- `--mode corr`: symmetric marginal-normalized correlation-like baseline.
+- `--m`: number of non-constant Legendre basis terms.
+- `--lags-ms`: target lag grid in milliseconds.
+- `--epoch-len-s`: fixed phase-window length.
+- `--basis-allpairs`: enables PCA projection using the learned basis.
+- `--pca-r`: number of PCA components to export.
+- `--topk`: number of directed edges saved per subject/scenario.
+- `--use-fdr`: applies BH-FDR in meta-analysis.
+- `--significant-only`: exports only significant meta-analysis edges.
 
-Powinno utworzyć:
+## Documentation
 
-out/smoke/ALL/
+For article writing, use:
 
-z kilkoma plikami .png i .txt.
+- `docs/METHODOLOGY.md`
+- `docs/PROJECT_OVERVIEW.md`
 
-.
-.
-.
-.
+These documents define the active method, assumptions, outputs, and validation
+workflow.
+
+## Tests
+
+Run:
+
+```powershell
+python -m unittest discover -s tests -v
+python -m compileall src_mfg scripts tests
+```
+
+## Practical Research Standard
+
+Treat a finding as article-ready only if:
+
+- It repeats across subjects.
+- It survives the chosen binomial/FDR setting.
+- It remains plausible under sensitivity checks.
+- It has an event-phase and lag interpretation.
+- It has a machine-readable table and manifest.

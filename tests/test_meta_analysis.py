@@ -1,0 +1,110 @@
+import shutil
+import sys
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.meta_analysis import build_reports  # noqa: E402
+
+
+def _write_top_edges(path: Path, edges: list[tuple[str, str, float]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("phase=stub\n\n")
+        for idx, (src, dst, val) in enumerate(edges, start=1):
+            handle.write(f"{idx:03d}. {src} -> {dst} : {val:.6f}\n")
+
+
+def _make_case_root(case_name: str) -> Path:
+    root = REPO_ROOT / "out" / "test_meta_analysis" / case_name
+    shutil.rmtree(root, ignore_errors=True)
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+class MetaAnalysisTests(unittest.TestCase):
+    def test_scenario_specific_subject_count_is_used(self) -> None:
+        root = _make_case_root("scenario_subject_count")
+        try:
+            filename = "phase_top_edges_HandStart__FirstDigitTouch_gc_m4_pc1_lag50ms.txt"
+
+            _write_top_edges(root / "subj01" / filename, [("Fp1", "Fp2", 1.0)])
+            _write_top_edges(root / "subj02" / filename, [("Fp1", "Fp2", 1.0)])
+
+            other_filename = "phase_top_edges_LiftOff__Replace_gc_m4_pc1_lag50ms.txt"
+            _write_top_edges(root / "subj01" / other_filename, [("F3", "F4", 1.0)])
+            _write_top_edges(root / "subj02" / other_filename, [("F3", "F4", 1.0)])
+            _write_top_edges(root / "subj03" / other_filename, [("F3", "F4", 1.0)])
+
+            edge_rows, scenario_rows, _text, metadata = build_reports(
+                dir_root=str(root),
+                topk=10,
+                min_subjects=1,
+                channels=32,
+                p0=0.01,
+                p0_inflate=10.0,
+                mode_filter="gc",
+                use_fdr=False,
+                alpha=0.05,
+                significant_only=False,
+                dominant_flow_scope="reported",
+                max_edges=3,
+            )
+
+            self.assertEqual(metadata["total_subjects"], 3)
+
+            target_edge = next(
+                row
+                for row in edge_rows
+                if row.phase == "HandStart__FirstDigitTouch" and row.src == "Fp1"
+            )
+            self.assertEqual(target_edge.n_subjects, 2)
+            self.assertEqual(target_edge.total_subjects_in_dir, 3)
+
+            target_scenario = next(
+                row
+                for row in scenario_rows
+                if row.phase == "HandStart__FirstDigitTouch"
+            )
+            self.assertEqual(target_scenario.n_subjects, 2)
+            self.assertEqual(target_scenario.total_subjects_in_dir, 3)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_significant_only_filters_console_report_candidates(self) -> None:
+        root = _make_case_root("significant_only_filter")
+        try:
+            filename = "phase_top_edges_HandStart__FirstDigitTouch_gc_m4_pc1_lag50ms.txt"
+
+            for subj in ["subj01", "subj02", "subj03"]:
+                _write_top_edges(
+                    root / subj / filename,
+                    [("Fp1", "Fp2", 1.0), ("O1", "O2", 0.5)],
+                )
+
+            edge_rows, _scenario_rows, report_text, _metadata = build_reports(
+                dir_root=str(root),
+                topk=10,
+                min_subjects=1,
+                channels=32,
+                p0=0.9,
+                p0_inflate=10.0,
+                mode_filter="gc",
+                use_fdr=False,
+                alpha=0.05,
+                significant_only=True,
+                dominant_flow_scope="reported",
+                max_edges=3,
+            )
+
+            self.assertTrue(any(not row.significant for row in edge_rows))
+            self.assertNotIn("HandStart__FirstDigitTouch | pc1 | lag=50ms", report_text)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    unittest.main()

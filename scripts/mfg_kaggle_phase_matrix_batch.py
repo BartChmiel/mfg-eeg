@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import argparse
@@ -134,6 +135,17 @@ def _save_top_edges(
                 break
 
 
+def _save_npz_payload(path: Path, **payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(path, **payload)
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, ensure_ascii=False)
+
+
 def _normalize_series(
     X: np.ndarray, mode: str, fs: int, cfg
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -196,6 +208,8 @@ def _run_group(
     metric: str,
     basis_allpairs: Optional[str],
     pca_r: int,
+    topk: int,
+    save_npz: bool,
 ) -> None:
     cfg = load_config()
     fs = int(cfg.fs)
@@ -233,6 +247,25 @@ def _run_group(
     n_files_used = 0
     n_cycles_total = 0
     n_windows_total = 0
+    manifest: dict[str, Any] = {
+        "group": group_name,
+        "mode": mode,
+        "epoch_len_s": float(epoch_len_s),
+        "max_cycle_s": float(max_cycle_s),
+        "min_cycles": int(min_cycles),
+        "m": int(m),
+        "lags_ms": list(map(int, lags_ms)),
+        "summary": summary,
+        "metric": metric,
+        "basis_allpairs": basis_allpairs,
+        "pca_r": int(pca_r),
+        "topk": int(topk),
+        "save_npz": bool(save_npz),
+        "config": asdict(cfg),
+        "input_files": [path.name for path in files],
+        "used_files": [],
+        "phases": [],
+    }
 
     for data_path in files:
         events_path = _events_path_for_data(data_path)
@@ -272,6 +305,7 @@ def _run_group(
 
         n_files_used += 1
         n_cycles_total += int(len(cycles))
+        manifest["used_files"].append(data_path.name)
 
         for cyc in cycles:
             for pi, (ev0, ev1) in enumerate(PHASES):
@@ -319,6 +353,7 @@ def _run_group(
     # Finalize + save per phase
     group_out = out_dir / group_name
     group_out.mkdir(parents=True, exist_ok=True)
+    basis_payload = _load_allpairs_basis(basis_allpairs) if basis_allpairs is not None else None
 
     for pi, (ev0, ev1) in enumerate(PHASES):
         if np.all(n_eff_sum[pi] <= 0):
@@ -328,8 +363,14 @@ def _run_group(
             continue
 
         coeffs_mean = coeffs_sum[pi] / n_eff_sum[pi][:, None, None, None]  # (L,C,C,K)
-        if basis_allpairs is not None:
-            B = _load_allpairs_basis(basis_allpairs)
+        phase_manifest: dict[str, Any] = {
+            "phase": f"{ev0}__{ev1}",
+            "group": group_name,
+            "windows_per_lag": n_eff_sum[pi].tolist(),
+            "outputs": [],
+        }
+        if basis_payload is not None:
+            B = basis_payload
 
             # sanity checks
             if B["fs"] != fs:
@@ -394,6 +435,7 @@ def _run_group(
             )
             fig.savefig(out_png, dpi=220)
             plt.close(fig)
+            phase_manifest["outputs"].append(out_png.name)
             print("Saved:", str(out_png))
 
             # Optional: top edges per (pc, lag)
@@ -414,10 +456,33 @@ def _run_group(
                         )
                         f.write(f"config={asdict(cfg)}\n\n")
                     _save_top_edges(
-                        str(out_txt), mat, ch_names0, topk=40, sort_abs=True
+                        str(out_txt), mat, ch_names0, topk=topk, sort_abs=True
                     )
+                    phase_manifest["outputs"].append(out_txt.name)
                     print("Saved:", str(out_txt))
 
+            if save_npz:
+                out_npz = group_out / (
+                    f"phasegrid_data_{ev0}__{ev1}_{mode}_m{m}_pca_r{r}_lags{'-'.join(map(str,lags_ms))}.npz"
+                )
+                _save_npz_payload(
+                    out_npz,
+                    scores=scores.astype(np.float32),
+                    lags_ms=np.array(lags_ms, dtype=int),
+                    ch_names=np.array(ch_names0, dtype=object),
+                    phase=np.array(f"{ev0}__{ev1}"),
+                    group=np.array(group_name),
+                    mode=np.array(mode),
+                    m=np.array(int(m)),
+                    pca_r=np.array(int(r)),
+                    files_used=np.array(int(n_files_used)),
+                    cycles_total=np.array(int(n_cycles_total)),
+                    windows_total=np.array(int(n_windows_total)),
+                )
+                phase_manifest["outputs"].append(out_npz.name)
+                print("Saved:", str(out_npz))
+
+            manifest["phases"].append(phase_manifest)
             continue
 
         energy_per_lag = np.sqrt(np.sum(coeffs_mean**2, axis=-1))
@@ -485,10 +550,48 @@ def _run_group(
                 f"files={n_files_used} cycles_total={n_cycles_total} windows_total={n_windows_total}\n"
             )
             f.write(f"config={asdict(cfg)}\n\n")
-        _save_top_edges(str(out_txt), mat, ch_names0, topk=40)
+        _save_top_edges(str(out_txt), mat, ch_names0, topk=topk)
+
+        phase_manifest["outputs"].extend([out_png.name, out_txt.name])
+
+        if save_npz:
+            out_npz = (
+                group_out
+                / f"phase_data_{ev0}__{ev1}_{mode}_m{m}_{metric}_{summary}.npz"
+            )
+            _save_npz_payload(
+                out_npz,
+                mat_summary=np.asarray(mat, dtype=np.float32),
+                per_lag=np.asarray(per_lag, dtype=np.float32),
+                coeffs_mean=np.asarray(coeffs_mean, dtype=np.float32),
+                energy_per_lag=np.asarray(energy_per_lag, dtype=np.float32),
+                chi2_stat=np.asarray(chi2_stat, dtype=np.float32),
+                neglog10p=np.asarray(neglog10p, dtype=np.float32),
+                lags_ms=np.array(lags_ms, dtype=int),
+                ch_names=np.array(ch_names0, dtype=object),
+                phase=np.array(f"{ev0}__{ev1}"),
+                group=np.array(group_name),
+                mode=np.array(mode),
+                m=np.array(int(m)),
+                metric=np.array(metric),
+                summary=np.array(summary),
+                files_used=np.array(int(n_files_used)),
+                cycles_total=np.array(int(n_cycles_total)),
+                windows_total=np.array(int(n_windows_total)),
+            )
+            phase_manifest["outputs"].append(out_npz.name)
+            print("Saved:", str(out_npz))
 
         print("Saved:", str(out_png))
         print("Saved:", str(out_txt))
+        manifest["phases"].append(phase_manifest)
+
+    manifest["files_requested"] = len(files)
+    manifest["files_used"] = int(n_files_used)
+    manifest["cycles_total"] = int(n_cycles_total)
+    manifest["windows_total"] = int(n_windows_total)
+    _write_json(group_out / "run_manifest.json", manifest)
+    print("Saved:", str(group_out / "run_manifest.json"))
 
 
 def main() -> None:
@@ -520,6 +623,12 @@ def main() -> None:
     ap.add_argument("--subjects", type=int, nargs="*", default=None)
     ap.add_argument("--series", type=int, nargs="*", default=None)
     ap.add_argument("--max-files", type=int, default=None)
+    ap.add_argument("--topk", type=int, default=40)
+    ap.add_argument(
+        "--save-npz",
+        action="store_true",
+        help="Save machine-readable .npz payloads alongside plots and text files.",
+    )
 
     ap.add_argument(
         "--group-by",
@@ -554,6 +663,8 @@ def main() -> None:
             metric=str(args.metric),
             basis_allpairs=args.basis_allpairs,
             pca_r=int(args.pca_r),
+            topk=int(args.topk),
+            save_npz=bool(args.save_npz),
         )
         return
 
@@ -581,6 +692,8 @@ def main() -> None:
             metric=str(args.metric),
             basis_allpairs=args.basis_allpairs,
             pca_r=int(args.pca_r),
+            topk=int(args.topk),
+            save_npz=bool(args.save_npz),
         )
 
 

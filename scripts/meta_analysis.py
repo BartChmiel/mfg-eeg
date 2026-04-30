@@ -7,24 +7,25 @@ Goal:
 - Significance: one-sided binomial test P(X >= k) for X ~ Binomial(N_subjects, p0).
 - Optional multiple-testing correction: BH FDR (q-values).
 - Region-level interpretation + Directionality Index (DI) for dominant region flow.
+- Article-ready exports: text report, edge table CSV, scenario summary CSV, JSON.
 """
 
 from __future__ import annotations
 
+import argparse
+import csv
+import glob
+import json
 import os
 import re
-import glob
-import argparse
-from collections import defaultdict, Counter
-from typing import Dict, List, Tuple, Optional
+from collections import Counter, defaultdict
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 from scipy.stats import binomtest
 
 
-# -----------------------------------------------------------------------------
-# Regions (channel -> anatomical macro-region)
-# -----------------------------------------------------------------------------
 REGIONS: Dict[str, List[str]] = {
     "F_Exec": ["Fp1", "Fp2", "Fz"],
     "F_Motor": ["F3", "F4", "FC5", "FC1", "FC2", "FC6", "C3", "Cz", "C4"],
@@ -41,9 +42,6 @@ def get_region(channel: str) -> str:
     return "X_Other"
 
 
-# -----------------------------------------------------------------------------
-# Interpretation engine (region-to-region)
-# -----------------------------------------------------------------------------
 class BrainInsights:
     @staticmethod
     def get_context(r_src: str, r_dst: str) -> Tuple[str, str]:
@@ -92,13 +90,9 @@ class BrainInsights:
         return ("FUNCTIONAL CONNECTIVITY", f"Information transfer: {r_src} -> {r_dst}.")
 
 
-# -----------------------------------------------------------------------------
-# Parsing helpers
-# -----------------------------------------------------------------------------
 _EDGE_RE = re.compile(
     r"^\s*(?P<rank>\d+)\.\s+(?P<src>[A-Za-z0-9]+)\s+->\s+(?P<dst>[A-Za-z0-9]+)\s+:\s+(?P<val>[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*$"
 )
-
 _FILE_RE = re.compile(
     r"^phase_top_edges_(?P<phase>.+?)_(?P<mode>gc|corr)_m(?P<m>\d+)_pc(?P<pc>\d+)_lag(?P<lag>\d+)ms\.txt$",
     re.IGNORECASE,
@@ -106,27 +100,24 @@ _FILE_RE = re.compile(
 
 
 def parse_edge_line(line: str) -> Optional[Tuple[str, str, float]]:
-    m = _EDGE_RE.match(line.strip())
-    if not m:
+    match = _EDGE_RE.match(line.strip())
+    if not match:
         return None
-    return m.group("src"), m.group("dst"), float(m.group("val"))
+    return match.group("src"), match.group("dst"), float(match.group("val"))
 
 
 def parse_filename(fname: str) -> Optional[Tuple[str, str, int, str, int]]:
-    m = _FILE_RE.match(fname)
-    if not m:
+    match = _FILE_RE.match(fname)
+    if not match:
         return None
-    phase = m.group("phase")
-    mode = m.group("mode").lower()
-    pc = f"pc{int(m.group('pc'))}"
-    lag_ms = int(m.group("lag"))
-    deg_m = int(m.group("m"))
+    phase = match.group("phase")
+    mode = match.group("mode").lower()
+    pc = f"pc{int(match.group('pc'))}"
+    lag_ms = int(match.group("lag"))
+    deg_m = int(match.group("m"))
     return phase, pc, lag_ms, mode, deg_m
 
 
-# -----------------------------------------------------------------------------
-# Statistics: BH FDR
-# -----------------------------------------------------------------------------
 def fdr_bh(pvals: List[float]) -> List[float]:
     p = np.asarray(pvals, float)
     m = p.size
@@ -142,14 +133,400 @@ def fdr_bh(pvals: List[float]) -> List[float]:
     return out.tolist()
 
 
-# -----------------------------------------------------------------------------
-# Directionality Index on region flows
-# -----------------------------------------------------------------------------
 def directionality_index(flow: Counter, a: str, b: str) -> float:
     ab = int(flow.get((a, b), 0))
     ba = int(flow.get((b, a), 0))
     denom = ab + ba
     return 0.0 if denom == 0 else (ab - ba) / float(denom)
+
+
+@dataclass(frozen=True)
+class EdgeResult:
+    phase: str
+    pc: str
+    lag_ms: int
+    src: str
+    dst: str
+    region_src: str
+    region_dst: str
+    k: int
+    n_subjects: int
+    total_subjects_in_dir: int
+    p_value: float
+    q_value: Optional[float]
+    significant: bool
+
+
+@dataclass(frozen=True)
+class ScenarioResult:
+    phase: str
+    pc: str
+    lag_ms: int
+    n_subjects: int
+    total_subjects_in_dir: int
+    candidate_edges: int
+    reported_edges: int
+    dominant_flow_src: str
+    dominant_flow_dst: str
+    dominant_flow_count: int
+    dominant_flow_di: float
+    process_label: str
+    process_desc: str
+
+
+def _scenario_sort_key(scenario: Tuple[str, str, int]) -> tuple[str, str, int]:
+    return scenario[0], scenario[1], scenario[2]
+
+
+def _edge_sort_key(edge: EdgeResult) -> tuple[Any, ...]:
+    q_for_sort = edge.q_value if edge.q_value is not None else 1.0
+    return (-edge.k, edge.p_value, q_for_sort, edge.src, edge.dst)
+
+
+def _sig_marker(p_value: float, q_value: Optional[float], alpha: float, use_fdr: bool) -> str:
+    score = q_value if use_fdr else p_value
+    if score is None:
+        return ""
+    if score < 0.001:
+        return "***"
+    if score < 0.01:
+        return "**"
+    if score < alpha:
+        return "*"
+    return ""
+
+
+def _is_significant(p_value: float, q_value: Optional[float], alpha: float, use_fdr: bool) -> bool:
+    score = q_value if use_fdr else p_value
+    if score is None:
+        return False
+    return bool(score < alpha)
+
+
+def _ensure_parent(path: str) -> None:
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+
+def collect_edge_presence(
+    *,
+    dir_root: str,
+    topk: int,
+    mode_filter: str,
+) -> tuple[
+    dict[tuple[str, str, int], dict[tuple[str, str], set[str]]],
+    dict[tuple[str, str, int], list[tuple[str, str]]],
+    dict[tuple[str, str, int], set[str]],
+    set[str],
+]:
+    pattern = os.path.join(dir_root, "**", "phase_top_edges_*.txt")
+    all_files = glob.glob(pattern, recursive=True)
+    if not all_files:
+        raise RuntimeError("No phase_top_edges_*.txt files found in the given directory.")
+
+    subj_edge_presence: dict[tuple[str, str, int], dict[tuple[str, str], set[str]]] = defaultdict(
+        lambda: defaultdict(set)
+    )
+    region_flow_by_scenario: dict[tuple[str, str, int], list[tuple[str, str]]] = defaultdict(list)
+    scenario_subjects: dict[tuple[str, str, int], set[str]] = defaultdict(set)
+    subjects_all: set[str] = set()
+
+    for fpath in all_files:
+        subj = os.path.basename(os.path.dirname(fpath))
+
+        meta = parse_filename(os.path.basename(fpath))
+        if meta is None:
+            continue
+        phase, pc, lag_ms, mode, _deg_m = meta
+
+        if mode_filter != "any" and mode != mode_filter:
+            continue
+
+        scenario = (phase, pc, lag_ms)
+        subjects_all.add(subj)
+        scenario_subjects[scenario].add(subj)
+
+        edges_taken = 0
+        try:
+            with open(fpath, "r", encoding="utf-8") as handle:
+                for line in handle:
+                    parsed = parse_edge_line(line)
+                    if parsed is None:
+                        continue
+                    src, dst, _val = parsed
+                    subj_edge_presence[scenario][(src, dst)].add(subj)
+                    region_flow_by_scenario[scenario].append((get_region(src), get_region(dst)))
+                    edges_taken += 1
+                    if edges_taken >= int(topk):
+                        break
+        except OSError:
+            continue
+
+    if not subjects_all:
+        raise RuntimeError("No matching files remained after mode filtering.")
+
+    return subj_edge_presence, region_flow_by_scenario, scenario_subjects, subjects_all
+
+
+def build_reports(
+    *,
+    dir_root: str,
+    topk: int,
+    min_subjects: int,
+    channels: int,
+    p0: Optional[float],
+    p0_inflate: float,
+    mode_filter: str,
+    use_fdr: bool,
+    alpha: float,
+    significant_only: bool,
+    dominant_flow_scope: str,
+    max_edges: int,
+) -> tuple[list[EdgeResult], list[ScenarioResult], str, dict[str, Any]]:
+    subj_edge_presence, region_flow_by_scenario, scenario_subjects, subjects_all = collect_edge_presence(
+        dir_root=dir_root,
+        topk=topk,
+        mode_filter=mode_filter,
+    )
+
+    total_subjects = len(subjects_all)
+    C = int(channels)
+    M = C * (C - 1)
+    if p0 is None:
+        p0_eff = min(1.0, float(p0_inflate) * (float(topk) / float(M)))
+    else:
+        p0_eff = float(p0)
+
+    scenarios = sorted(subj_edge_presence.keys(), key=_scenario_sort_key)
+
+    all_edge_rows: list[EdgeResult] = []
+    for scenario in scenarios:
+        phase, pc, lag_ms = scenario
+        N = len(scenario_subjects[scenario])
+        for (src, dst), subjs in subj_edge_presence[scenario].items():
+            k = len(subjs)
+            if k < int(min_subjects):
+                continue
+            p_value = binomtest(k, N, p=p0_eff, alternative="greater").pvalue
+            all_edge_rows.append(
+                EdgeResult(
+                    phase=phase,
+                    pc=pc,
+                    lag_ms=lag_ms,
+                    src=src,
+                    dst=dst,
+                    region_src=get_region(src),
+                    region_dst=get_region(dst),
+                    k=k,
+                    n_subjects=N,
+                    total_subjects_in_dir=total_subjects,
+                    p_value=p_value,
+                    q_value=None,
+                    significant=False,
+                )
+            )
+
+    if use_fdr and all_edge_rows:
+        qvals = fdr_bh([row.p_value for row in all_edge_rows])
+        all_edge_rows = [
+            EdgeResult(
+                **{
+                    **asdict(row),
+                    "q_value": float(q),
+                    "significant": _is_significant(row.p_value, float(q), alpha, True),
+                }
+            )
+            for row, q in zip(all_edge_rows, qvals)
+        ]
+    else:
+        all_edge_rows = [
+            EdgeResult(
+                **{
+                    **asdict(row),
+                    "q_value": None,
+                    "significant": _is_significant(row.p_value, None, alpha, False),
+                }
+            )
+            for row in all_edge_rows
+        ]
+
+    rows_by_scenario: dict[tuple[str, str, int], list[EdgeResult]] = defaultdict(list)
+    for row in all_edge_rows:
+        rows_by_scenario[(row.phase, row.pc, row.lag_ms)].append(row)
+    for scenario in rows_by_scenario:
+        rows_by_scenario[scenario].sort(key=_edge_sort_key)
+
+    scenario_rows: list[ScenarioResult] = []
+    report_lines: list[str] = [
+        (
+            f"N_subjects_total={total_subjects} | mode={mode_filter} | topk={topk} | "
+            f"p0={p0_eff:.6g} | FDR={use_fdr} | significant_only={significant_only}"
+        )
+    ]
+
+    for scenario in scenarios:
+        phase, pc, lag_ms = scenario
+        scenario_edge_rows = rows_by_scenario.get(scenario, [])
+        reported_rows = [
+            row for row in scenario_edge_rows if (row.significant or not significant_only)
+        ]
+
+        flow_source: Iterable[tuple[str, str]]
+        if dominant_flow_scope == "reported" and reported_rows:
+            flow_source = [(row.region_src, row.region_dst) for row in reported_rows]
+        else:
+            flow_source = region_flow_by_scenario[scenario]
+
+        flow = Counter(flow_source)
+        if flow:
+            (dom_src, dom_dst), dom_cnt = flow.most_common(1)[0]
+            dom_di = directionality_index(flow, dom_src, dom_dst)
+        else:
+            dom_src, dom_dst, dom_cnt, dom_di = "X_Other", "X_Other", 0, 0.0
+        process_label, process_desc = BrainInsights.get_context(dom_src, dom_dst)
+
+        scenario_rows.append(
+            ScenarioResult(
+                phase=phase,
+                pc=pc,
+                lag_ms=lag_ms,
+                n_subjects=len(scenario_subjects[scenario]),
+                total_subjects_in_dir=total_subjects,
+                candidate_edges=len(scenario_edge_rows),
+                reported_edges=len(reported_rows),
+                dominant_flow_src=dom_src,
+                dominant_flow_dst=dom_dst,
+                dominant_flow_count=dom_cnt,
+                dominant_flow_di=dom_di,
+                process_label=process_label,
+                process_desc=process_desc,
+            )
+        )
+
+        if not reported_rows:
+            continue
+
+        report_lines.append(f"{phase} | {pc} | lag={lag_ms}ms")
+        report_lines.append(
+            f"  scenario_subjects={len(scenario_subjects[scenario])}/{total_subjects}  reported_edges={len(reported_rows)}"
+        )
+        if use_fdr:
+            report_lines.append("  edge        k/N    p-value      q(FDR)      sig")
+        else:
+            report_lines.append("  edge        k/N    p-value      sig")
+
+        for row in reported_rows[: int(max_edges)]:
+            marker = _sig_marker(row.p_value, row.q_value, alpha, use_fdr)
+            if use_fdr:
+                report_lines.append(
+                    f"  {row.src:4}->{row.dst:4}   {row.k:>2}/{row.n_subjects:<2}  "
+                    f"{row.p_value:>10.4g}  {row.q_value if row.q_value is not None else 1.0:>10.4g}  {marker}"
+                )
+            else:
+                report_lines.append(
+                    f"  {row.src:4}->{row.dst:4}   {row.k:>2}/{row.n_subjects:<2}  {row.p_value:>10.4g}  {marker}"
+                )
+
+        report_lines.append(
+            f"  dominant_flow {dom_src}->{dom_dst}  DI={dom_di:+.2f}  ({process_label})"
+        )
+        report_lines.append(f"  {process_desc}")
+        report_lines.append("")
+
+    report_text = "\n".join(report_lines).rstrip() + "\n"
+    metadata = {
+        "dir": dir_root,
+        "mode": mode_filter,
+        "topk": int(topk),
+        "min_subjects": int(min_subjects),
+        "channels": int(channels),
+        "p0": float(p0_eff),
+        "use_fdr": bool(use_fdr),
+        "alpha": float(alpha),
+        "significant_only": bool(significant_only),
+        "dominant_flow_scope": dominant_flow_scope,
+        "total_subjects": int(total_subjects),
+    }
+    return all_edge_rows, scenario_rows, report_text, metadata
+
+
+def _default_export_paths(out_dir: Optional[str]) -> dict[str, Optional[str]]:
+    if not out_dir:
+        return {"text": None, "edges_csv": None, "scenarios_csv": None, "json": None}
+    os.makedirs(out_dir, exist_ok=True)
+    return {
+        "text": os.path.join(out_dir, "meta_report.txt"),
+        "edges_csv": os.path.join(out_dir, "meta_edges.csv"),
+        "scenarios_csv": os.path.join(out_dir, "meta_scenarios.csv"),
+        "json": os.path.join(out_dir, "meta_report.json"),
+    }
+
+
+def write_edge_csv(path: str, rows: list[EdgeResult]) -> None:
+    _ensure_parent(path)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(asdict(rows[0]).keys()) if rows else [
+            "phase",
+            "pc",
+            "lag_ms",
+            "src",
+            "dst",
+            "region_src",
+            "region_dst",
+            "k",
+            "n_subjects",
+            "total_subjects_in_dir",
+            "p_value",
+            "q_value",
+            "significant",
+        ])
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(asdict(row))
+
+
+def write_scenario_csv(path: str, rows: list[ScenarioResult]) -> None:
+    _ensure_parent(path)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=list(asdict(rows[0]).keys()) if rows else [
+                "phase",
+                "pc",
+                "lag_ms",
+                "n_subjects",
+                "total_subjects_in_dir",
+                "candidate_edges",
+                "reported_edges",
+                "dominant_flow_src",
+                "dominant_flow_dst",
+                "dominant_flow_count",
+                "dominant_flow_di",
+                "process_label",
+                "process_desc",
+            ],
+        )
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(asdict(row))
+
+
+def write_json_report(
+    path: str,
+    *,
+    metadata: dict[str, Any],
+    edge_rows: list[EdgeResult],
+    scenario_rows: list[ScenarioResult],
+) -> None:
+    _ensure_parent(path)
+    payload = {
+        "metadata": metadata,
+        "scenarios": [asdict(row) for row in scenario_rows],
+        "edges": [asdict(row) for row in edge_rows],
+    }
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, ensure_ascii=False)
 
 
 def main() -> None:
@@ -159,9 +536,7 @@ def main() -> None:
         default="out/phase_mats_pca_by_subject",
         help="Root directory containing subject subfolders with phase_top_edges_*.txt files.",
     )
-    ap.add_argument(
-        "--topk", type=int, default=10, help="Top-k edges to read per file."
-    )
+    ap.add_argument("--topk", type=int, default=10, help="Top-k edges to read per file.")
     ap.add_argument(
         "--min-subjects",
         type=int,
@@ -212,148 +587,91 @@ def main() -> None:
     ap.add_argument(
         "--quiet",
         action="store_true",
-        help="Suppress non-essential output (prints only the core report).",
+        help="Suppress console output.",
     )
+    ap.add_argument(
+        "--significant-only",
+        action="store_true",
+        help="Report and export only statistically significant edges.",
+    )
+    ap.add_argument(
+        "--dominant-flow-scope",
+        choices=["all", "reported"],
+        default="reported",
+        help="Whether dominant flow should use all parsed top-k edges or only reported rows.",
+    )
+    ap.add_argument(
+        "--out-dir",
+        default=None,
+        help="If set, write article-ready exports into this directory.",
+    )
+    ap.add_argument("--out-text", default=None, help="Optional path for the text report.")
+    ap.add_argument("--out-csv", default=None, help="Optional path for the flat edge CSV.")
+    ap.add_argument(
+        "--out-scenarios-csv",
+        default=None,
+        help="Optional path for the scenario summary CSV.",
+    )
+    ap.add_argument("--out-json", default=None, help="Optional path for the JSON report.")
     args = ap.parse_args()
 
-    C = int(args.channels)
-    M = C * (C - 1)
-    if args.p0 is None:
-        p0 = min(1.0, float(args.p0_inflate) * (float(args.topk) / float(M)))
-    else:
-        p0 = float(args.p0)
+    edge_rows, scenario_rows, report_text, metadata = build_reports(
+        dir_root=args.dir,
+        topk=int(args.topk),
+        min_subjects=int(args.min_subjects),
+        channels=int(args.channels),
+        p0=args.p0,
+        p0_inflate=float(args.p0_inflate),
+        mode_filter=str(args.mode),
+        use_fdr=bool(args.use_fdr),
+        alpha=float(args.alpha),
+        significant_only=bool(args.significant_only),
+        dominant_flow_scope=str(args.dominant_flow_scope),
+        max_edges=int(args.max_edges),
+    )
 
-    pattern = os.path.join(args.dir, "**", "phase_top_edges_*.txt")
-    all_files = glob.glob(pattern, recursive=True)
-    if not all_files:
-        print("No phase_top_edges_*.txt files found in the given directory.")
-        return
+    filtered_edge_rows = [
+        row for row in edge_rows if (row.significant or not args.significant_only)
+    ]
+    rows_by_scenario: dict[tuple[str, str, int], list[EdgeResult]] = defaultdict(list)
+    for row in filtered_edge_rows:
+        rows_by_scenario[(row.phase, row.pc, row.lag_ms)].append(row)
+    for scenario in rows_by_scenario:
+        rows_by_scenario[scenario].sort(key=_edge_sort_key)
+        rows_by_scenario[scenario] = rows_by_scenario[scenario][: int(args.max_edges)]
 
-    # subj_edge_presence[(phase, pc, lag)][(src,dst)] = set(subjects)
-    subj_edge_presence = defaultdict(lambda: defaultdict(set))
-    region_flow_by_scenario = defaultdict(list)
+    default_paths = _default_export_paths(args.out_dir)
+    out_text = args.out_text or default_paths["text"]
+    out_csv = args.out_csv or default_paths["edges_csv"]
+    out_scenarios_csv = args.out_scenarios_csv or default_paths["scenarios_csv"]
+    out_json = args.out_json or default_paths["json"]
 
-    subjects = set()
-
-    for fpath in all_files:
-        subj = os.path.basename(os.path.dirname(fpath))
-        subjects.add(subj)
-
-        meta = parse_filename(os.path.basename(fpath))
-        if meta is None:
-            continue
-        phase, pc, lag_ms, mode, _deg_m = meta
-
-        if args.mode != "any" and mode != args.mode:
-            continue
-
-        scenario = (phase, pc, lag_ms)
-
-        edges_taken = 0
-        try:
-            with open(fpath, "r", encoding="utf-8") as f:
-                for line in f:
-                    parsed = parse_edge_line(line)
-                    if parsed is None:
-                        continue
-                    src, dst, _val = parsed
-
-                    subj_edge_presence[scenario][(src, dst)].add(subj)
-
-                    r_src = get_region(src)
-                    r_dst = get_region(dst)
-                    region_flow_by_scenario[scenario].append((r_src, r_dst))
-
-                    edges_taken += 1
-                    if edges_taken >= int(args.topk):
-                        break
-        except OSError:
-            continue
-
-    N = len(subjects)
-    scenarios = sorted(subj_edge_presence.keys(), key=lambda x: (x[0], x[1], x[2]))
-
-    # Collect global report items for optional FDR
-    report_items: List[Tuple[Tuple[str, str, int], Tuple[str, str], int, float]] = []
-    for scenario in scenarios:
-        for edge, subjs in subj_edge_presence[scenario].items():
-            k = len(subjs)
-            if k >= int(args.min_subjects):
-                pval = binomtest(k, N, p=p0, alternative="greater").pvalue
-                report_items.append((scenario, edge, k, pval))
-
-    q_map = {}
-    if args.use_fdr and report_items:
-        qvals = fdr_bh([it[3] for it in report_items])
-        for it, q in zip(report_items, qvals):
-            scenario, edge, _k, _p = it
-            q_map[(scenario, edge)] = q
-
-    if not args.quiet:
-        print(
-            f"N_subjects={N} | mode={args.mode} | topk={args.topk} | p0={p0:.6g} | FDR={args.use_fdr}"
+    if out_text:
+        _ensure_parent(out_text)
+        with open(out_text, "w", encoding="utf-8") as handle:
+            handle.write(report_text)
+    if out_csv:
+        write_edge_csv(out_csv, filtered_edge_rows)
+    if out_scenarios_csv:
+        write_scenario_csv(out_scenarios_csv, scenario_rows)
+    if out_json:
+        write_json_report(
+            out_json,
+            metadata=metadata,
+            edge_rows=filtered_edge_rows,
+            scenario_rows=scenario_rows,
         )
 
-    for scenario in scenarios:
-        phase, pc, lag_ms = scenario
-        edge2subj = subj_edge_presence[scenario]
-
-        candidates = []
-        for (src, dst), subjs in edge2subj.items():
-            k = len(subjs)
-            if k < int(args.min_subjects):
-                continue
-            pval = binomtest(k, N, p=p0, alternative="greater").pvalue
-            qval = q_map.get((scenario, (src, dst)), None) if args.use_fdr else None
-            candidates.append((k, pval, (qval if qval is not None else 1.0), src, dst))
-
-        if not candidates:
-            continue
-
-        candidates.sort(key=lambda x: (-x[0], x[1], x[2]))
-
-        flow = Counter(region_flow_by_scenario[scenario])
-        (dom_src, dom_dst), dom_cnt = flow.most_common(1)[0]
-        di = directionality_index(flow, dom_src, dom_dst)
-        proc_label, proc_desc = BrainInsights.get_context(dom_src, dom_dst)
-
-        # Scenario header
-        print(f"{phase} | {pc} | lag={lag_ms}ms")
-
-        # Edge table header
-        if args.use_fdr:
-            print("  edge        k/N    p-value      q(FDR)      sig")
-        else:
-            print("  edge        k/N    p-value      sig")
-
-        # Print top edges
-        shown = 0
-        for k, pval, qtmp, src, dst in candidates:
-            if shown >= int(args.max_edges):
-                break
-            if args.use_fdr:
-                qval = q_map.get((scenario, (src, dst)), 1.0)
-                sig = (
-                    "***"
-                    if qval < 0.001
-                    else ("**" if qval < 0.01 else ("*" if qval < args.alpha else ""))
-                )
-                print(
-                    f"  {src:4}->{dst:4}   {k:>2}/{N:<2}  {pval:>10.4g}  {qval:>10.4g}  {sig}"
-                )
-            else:
-                sig = (
-                    "***"
-                    if pval < 0.001
-                    else ("**" if pval < 0.01 else ("*" if pval < args.alpha else ""))
-                )
-                print(f"  {src:4}->{dst:4}   {k:>2}/{N:<2}  {pval:>10.4g}  {sig}")
-            shown += 1
-
-        # Interpretation line
-        print(f"  dominant_flow {dom_src}->{dom_dst}  DI={di:+.2f}  ({proc_label})")
-        print(f"  {proc_desc}")
-        print()
+    if not args.quiet:
+        print(report_text, end="")
+        for label, path in [
+            ("text", out_text),
+            ("edges_csv", out_csv),
+            ("scenarios_csv", out_scenarios_csv),
+            ("json", out_json),
+        ]:
+            if path:
+                print(f"[OK] wrote {label}: {path}")
 
 
 if __name__ == "__main__":
