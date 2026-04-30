@@ -308,13 +308,3 @@ Run:
 python -m unittest discover -s tests -v
 python -m compileall src_mfg scripts tests
 ```
-
-## Practical Research Standard
-
-Treat a finding as article-ready only if:
-
-- It repeats across subjects.
-- It survives the chosen binomial/FDR setting.
-- It remains plausible under sensitivity checks.
-- It has an event-phase and lag interpretation.
-- It has a machine-readable table and manifest.
