@@ -1,12 +1,9 @@
-# MFG EEG: Kaggle Grasp-and-Lift Article Pipeline
+# MFG EEG: Kaggle Grasp-and-Lift
 
 This project analyzes the Kaggle Grasp-and-Lift EEG Detection dataset with an
 article-focused pipeline for event-locked directed lagged functional
 connectivity.
 
-The project is intentionally centered on Kaggle data. Older exploratory paths
-can stay in the repository, but the GUI and recommended workflow focus on the
-results intended for the article.
 
 ## What It Does
 
