@@ -1,0 +1,30 @@
+{
+  "matched_rows": 288,
+  "mean_aligned_lift": 0.0026013088691555484,
+  "mean_shifted_lift": 0.0011952857182485524,
+  "mean_delta": 0.0014060231509069965,
+  "aligned_wins": 175,
+  "best_group": {
+    "alpha": 0.2,
+    "fusion_grid": 0.25,
+    "classifier": "sgd_logistic",
+    "channel_set": "all32",
+    "preprocess": "bandpass_0_5_48",
+    "matches": 24,
+    "mean_aligned_lift": 0.0025057143269127165,
+    "mean_shifted_lift": 0.0005041300349902792,
+    "mean_delta": 0.0020015842919224374,
+    "aligned_wins": 14,
+    "mean_aligned_auc": 0.8633962828461529,
+    "mean_shifted_auc": 0.8556891672429638,
+    "mean_aligned_baseline_auc": 0.8608905685192402,
+    "mean_shifted_baseline_auc": 0.8551850372079737,
+    "summary_eligible": true
+  },
+  "outputs": {
+    "timing_control": "out\\classification_subject_epochs3\\timing_control.csv",
+    "timing_control_groups": "out\\classification_subject_epochs3\\timing_control_groups.csv",
+    "timing_control_report": "out\\classification_subject_epochs3\\timing_control.md",
+    "timing_control_summary": "out\\classification_subject_epochs3\\timing_control_summary.json"
+  }
+}

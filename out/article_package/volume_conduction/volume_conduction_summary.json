@@ -1,0 +1,32 @@
+{
+  "source_edge_table": "out\\article_meta_sensitivity_bandpass\\edge_stability.csv",
+  "short_range_cm_threshold": 4.5,
+  "min_stability": 1.0,
+  "seed": 20240617,
+  "total_edges": 5,
+  "short_range_edges": 1,
+  "short_range_fraction": 0.2,
+  "long_range_edges": 4,
+  "zero_lag_edges": 2,
+  "nonzero_lag_edges": 3,
+  "nonzero_lag_fraction": 0.6,
+  "asymmetric_edges": 3,
+  "asymmetric_fraction": 0.6,
+  "vc_robust_edges": 2,
+  "vc_robust_fraction": 0.4,
+  "vc_robust_region_flow_top": [
+    {
+      "flow": "Frontal->Frontal",
+      "count": 2
+    }
+  ],
+  "spatial_enrichment": {
+    "n_edges": 5,
+    "observed_mean_distance_cm": 5.385,
+    "null_mean_distance_cm": 14.057,
+    "null_sd_distance_cm": 2.875,
+    "permutation_p_shorter": 0.00039998000099995,
+    "z_score": -3.016,
+    "n_permutations": 20000
+  }
+}

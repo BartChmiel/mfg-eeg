@@ -1,0 +1,3 @@
+preprocessing,stable_edge_count,fully_stable_edges,vc_robust_edges,vc_robust_fraction,short_range_fraction,observed_mean_distance_cm,permutation_p_shorter
+CAR-only,1323,298,79,0.2651,0.7114,3.892,4.999750012499375e-05
+bandpass_0_5_48,766,5,2,0.4,0.2,5.385,0.00039998000099995

@@ -1,0 +1,6 @@
+phase,pc,lag_ms,src,dst,region_src,region_dst,distance_cm,short_range,zero_lag,reverse_present,asymmetric,vc_robust
+Replace__BothReleased,pc2,50,Fp2,Fp1,Frontal,Frontal,5.804,False,False,False,True,True
+Replace__BothReleased,pc2,0,Fp1,Fp2,Frontal,Frontal,5.804,False,True,True,False,False
+Replace__BothReleased,pc2,200,Fp2,Fp1,Frontal,Frontal,5.804,False,False,False,True,True
+FirstDigitTouch__BothStartLoadPhase,pc1,200,F7,FC5,Other,Frontocentral,3.71,True,False,False,True,False
+Replace__BothReleased,pc2,0,Fp2,Fp1,Frontal,Frontal,5.804,False,True,True,False,False

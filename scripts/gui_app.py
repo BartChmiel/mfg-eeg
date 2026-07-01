@@ -61,9 +61,24 @@ RECOMMENDED_STEPS = [
         "Check whether key edges survive changes in top-k, min-subjects, and p0 inflation.",
     ),
     (
+        "classification_benchmark",
+        "Run Classification Benchmark",
+        "Compare baseline EEG classification against MFG-only and baseline + MFG feature sets.",
+    ),
+    (
+        "classification_sweep",
+        "Run Classification Sweep",
+        "Rank several splits and feature settings to test whether MFG-assisted prediction is stable.",
+    ),
+    (
+        "classification_controls",
+        "Run Artefact Controls",
+        "Test MFG lift across channel-set and preprocessing controls before article-level claims.",
+    ),
+    (
         "article_package",
         "Build Article Package",
-        "Collect tables, meta exports, figure indexes, and provenance into one final article folder.",
+        "Collect tables, classification results, figure indexes, and provenance into one final article folder.",
     ),
 ]
 
@@ -157,7 +172,7 @@ class StartHereTab(ttk.Frame):
             hero,
             text=(
                 "Main focus: Grasp-and-Lift EEG Detection (Kaggle).\n"
-                "The recommended route is PCA basis -> phase analysis -> pre-event EMA -> meta-analysis -> sensitivity -> article package."
+                "The recommended route is PCA basis -> phase analysis -> pre-event EMA -> meta-analysis -> sensitivity -> classification -> sweep -> article package."
             ),
             bg=BG_HERO,
             fg="#D9E9F6",
@@ -187,7 +202,7 @@ class StartHereTab(ttk.Frame):
             card,
             text=(
                 "This runs the full Kaggle article pipeline automatically:\n"
-                "PCA basis -> phase analysis -> pre-event EMA -> meta-analysis -> sensitivity -> article package."
+                "PCA basis -> phase analysis -> pre-event EMA -> meta-analysis -> sensitivity -> classification -> sweep -> article package."
             ),
             bg=BG_PANEL,
             fg=FG_MUTED,
@@ -395,6 +410,9 @@ class StartHereTab(ttk.Frame):
                 "Leave advanced settings hidden unless you already know why you want to change them.\n"
                 "For the paper, treat phase analysis as the main result and pre-event EMA as a complementary analysis.\n"
                 "Use Sensitivity Grid to support claims that are stable, not parameter-picked.\n"
+                "Use Classification Benchmark to measure whether MFG features improve event detection.\n"
+                "Use Classification Sweep before strong claims about predictive lift.\n"
+                "Use Artefact Controls before interpreting classifier lift as brain-focused evidence.\n"
                 "Finish with Article Package to gather the tables and provenance you can actually cite.\n"
                 "Secondary dataset paths are intentionally omitted from the interface to keep the project focused."
             ),
@@ -777,9 +795,10 @@ class MethodologyTab(ttk.Frame):
             column=0,
             title="Interpretation",
             text=(
-                "Use 'directional lagged innovation-coupling' or 'directed functional "
-                "connectivity'. Do not claim anatomical causality. Zero-lag visual "
-                "effects especially can reflect common causes or volume conduction."
+                "Recommended reporting terms: 'directional lagged innovation-coupling' "
+                "or 'directed functional connectivity'. The estimates are sensor-level "
+                "statistical dependencies; zero-lag visual effects can reflect common "
+                "causes or volume conduction."
             ),
         )
         self._build_card(
@@ -879,8 +898,8 @@ class MethodologyTab(ttk.Frame):
         buttons = tk.Frame(card, bg=ACCENT_SOFT)
         buttons.pack(anchor="w", pady=(10, 0))
         for label, rel_path in [
+            ("README", "README.md"),
             ("Methodology", "docs/METHODOLOGY.md"),
-            ("Project Overview", "docs/PROJECT_OVERVIEW.md"),
             ("Final Package", "out/article_package/article_summary.md"),
         ]:
             ttk.Button(
@@ -1032,7 +1051,10 @@ class PipelineGui(tk.Tk):
         ).pack(anchor="w")
         tk.Label(
             right,
-            text="1. PCA basis\n2. Phase analysis\n3. Pre-event EMA\n4. Meta-analysis\n5. Sensitivity\n6. Article package",
+            text=(
+                "1. PCA basis\n2. Phase analysis\n3. Pre-event EMA\n"
+                "4. Meta-analysis\n5. Sensitivity\n6. Classification\n7. Sweep\n8. Article package"
+            ),
             bg="#0D2A43",
             fg="#CFE0EE",
             font=("Segoe UI", 10),
@@ -1122,6 +1144,9 @@ class PipelineGui(tk.Tk):
         ttk.Label(shortcuts, text="Quick views", style="Muted.TLabel").pack(side="left")
         for label, path in [
             ("Article Package", "out/article_package"),
+            ("Classification", "out/classification_benchmark"),
+            ("Sweep", "out/classification_sweep"),
+            ("Controls", "out/classification_controls"),
             ("Meta Tables", "out/article_meta_kaggle"),
             ("Sensitivity", "out/article_meta_sensitivity"),
             ("Phase Results", "out/phase_mats_pca_by_subject"),
@@ -1384,12 +1409,16 @@ class PipelineGui(tk.Tk):
     def build_readiness_report(self, dataset_root: str, out_root: str) -> str:
         dataset_path = self._coerce_path(dataset_root or "data/grasp-and-lift-eeg-detection/train")
         output_path = self._coerce_path(out_root or "out")
+        competition_root = dataset_path.parent if dataset_path.name.lower() == "train" else dataset_path
+        test_path = competition_root / "test"
+        sample_submission = competition_root / "sample_submission.csv"
 
         def mark(ok: bool) -> str:
             return "[OK]" if ok else "[MISSING]"
 
         data_files = list(dataset_path.glob("subj*_series*_data.csv")) if dataset_path.exists() else []
         event_files = list(dataset_path.glob("subj*_series*_events.csv")) if dataset_path.exists() else []
+        test_files = list(test_path.glob("subj*_series*_data.csv")) if test_path.exists() else []
         subjects = {
             name.split("_series")[0]
             for name in [path.stem for path in data_files]
@@ -1402,6 +1431,9 @@ class PipelineGui(tk.Tk):
             ("Pre-event EMA", output_path / "experimental_kaggle_by_subject"),
             ("Meta-analysis", output_path / "article_meta_kaggle"),
             ("Sensitivity", output_path / "article_meta_sensitivity"),
+            ("Classification benchmark", output_path / "classification_benchmark" / "model_comparison.csv"),
+            ("Classification sweep", output_path / "classification_sweep" / "sweep_results.csv"),
+            ("Classification controls", output_path / "classification_controls" / "ablation_results.csv"),
             ("Article package", output_path / "article_package" / "article_summary.md"),
         ]
 
@@ -1410,10 +1442,12 @@ class PipelineGui(tk.Tk):
             f"{mark(bool(data_files))} Data files: {len(data_files)}",
             f"{mark(bool(event_files))} Event files: {len(event_files)}",
             f"{mark(bool(subjects))} Subjects detected: {len(subjects)}",
+            f"{mark(bool(test_files))} Kaggle test files: {len(test_files)}",
+            f"{mark(sample_submission.exists())} Sample submission: {sample_submission}",
             "",
             "Method: HCR/PCA-style time-delay multi-feature dependence analysis.",
-            "Variant: event-locked, cross-subject, meta-analysis pipeline.",
-            "Safe wording: directional lagged innovation-coupling, not anatomical causality.",
+            "Variant: event-locked, cross-subject, meta-analysis and classification-ablation pipeline.",
+            "Reporting: directional lagged innovation-coupling at the sensor level.",
             "",
             f"Article output root: {output_path}",
         ]

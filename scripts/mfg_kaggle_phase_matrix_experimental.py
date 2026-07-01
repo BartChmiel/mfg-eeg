@@ -15,7 +15,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src_mfg.basis import legendre_orthonormal
-from src_mfg.config import load_config
+from src_mfg.config import load_config_yaml
 from src_mfg.io import KAGGLE_EVENT_COLS, extract_grasp_cycles, load_kaggle_data_with_events
 from src_mfg.normalize import normalize_edf, normalize_gauss, pnorm_student
 
@@ -286,7 +286,7 @@ def _run_group(
     if metric != "energy":
         raise ValueError("Pre-event EMA analysis currently supports only metric=energy.")
 
-    cfg = load_config()
+    cfg = load_config_yaml()
     fs = int(cfg.fs)
 
     if not files:

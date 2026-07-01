@@ -3,7 +3,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
+import random
 import shutil
+import statistics
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -157,8 +160,12 @@ def _copy_project_docs(out_dir: Path) -> list[str]:
     copied: list[str] = []
     dst_dir = out_dir / "documentation"
     dst_dir.mkdir(parents=True, exist_ok=True)
-    allowed = {"METHODOLOGY.md", "PROJECT_OVERVIEW.md"}
-    for existing in dst_dir.glob("*.md"):
+    allowed = {
+        "METHODOLOGY.md",
+        "eeg_mfg_article.pdf",
+        "references.bib",
+    }
+    for existing in dst_dir.iterdir():
         if existing.name not in allowed:
             existing.unlink()
     for name in sorted(allowed):
@@ -169,6 +176,46 @@ def _copy_project_docs(out_dir: Path) -> list[str]:
         shutil.copy2(src, dst)
         copied.append(str(dst))
     return copied
+
+
+def _copy_volume_conduction(src_dir: Path | None, out_dir: Path) -> list[str]:
+    if src_dir is None or not src_dir.exists():
+        return []
+    copied: list[str] = []
+    dst_dir = out_dir / "volume_conduction"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for name in [
+        "volume_conduction_report.md",
+        "volume_conduction_summary.json",
+        "volume_conduction_edges.csv",
+        "vc_robust_edge_stability.csv",
+    ]:
+        src = src_dir / name
+        if not src.exists():
+            continue
+        dst = dst_dir / name
+        shutil.copy2(src, dst)
+        copied.append(str(dst))
+    return copied
+
+
+def _volume_conduction_stats(vc_dir: Path | None) -> dict[str, Any] | None:
+    if vc_dir is None:
+        return None
+    summary_path = vc_dir / "volume_conduction_summary.json"
+    if not summary_path.exists():
+        return None
+    data = _read_json(summary_path)
+    if not data:
+        return None
+    return {
+        "total_edges": data.get("total_edges"),
+        "short_range_fraction": data.get("short_range_fraction"),
+        "vc_robust_edges": data.get("vc_robust_edges"),
+        "vc_robust_fraction": data.get("vc_robust_fraction"),
+        "observed_mean_distance_cm": (data.get("spatial_enrichment") or {}).get("observed_mean_distance_cm"),
+        "permutation_p_shorter": (data.get("spatial_enrichment") or {}).get("permutation_p_shorter"),
+    }
 
 
 def _copy_sensitivity(src_dir: Path | None, out_dir: Path) -> list[str]:
@@ -182,6 +229,97 @@ def _copy_sensitivity(src_dir: Path | None, out_dir: Path) -> list[str]:
         "sensitivity_edges.csv",
         "edge_stability.csv",
         "sensitivity_manifest.json",
+    ]:
+        src = src_dir / name
+        if not src.exists():
+            continue
+        dst = dst_dir / name
+        shutil.copy2(src, dst)
+        copied.append(str(dst))
+    return copied
+
+
+def _copy_classification(src_dir: Path | None, out_dir: Path) -> list[str]:
+    if src_dir is None or not src_dir.exists():
+        return []
+    copied: list[str] = []
+    dst_dir = out_dir / "classification"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for name in [
+        "benchmark_report.md",
+        "benchmark_summary.json",
+        "model_comparison.csv",
+        "auc_by_event.csv",
+        "mfg_edges_used.csv",
+    ]:
+        src = src_dir / name
+        if not src.exists():
+            continue
+        dst = dst_dir / name
+        shutil.copy2(src, dst)
+        copied.append(str(dst))
+    return copied
+
+
+def _copy_classification_sweep(src_dir: Path | None, out_dir: Path) -> list[str]:
+    if src_dir is None or not src_dir.exists():
+        return []
+    copied: list[str] = []
+    dst_dir = out_dir / "classification_sweep"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for name in [
+        "sweep_report.md",
+        "sweep_summary.json",
+        "sweep_results.csv",
+        "event_lift.csv",
+        "failures.csv",
+    ]:
+        src = src_dir / name
+        if not src.exists():
+            continue
+        dst = dst_dir / name
+        shutil.copy2(src, dst)
+        copied.append(str(dst))
+    return copied
+
+
+def _copy_classification_controls(src_dir: Path | None, out_dir: Path) -> list[str]:
+    if src_dir is None or not src_dir.exists():
+        return []
+    copied: list[str] = []
+    dst_dir = out_dir / "classification_controls"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for name in [
+        "ablation_report.md",
+        "ablation_summary.json",
+        "ablation_results.csv",
+        "ablation_event_lift.csv",
+        "failures.csv",
+    ]:
+        src = src_dir / name
+        if not src.exists():
+            continue
+        dst = dst_dir / name
+        shutil.copy2(src, dst)
+        copied.append(str(dst))
+    return copied
+
+
+def _copy_classification_subject(src_dir: Path | None, out_dir: Path) -> list[str]:
+    if src_dir is None or not src_dir.exists():
+        return []
+    copied: list[str] = []
+    dst_dir = out_dir / "classification_subject"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for name in [
+        "subject_report.md",
+        "subject_summary.json",
+        "subject_results.csv",
+        "timing_control.md",
+        "timing_control.csv",
+        "timing_control_groups.csv",
+        "timing_control_summary.json",
+        "failures.csv",
     ]:
         src = src_dir / name
         if not src.exists():
@@ -221,6 +359,267 @@ def _md_table(headers: list[str], rows: list[list[Any]]) -> list[str]:
     return out
 
 
+def _fmt_metric(value: Any, digits: int = 4, signed: bool = False) -> str:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "n/a"
+    prefix = "+" if signed and number >= 0 else ""
+    return f"{prefix}{number:.{digits}f}"
+
+
+def _exact_positive_sign_p(wins: int, total: int) -> float | None:
+    if total <= 0:
+        return None
+    return sum(math.comb(total, i) for i in range(wins, total + 1)) / float(2**total)
+
+
+def _percentile(values: list[float], q: float) -> float | None:
+    if not values:
+        return None
+    if len(values) == 1:
+        return values[0]
+    ordered = sorted(values)
+    pos = (len(ordered) - 1) * q
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return ordered[lo]
+    weight = pos - lo
+    return ordered[lo] * (1.0 - weight) + ordered[hi] * weight
+
+
+def _bootstrap_mean_ci(
+    values: list[float],
+    *,
+    iterations: int = 20000,
+    seed: int = 20260617,
+) -> tuple[float | None, float | None]:
+    if not values:
+        return None, None
+    rng = random.Random(seed)
+    means: list[float] = []
+    n = len(values)
+    for _ in range(iterations):
+        sample = [values[rng.randrange(n)] for _ in range(n)]
+        means.append(statistics.fmean(sample))
+    return _percentile(means, 0.025), _percentile(means, 0.975)
+
+
+def _classification_subject_stats(classification_subject_dir: Path | None) -> dict[str, Any] | None:
+    if classification_subject_dir is None:
+        return None
+    timing_path = classification_subject_dir / "timing_control.csv"
+    rows = _read_csv(timing_path)
+    if not rows:
+        return None
+
+    deltas = [_safe_float(row.get("aligned_minus_shifted"), 0.0) for row in rows]
+    wins = sum(delta > 0 for delta in deltas)
+    subject_values: dict[str, list[float]] = {}
+    for row, delta in zip(rows, deltas):
+        subject_values.setdefault(str(row.get("subject", "")), []).append(delta)
+    subject_means = [
+        statistics.fmean(values)
+        for subject, values in sorted(subject_values.items())
+        if subject and values
+    ]
+    subject_wins = sum(value > 0 for value in subject_means)
+    ci_low, ci_high = _bootstrap_mean_ci(subject_means)
+
+    return {
+        "matched_rows": len(rows),
+        "row_mean_delta": statistics.fmean(deltas),
+        "row_median_delta": statistics.median(deltas),
+        "row_positive": wins,
+        "row_sign_p": _exact_positive_sign_p(wins, len(deltas)),
+        "subjects": len(subject_means),
+        "subject_mean_delta": statistics.fmean(subject_means) if subject_means else None,
+        "subject_median_delta": statistics.median(subject_means) if subject_means else None,
+        "subject_positive": subject_wins,
+        "subject_sign_p": _exact_positive_sign_p(subject_wins, len(subject_means)),
+        "subject_bootstrap_ci_low": ci_low,
+        "subject_bootstrap_ci_high": ci_high,
+    }
+
+
+def _sensitivity_stats(sensitivity_dir: Path | None) -> dict[str, Any] | None:
+    if sensitivity_dir is None:
+        return None
+    edge_path = sensitivity_dir / "edge_stability.csv"
+    rows = _read_csv(edge_path)
+    if not rows:
+        return None
+    full_stable = [
+        row
+        for row in rows
+        if _safe_float(row.get("stability_fraction"), 0.0) >= 1.0
+    ]
+    region_counts: dict[tuple[str, str], int] = {}
+    for row in full_stable:
+        key = (str(row.get("region_src", "")), str(row.get("region_dst", "")))
+        region_counts[key] = region_counts.get(key, 0) + 1
+    top_region = max(region_counts.items(), key=lambda item: item[1], default=(("", ""), 0))
+
+    return {
+        "unique_stable_edges": len(rows),
+        "fully_stable_edges": len(full_stable),
+        "stable_90_edges": sum(_safe_float(row.get("stability_fraction"), 0.0) >= 0.9 for row in rows),
+        "stable_75_edges": sum(_safe_float(row.get("stability_fraction"), 0.0) >= 0.75 for row in rows),
+        "stable_50_edges": sum(_safe_float(row.get("stability_fraction"), 0.0) >= 0.5 for row in rows),
+        "top_full_stable_region_flow": f"{top_region[0][0]}->{top_region[0][1]}" if top_region[1] else "",
+        "top_full_stable_region_count": top_region[1],
+    }
+
+
+def _write_evidence_tables(
+    out_dir: Path,
+    classifier_stats: dict[str, Any] | None,
+    sensitivity_stats: dict[str, Any] | None,
+    preprocessing_comparison: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    copied: list[str] = []
+    tables_dir = out_dir / "tables"
+    if classifier_stats:
+        classifier_path = tables_dir / "classifier_evidence.csv"
+        _write_csv(
+            classifier_path,
+            [classifier_stats],
+            [
+                "matched_rows",
+                "row_mean_delta",
+                "row_median_delta",
+                "row_positive",
+                "row_sign_p",
+                "subjects",
+                "subject_mean_delta",
+                "subject_median_delta",
+                "subject_positive",
+                "subject_sign_p",
+                "subject_bootstrap_ci_low",
+                "subject_bootstrap_ci_high",
+            ],
+        )
+        copied.append(str(classifier_path))
+    if sensitivity_stats:
+        sensitivity_path = tables_dir / "sensitivity_evidence.csv"
+        _write_csv(
+            sensitivity_path,
+            [sensitivity_stats],
+            [
+                "unique_stable_edges",
+                "fully_stable_edges",
+                "stable_90_edges",
+                "stable_75_edges",
+                "stable_50_edges",
+                "top_full_stable_region_flow",
+                "top_full_stable_region_count",
+            ],
+        )
+        copied.append(str(sensitivity_path))
+    if preprocessing_comparison:
+        comparison_path = tables_dir / "preprocessing_comparison.csv"
+        _write_csv(
+            comparison_path,
+            preprocessing_comparison,
+            [
+                "preprocessing",
+                "stable_edge_count",
+                "fully_stable_edges",
+                "vc_robust_edges",
+                "vc_robust_fraction",
+                "short_range_fraction",
+                "observed_mean_distance_cm",
+                "permutation_p_shorter",
+            ],
+        )
+        copied.append(str(comparison_path))
+    return copied
+
+
+def _preprocessing_comparison_row(
+    label: str,
+    sensitivity_dir: Path | None,
+    volume_conduction_dir: Path | None,
+) -> dict[str, Any] | None:
+    sensitivity = _sensitivity_stats(sensitivity_dir)
+    volume_conduction = _volume_conduction_stats(volume_conduction_dir)
+    if not sensitivity and not volume_conduction:
+        return None
+    return {
+        "preprocessing": label,
+        "stable_edge_count": (sensitivity or {}).get("unique_stable_edges"),
+        "fully_stable_edges": (sensitivity or {}).get("fully_stable_edges"),
+        "vc_robust_edges": (volume_conduction or {}).get("vc_robust_edges"),
+        "vc_robust_fraction": (volume_conduction or {}).get("vc_robust_fraction"),
+        "short_range_fraction": (volume_conduction or {}).get("short_range_fraction"),
+        "observed_mean_distance_cm": (volume_conduction or {}).get("observed_mean_distance_cm"),
+        "permutation_p_shorter": (volume_conduction or {}).get("permutation_p_shorter"),
+    }
+
+
+def _build_classifier_snapshot(
+    classification_controls_dir: Path | None,
+    classification_subject_dir: Path | None,
+    classifier_stats: dict[str, Any] | None = None,
+) -> list[str]:
+    lines: list[str] = []
+
+    timing = (
+        _read_json(classification_subject_dir / "timing_control_summary.json")
+        if classification_subject_dir
+        else None
+    )
+    if timing:
+        lines.append(
+            (
+                "- Subject-aware timing control: "
+                f"{timing.get('matched_rows', 'n/a')} matched rows, aligned lift "
+                f"{_fmt_metric(timing.get('mean_aligned_lift'), signed=True)}, shifted lift "
+                f"{_fmt_metric(timing.get('mean_shifted_lift'), signed=True)}, delta "
+                f"{_fmt_metric(timing.get('mean_delta'), signed=True)}, aligned wins "
+                f"{timing.get('aligned_wins', 'n/a')}/{timing.get('matched_rows', 'n/a')}."
+            )
+        )
+        best_group = timing.get("best_group", {})
+        if best_group:
+            fusion_value = best_group.get("fusion_weight", best_group.get("fusion_grid", "n/a"))
+            lines.append(
+                (
+                    "- Best subject-aware group: "
+                    f"alpha={best_group.get('alpha', 'n/a')}, "
+                    f"fusion={fusion_value}, "
+                    f"baseline AUC {_fmt_metric(best_group.get('mean_aligned_baseline_auc'))}, "
+                    f"assisted AUC {_fmt_metric(best_group.get('mean_aligned_auc'))}, "
+                    f"lift {_fmt_metric(best_group.get('mean_aligned_lift'), signed=True)}, "
+                    f"matched delta {_fmt_metric(best_group.get('mean_delta'), signed=True)}."
+                )
+            )
+
+    if classifier_stats:
+        ci_low = classifier_stats.get("subject_bootstrap_ci_low")
+        ci_high = classifier_stats.get("subject_bootstrap_ci_high")
+        lines.append(
+            (
+                "- Subject-level robustness: "
+                f"{classifier_stats.get('subject_positive', 'n/a')}/"
+                f"{classifier_stats.get('subjects', 'n/a')} subjects have positive mean delta; "
+                f"subject-mean delta {_fmt_metric(classifier_stats.get('subject_mean_delta'), signed=True)}; "
+                f"bootstrap 95% CI [{_fmt_metric(ci_low, signed=True)}, {_fmt_metric(ci_high, signed=True)}]; "
+                f"one-sided sign-test p={_fmt_metric(classifier_stats.get('subject_sign_p'))}."
+            )
+        )
+
+    if lines:
+        lines.append(
+            (
+                "- Classifier interpretation: positive but modest subject-aware "
+                "incremental value."
+            )
+        )
+    return lines
+
+
 def _build_markdown(
     *,
     generated_at: str,
@@ -228,11 +627,25 @@ def _build_markdown(
     pre_event_dir: Path,
     meta_dir: Path,
     sensitivity_dir: Path | None,
+    classification_dir: Path | None,
+    classification_sweep_dir: Path | None,
+    classification_controls_dir: Path | None,
+    classification_subject_dir: Path | None,
+    volume_conduction_dir: Path | None,
     top_scenarios: list[dict[str, Any]],
     top_edges: list[dict[str, Any]],
     manifest_count: int,
     figure_count: int,
     sensitivity_count: int,
+    classification_count: int,
+    classification_sweep_count: int,
+    classification_controls_count: int,
+    classification_subject_count: int,
+    volume_conduction_count: int,
+    classifier_snapshot: list[str],
+    sensitivity_snapshot: list[str],
+    volume_conduction_snapshot: list[str],
+    evidence_table_count: int,
     warnings: list[str],
 ) -> str:
     scenario_rows = [
@@ -243,7 +656,6 @@ def _build_markdown(
             f"{row.get('n_subjects', '')}/{row.get('total_subjects_in_dir', '')}",
             row.get("reported_edges", ""),
             f"{row.get('dominant_flow_src', '')}->{row.get('dominant_flow_dst', '')}",
-            row.get("process_label", ""),
         ]
         for row in top_scenarios[:10]
     ]
@@ -261,16 +673,16 @@ def _build_markdown(
     ]
 
     lines: list[str] = [
-        "# Kaggle Article Package",
+        "# Article Evidence Bundle",
         "",
         f"Generated at UTC: {generated_at}",
         "",
         "## Purpose",
         "",
         (
-            "This package collects the final outputs from the Grasp-and-Lift EEG "
-            "pipeline: phase-wise directed lagged coupling, pre-event EMA dynamics, "
-            "cross-subject meta-analysis, sensitivity analysis, and provenance."
+            "This directory contains the results used in the Grasp-and-Lift EEG "
+            "article: phase-wise directed lagged dependence, cross-subject "
+            "meta-analysis, sensitivity checks, classifier controls, and provenance."
         ),
         "",
         "## Inputs",
@@ -279,9 +691,20 @@ def _build_markdown(
         f"- Pre-event directory: `{pre_event_dir}`",
         f"- Meta-analysis directory: `{meta_dir}`",
         f"- Sensitivity directory: `{sensitivity_dir}`" if sensitivity_dir else "- Sensitivity directory: not provided",
+        f"- Classification directory: `{classification_dir}`" if classification_dir else "- Classification directory: not provided",
+        f"- Classification sweep directory: `{classification_sweep_dir}`" if classification_sweep_dir else "- Classification sweep directory: not provided",
+        f"- Classification controls directory: `{classification_controls_dir}`" if classification_controls_dir else "- Classification controls directory: not provided",
+        f"- Subject classification directory: `{classification_subject_dir}`" if classification_subject_dir else "- Subject classification directory: not provided",
+        f"- Volume-conduction directory: `{volume_conduction_dir}`" if volume_conduction_dir else "- Volume-conduction directory: not provided",
         f"- Run manifests indexed: {manifest_count}",
         f"- Figure candidates indexed: {figure_count}",
         f"- Sensitivity files copied: {sensitivity_count}",
+        f"- Classification files copied: {classification_count}",
+        f"- Classification sweep files copied: {classification_sweep_count}",
+        f"- Classification controls files copied: {classification_controls_count}",
+        f"- Subject classification files copied: {classification_subject_count}",
+        f"- Volume-conduction files copied: {volume_conduction_count}",
+        f"- Evidence table files written: {evidence_table_count}",
         "",
         "## Top Scenarios",
         "",
@@ -295,7 +718,6 @@ def _build_markdown(
                 "subjects",
                 "reported_edges",
                 "dominant_flow",
-                "process",
             ],
             scenario_rows,
         )
@@ -307,13 +729,28 @@ def _build_markdown(
             edge_rows,
         )
     )
+    lines.extend(["", "## Classifier Evidence Snapshot", ""])
+    if classifier_snapshot:
+        lines.extend(classifier_snapshot)
+    else:
+        lines.append("- No classifier evidence snapshot available.")
+    lines.extend(["", "## Sensitivity Evidence Snapshot", ""])
+    if sensitivity_snapshot:
+        lines.extend(sensitivity_snapshot)
+    else:
+        lines.append("- No sensitivity evidence snapshot available.")
+    lines.extend(["", "## Volume-Conduction Snapshot", ""])
+    if volume_conduction_snapshot:
+        lines.extend(volume_conduction_snapshot)
+    else:
+        lines.append("- No volume-conduction snapshot available.")
     lines.extend(
         [
             "",
             "## Interpretation",
             "",
             (
-                "The primary supported result is reproducible, phase-locked, directed "
+                "The central result is reproducible, phase-locked, directed "
                 "lagged dependence between EEG channels after marginal normalization "
                 "and innovation-style whitening. The meta-analysis evaluates whether "
                 "the same edges recur across subjects under a binomial null with "
@@ -321,22 +758,29 @@ def _build_markdown(
             ),
             "",
             (
-                "The results should not be described as direct proof of anatomical "
-                "causality. Recommended terms are directional lagged innovation-coupling, "
-                "directed functional connectivity, or candidate information flow. "
-                "Interpretation should refer to replication, event phase, lag, and "
-                "region-level convergence."
+                "The results are sensor-level statistical dependencies rather than "
+                "anatomical pathways. We describe them as directional lagged sensor "
+                "dependence and interpret only their replication, event phase, lag, "
+                "and sensor-group distribution."
             ),
             "",
             "## Files To Use In The Article",
             "",
             "- `tables/top_scenarios.csv`: compact table of strongest phase/PC/lag scenarios.",
             "- `tables/top_edges.csv`: compact table of most replicated directed edges.",
-            "- `article_summary.md`: summary of the final output package.",
+            "- `tables/classifier_evidence.csv`: compact uncertainty summary for the subject-aware timing control.",
+            "- `tables/sensitivity_evidence.csv`: compact sensitivity-grid stability summary.",
+            "- `tables/preprocessing_comparison.csv`: compact CAR-only versus cleaned-run robustness comparison, if requested.",
+            "- `article_summary.md`: summary of the final evidence.",
             "- `package_manifest.json`: provenance index for inputs, manifests, and figures.",
             "- `raw_meta_exports/`: exact meta-analysis exports copied from the source run.",
             "- `sensitivity/`: optional robustness-grid exports, if provided.",
-            "- `documentation/`: methodology and project overview copied from the repo.",
+            "- `classification/`: optional Kaggle-style classifier ablation exports, if provided.",
+            "- `classification_sweep/`: optional classification-grid robustness exports, if provided.",
+            "- `classification_controls/`: optional artefact and channel-set control exports, if provided.",
+            "- `classification_subject/`: optional participant-specific classifier validation exports, if provided.",
+            "- `volume_conduction/`: distance/lag/asymmetry screening report and edge table, if provided.",
+            "- `documentation/`: article PDF, references, and the technical methodology note.",
             "",
             "## Warnings",
             "",
@@ -356,6 +800,15 @@ def build_package(
     pre_event_dir: str | Path,
     meta_dir: str | Path,
     sensitivity_dir: str | Path | None = None,
+    classification_dir: str | Path | None = None,
+    classification_sweep_dir: str | Path | None = None,
+    classification_controls_dir: str | Path | None = None,
+    classification_subject_dir: str | Path | None = None,
+    volume_conduction_dir: str | Path | None = None,
+    comparison_baseline_label: str = "",
+    comparison_baseline_sensitivity_dir: str | Path | None = None,
+    comparison_baseline_volume_conduction_dir: str | Path | None = None,
+    comparison_current_label: str = "",
     out_dir: str | Path,
     top_scenarios: int = 20,
     top_edges: int = 50,
@@ -365,6 +818,21 @@ def build_package(
     pre_path = Path(pre_event_dir)
     meta_path = Path(meta_dir)
     sensitivity_path = Path(sensitivity_dir) if sensitivity_dir else None
+    classification_path = Path(classification_dir) if classification_dir else None
+    classification_sweep_path = Path(classification_sweep_dir) if classification_sweep_dir else None
+    classification_controls_path = Path(classification_controls_dir) if classification_controls_dir else None
+    classification_subject_path = Path(classification_subject_dir) if classification_subject_dir else None
+    volume_conduction_path = Path(volume_conduction_dir) if volume_conduction_dir else None
+    comparison_baseline_sensitivity_path = (
+        Path(comparison_baseline_sensitivity_dir)
+        if comparison_baseline_sensitivity_dir
+        else None
+    )
+    comparison_baseline_volume_conduction_path = (
+        Path(comparison_baseline_volume_conduction_dir)
+        if comparison_baseline_volume_conduction_dir
+        else None
+    )
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
@@ -392,6 +860,92 @@ def build_package(
     )
     copied_docs = _copy_project_docs(out_path)
     copied_sensitivity = _copy_sensitivity(sensitivity_path, out_path)
+    copied_classification = _copy_classification(classification_path, out_path)
+    copied_classification_sweep = _copy_classification_sweep(classification_sweep_path, out_path)
+    copied_classification_controls = _copy_classification_controls(classification_controls_path, out_path)
+    copied_classification_subject = _copy_classification_subject(classification_subject_path, out_path)
+    copied_volume_conduction = _copy_volume_conduction(volume_conduction_path, out_path)
+    if classification_path is not None and not copied_classification:
+        warnings.append("No classification benchmark files were copied.")
+    if classification_sweep_path is not None and not copied_classification_sweep:
+        warnings.append("No classification sweep files were copied.")
+    if classification_controls_path is not None and not copied_classification_controls:
+        warnings.append("No classification control files were copied.")
+    if classification_subject_path is not None and not copied_classification_subject:
+        warnings.append("No subject classification files were copied.")
+    if volume_conduction_path is not None and not copied_volume_conduction:
+        warnings.append("No volume-conduction control files were copied.")
+
+    classifier_stats = _classification_subject_stats(classification_subject_path)
+    sensitivity_stats_payload = _sensitivity_stats(sensitivity_path)
+    volume_conduction_stats_payload = _volume_conduction_stats(volume_conduction_path)
+    preprocessing_comparison: list[dict[str, Any]] = []
+    if comparison_baseline_label:
+        baseline_row = _preprocessing_comparison_row(
+            comparison_baseline_label,
+            comparison_baseline_sensitivity_path,
+            comparison_baseline_volume_conduction_path,
+        )
+        if baseline_row:
+            preprocessing_comparison.append(baseline_row)
+        else:
+            warnings.append("No baseline preprocessing comparison row could be built.")
+    if comparison_current_label:
+        current_row = _preprocessing_comparison_row(
+            comparison_current_label,
+            sensitivity_path,
+            volume_conduction_path,
+        )
+        if current_row:
+            preprocessing_comparison.append(current_row)
+        else:
+            warnings.append("No current preprocessing comparison row could be built.")
+    copied_evidence_tables = _write_evidence_tables(
+        out_path,
+        classifier_stats,
+        sensitivity_stats_payload,
+        preprocessing_comparison,
+    )
+
+    classifier_snapshot = _build_classifier_snapshot(
+        classification_controls_path,
+        classification_subject_path,
+        classifier_stats,
+    )
+    sensitivity_snapshot: list[str] = []
+    if sensitivity_stats_payload:
+        sensitivity_snapshot.extend(
+            [
+                (
+                    "- Sensitivity grid: "
+                    f"{sensitivity_stats_payload['unique_stable_edges']} unique stable edges across the sensitivity grid; "
+                    f"{sensitivity_stats_payload['fully_stable_edges']} remain significant in all grid settings."
+                ),
+                (
+                    "- Fully stable region flow: "
+                    f"{sensitivity_stats_payload['top_full_stable_region_flow']} "
+                    f"({sensitivity_stats_payload['top_full_stable_region_count']} edge instances)."
+                ),
+            ]
+        )
+    volume_conduction_snapshot: list[str] = []
+    if volume_conduction_stats_payload:
+        volume_conduction_snapshot.extend(
+            [
+                (
+                    "- Distance/lag/asymmetry screen: "
+                    f"{volume_conduction_stats_payload['vc_robust_edges']} / "
+                    f"{volume_conduction_stats_payload['total_edges']} edges pass "
+                    f"({float(volume_conduction_stats_payload['vc_robust_fraction']) * 100:.1f}%)."
+                ),
+                (
+                    "- Short-range fraction among fully stable edges: "
+                    f"{float(volume_conduction_stats_payload['short_range_fraction']) * 100:.1f}% "
+                    f"(permutation p shorter than chance: "
+                    f"{volume_conduction_stats_payload['permutation_p_shorter']})."
+                ),
+            ]
+        )
 
     manifest_paths = list(_safe_rglob(phase_path, "run_manifest.json")) + list(
         _safe_rglob(pre_path, "run_manifest.json")
@@ -417,11 +971,25 @@ def build_package(
         pre_event_dir=pre_path,
         meta_dir=meta_path,
         sensitivity_dir=sensitivity_path,
+        classification_dir=classification_path,
+        classification_sweep_dir=classification_sweep_path,
+        classification_controls_dir=classification_controls_path,
+        classification_subject_dir=classification_subject_path,
+        volume_conduction_dir=volume_conduction_path,
         top_scenarios=scenario_top_rows,
         top_edges=edge_top_rows,
         manifest_count=len(manifests),
         figure_count=len(figures),
         sensitivity_count=len(copied_sensitivity),
+        classification_count=len(copied_classification),
+        classification_sweep_count=len(copied_classification_sweep),
+        classification_controls_count=len(copied_classification_controls),
+        classification_subject_count=len(copied_classification_subject),
+        volume_conduction_count=len(copied_volume_conduction),
+        classifier_snapshot=classifier_snapshot,
+        sensitivity_snapshot=sensitivity_snapshot,
+        volume_conduction_snapshot=volume_conduction_snapshot,
+        evidence_table_count=len(copied_evidence_tables),
         warnings=warnings,
     )
     (out_path / "article_summary.md").write_text(summary_text, encoding="utf-8")
@@ -433,6 +1001,23 @@ def build_package(
             "pre_event_dir": str(pre_path),
             "meta_dir": str(meta_path),
             "sensitivity_dir": str(sensitivity_path) if sensitivity_path else None,
+            "classification_dir": str(classification_path) if classification_path else None,
+            "classification_sweep_dir": str(classification_sweep_path) if classification_sweep_path else None,
+            "classification_controls_dir": str(classification_controls_path) if classification_controls_path else None,
+            "classification_subject_dir": str(classification_subject_path) if classification_subject_path else None,
+            "volume_conduction_dir": str(volume_conduction_path) if volume_conduction_path else None,
+            "comparison_baseline_label": comparison_baseline_label or None,
+            "comparison_baseline_sensitivity_dir": (
+                str(comparison_baseline_sensitivity_path)
+                if comparison_baseline_sensitivity_path
+                else None
+            ),
+            "comparison_baseline_volume_conduction_dir": (
+                str(comparison_baseline_volume_conduction_path)
+                if comparison_baseline_volume_conduction_path
+                else None
+            ),
+            "comparison_current_label": comparison_current_label or None,
         },
         "outputs": {
             "article_summary": str(out_path / "article_summary.md"),
@@ -440,6 +1025,12 @@ def build_package(
             "top_edges": str(tables_dir / "top_edges.csv"),
             "raw_meta_exports": copied,
             "sensitivity": copied_sensitivity,
+            "classification": copied_classification,
+            "classification_sweep": copied_classification_sweep,
+            "classification_controls": copied_classification_controls,
+            "classification_subject": copied_classification_subject,
+            "volume_conduction": copied_volume_conduction,
+            "evidence_tables": copied_evidence_tables,
             "documentation": copied_docs,
         },
         "counts": {
@@ -450,10 +1041,19 @@ def build_package(
             "run_manifests": len(manifests),
             "figure_candidates": len(figures),
             "sensitivity_files": len(copied_sensitivity),
+            "classification_files": len(copied_classification),
+            "classification_sweep_files": len(copied_classification_sweep),
+            "classification_controls_files": len(copied_classification_controls),
+            "classification_subject_files": len(copied_classification_subject),
+            "volume_conduction_files": len(copied_volume_conduction),
+            "evidence_table_files": len(copied_evidence_tables),
         },
         "run_manifests": manifests,
         "figure_candidates": figures,
         "warnings": warnings,
+        "classifier_snapshot": classifier_snapshot,
+        "sensitivity_snapshot": sensitivity_snapshot,
+        "volume_conduction_snapshot": volume_conduction_snapshot,
     }
     _write_json(out_path / "package_manifest.json", payload)
     return payload
@@ -467,6 +1067,15 @@ def main() -> None:
     parser.add_argument("--pre-event-dir", default="out/experimental_kaggle_by_subject")
     parser.add_argument("--meta-dir", default="out/article_meta_kaggle")
     parser.add_argument("--sensitivity-dir", default="")
+    parser.add_argument("--classification-dir", default="")
+    parser.add_argument("--classification-sweep-dir", default="")
+    parser.add_argument("--classification-controls-dir", default="")
+    parser.add_argument("--classification-subject-dir", default="")
+    parser.add_argument("--volume-conduction-dir", default="out/article_volume_conduction")
+    parser.add_argument("--comparison-baseline-label", default="")
+    parser.add_argument("--comparison-baseline-sensitivity-dir", default="")
+    parser.add_argument("--comparison-baseline-volume-conduction-dir", default="")
+    parser.add_argument("--comparison-current-label", default="")
     parser.add_argument("--out", default="out/article_package")
     parser.add_argument("--top-scenarios", type=int, default=20)
     parser.add_argument("--top-edges", type=int, default=50)
@@ -477,6 +1086,15 @@ def main() -> None:
         pre_event_dir=args.pre_event_dir,
         meta_dir=args.meta_dir,
         sensitivity_dir=args.sensitivity_dir or None,
+        classification_dir=args.classification_dir or None,
+        classification_sweep_dir=args.classification_sweep_dir or None,
+        classification_controls_dir=args.classification_controls_dir or None,
+        classification_subject_dir=args.classification_subject_dir or None,
+        volume_conduction_dir=args.volume_conduction_dir or None,
+        comparison_baseline_label=args.comparison_baseline_label,
+        comparison_baseline_sensitivity_dir=args.comparison_baseline_sensitivity_dir or None,
+        comparison_baseline_volume_conduction_dir=args.comparison_baseline_volume_conduction_dir or None,
+        comparison_current_label=args.comparison_current_label,
         out_dir=args.out,
         top_scenarios=int(args.top_scenarios),
         top_edges=int(args.top_edges),

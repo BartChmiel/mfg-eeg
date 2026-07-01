@@ -1,0 +1,35 @@
+{
+  "configs_requested": 8,
+  "configs_completed": 8,
+  "configs_failed": 0,
+  "best": {
+    "config_id": 5,
+    "split": "1-2-3-4-5-6-7|8",
+    "mode": "corr",
+    "m": 2,
+    "max_edges": 8,
+    "stride": 25,
+    "epochs": 1,
+    "mfg_feature_mode": "expanded",
+    "ema_half_life_s": 0.1,
+    "train_series": "1 2 3 4 5 6 7",
+    "val_series": "8",
+    "baseline_windows_ms": "100 200 500",
+    "baseline_lags_ms": "50 100 200",
+    "baseline_auc": 0.6067188393312194,
+    "mfg_auc": 0.5177764601416439,
+    "combined_auc": 0.6111028371774784,
+    "baseline_ap": 0.05493120834170406,
+    "mfg_ap": 0.0433099981143544,
+    "combined_ap": 0.056084725056437655,
+    "combined_minus_baseline": 0.00438399784625898,
+    "mfg_minus_baseline": -0.08894237918957548,
+    "result_dir": "out\\classification_sweep\\runs\\cfg_005"
+  },
+  "outputs": {
+    "sweep_results": "out\\classification_sweep\\sweep_results.csv",
+    "event_lift": "out\\classification_sweep\\event_lift.csv",
+    "sweep_report": "out\\classification_sweep\\sweep_report.md",
+    "failures": null
+  }
+}

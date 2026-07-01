@@ -1,0 +1,88 @@
+{
+  "control_question": "Does MFG-assisted classification survive channel-set and preprocessing controls?",
+  "sweep_summary": {
+    "configs_requested": 64,
+    "configs_completed": 64,
+    "configs_failed": 0,
+    "best": {
+      "config_id": 19,
+      "split": "1-2-3-4-5-6|7",
+      "mode": "corr",
+      "m": 2,
+      "max_edges": 8,
+      "edge_selection": "event_union",
+      "channel_set": "all32",
+      "preprocess": "bandpass_0_5_48",
+      "label_shift_ms": 0.0,
+      "stride": 100,
+      "epochs": 1,
+      "mfg_feature_mode": "expanded",
+      "ema_half_life_s": 0.1,
+      "train_series": "1 2 3 4 5 6",
+      "val_series": "7",
+      "baseline_windows_ms": "100 200 500",
+      "baseline_lags_ms": "50 100 200",
+      "edges_used": 48,
+      "baseline_auc": 0.666731925869143,
+      "mfg_auc": 0.5738122844546852,
+      "combined_auc": 0.7184113733086823,
+      "baseline_ap": 0.06833742548889903,
+      "mfg_ap": 0.04749048179069864,
+      "combined_ap": 0.08309588654046662,
+      "combined_minus_baseline": 0.05167944743953934,
+      "mfg_minus_baseline": -0.09291964141445774,
+      "result_dir": "out\\classification_controls\\runs\\cfg_019"
+    },
+    "outputs": {
+      "sweep_results": "out\\classification_controls\\sweep_results.csv",
+      "event_lift": "out\\classification_controls\\event_lift.csv",
+      "sweep_report": "out\\classification_controls\\sweep_report.md",
+      "failures": null
+    }
+  },
+  "report_summary": {
+    "configs_completed": 64,
+    "best": {
+      "config_id": 19,
+      "split": "1-2-3-4-5-6|7",
+      "mode": "corr",
+      "m": 2,
+      "max_edges": 8,
+      "edge_selection": "event_union",
+      "channel_set": "all32",
+      "preprocess": "bandpass_0_5_48",
+      "label_shift_ms": 0.0,
+      "stride": 100,
+      "epochs": 1,
+      "mfg_feature_mode": "expanded",
+      "ema_half_life_s": 0.1,
+      "train_series": "1 2 3 4 5 6",
+      "val_series": 7,
+      "baseline_windows_ms": "100 200 500",
+      "baseline_lags_ms": "50 100 200",
+      "edges_used": 48,
+      "baseline_auc": 0.666731925869143,
+      "mfg_auc": 0.5738122844546852,
+      "combined_auc": 0.7184113733086823,
+      "baseline_ap": 0.068337425488899,
+      "mfg_ap": 0.0474904817906986,
+      "combined_ap": 0.0830958865404666,
+      "combined_minus_baseline": 0.0516794474395393,
+      "mfg_minus_baseline": -0.0929196414144577,
+      "result_dir": "out\\classification_controls\\runs\\cfg_019",
+      "classifier": "sgd_logistic"
+    },
+    "matched_timing_rows": 32,
+    "outputs": {
+      "ablation_report": "out\\classification_controls\\ablation_report.md"
+    }
+  },
+  "outputs": {
+    "ablation_results": "out\\classification_controls\\ablation_results.csv",
+    "ablation_event_lift": "out\\classification_controls\\ablation_event_lift.csv",
+    "ablation_report": "out\\classification_controls\\ablation_report.md",
+    "ablation_summary": "out\\classification_controls\\ablation_summary.json",
+    "sweep_results": "out\\classification_controls\\sweep_results.csv",
+    "event_lift": "out\\classification_controls\\event_lift.csv"
+  }
+}

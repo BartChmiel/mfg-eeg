@@ -1,0 +1,3 @@
+phase,pc,lag_ms,src,dst,region_src,region_dst,config_count,successful_config_count,stability_fraction,max_k,max_n_subjects,min_p_value,min_q_value,topk_values,min_subjects_values,p0_inflate_values
+Replace__BothReleased,pc2,50,Fp2,Fp1,Frontal,Frontal,27,27,1.0,10,12,6.511753201852308e-15,1.1721155763334154e-13,5 10 15,3 4 5,5.0 10.0 15.0
+Replace__BothReleased,pc2,200,Fp2,Fp1,Frontal,Frontal,27,27,1.0,9,12,7.35683912920622e-11,4.414103477523732e-10,5 10 15,3 4 5,5.0 10.0 15.0

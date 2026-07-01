@@ -57,6 +57,29 @@ def load_kaggle_data_with_events(
     return df_data.index.to_numpy(), X, E, channel_names, KAGGLE_EVENT_COLS
 
 
+def load_kaggle_data_only(
+    data_csv_path: str,
+    channels: Optional[Sequence[str]] = None,
+) -> Tuple[np.ndarray, np.ndarray, list[str]]:
+    """
+    Loads Kaggle EEG data without event labels. Applies Common Average Reference.
+    """
+    df_data = pd.read_csv(data_csv_path)
+    if "id" not in df_data.columns:
+        raise ValueError("Data file must contain an 'id' column.")
+
+    df_data = df_data.set_index("id")
+    channel_names = (
+        list(channels)
+        if channels
+        else [c for c in df_data.columns if pd.api.types.is_numeric_dtype(df_data[c])]
+    )
+    X = df_data[channel_names].to_numpy(dtype=float)
+    X -= np.mean(X, axis=1, keepdims=True)
+
+    return df_data.index.to_numpy(), X, channel_names
+
+
 def _blocks_to_centers(mask_01: np.ndarray) -> np.ndarray:
     """
     Identifies contiguous blocks of active events and returns their center indices.

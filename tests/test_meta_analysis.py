@@ -7,7 +7,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.meta_analysis import build_reports  # noqa: E402
+from scripts.meta_analysis import RegionSummary, build_reports, get_region  # noqa: E402
 
 
 def _write_top_edges(path: Path, edges: list[tuple[str, str, float]]) -> None:
@@ -26,6 +26,13 @@ def _make_case_root(case_name: str) -> Path:
 
 
 class MetaAnalysisTests(unittest.TestCase):
+    def test_region_labels_are_anatomical_and_non_interpretive(self) -> None:
+        self.assertEqual(get_region("Fp1"), "Frontal")
+        self.assertEqual(get_region("C3"), "Frontocentral")
+        label, description = RegionSummary.get_context("Frontal", "Parietal")
+        self.assertEqual(label, "FRONTAL TO PARIETAL SENSOR FLOW")
+        self.assertNotIn("executive", description.lower())
+
     def test_scenario_specific_subject_count_is_used(self) -> None:
         root = _make_case_root("scenario_subject_count")
         try:

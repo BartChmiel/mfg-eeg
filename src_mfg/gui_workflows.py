@@ -30,6 +30,7 @@ class FieldSpec:
     help_text: str = ""
     choices: tuple[str, ...] = ()
     advanced: bool = False
+    false_flag: str = ""
 
 
 @dataclass(frozen=True)
@@ -91,7 +92,7 @@ def _normalize_scalar(field: FieldSpec, raw_value: Any) -> Any:
             raise ValueError(f"Field '{field.label}' requires at least one value.")
         return values or None
 
-    text = str(raw_value or "").strip()
+    text = "" if raw_value is None else str(raw_value).strip()
     if text == "":
         if field.required:
             raise ValueError(f"Field '{field.label}' is required.")
@@ -141,6 +142,8 @@ def build_command(
         if field.kind == "bool":
             if value:
                 cmd.append(field.flag)
+            elif field.false_flag:
+                cmd.append(field.false_flag)
             continue
         if value is None or value == "":
             continue
@@ -182,6 +185,15 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
             FieldSpec("m", "Legendre m", "--m", "int", 4),
             FieldSpec("lags_ms", "Lags (ms)", "--lags-ms", "int_list", [0, 50, 100, 150, 200]),
             FieldSpec("pca_r", "PCA components", "--pca-r", "int", 3),
+            FieldSpec(
+                "preprocess",
+                "Preprocessing",
+                "--preprocess",
+                "choice",
+                "car_only",
+                choices=("car_only", "bandpass_0_5_48", "ocular_proxy_regression"),
+                advanced=True,
+            ),
             FieldSpec("subjects", "Subjects", "--subjects", "int_list", "", advanced=True),
             FieldSpec("series", "Series", "--series", "int_list", "", advanced=True),
             FieldSpec("max_files", "Max files", "--max-files", "int", "", advanced=True),
@@ -198,6 +210,7 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
                 "m": 4,
                 "lags_ms": [0, 50, 100, 150, 200],
                 "pca_r": 3,
+                "preprocess": "car_only",
             }
         },
         recommended_preset="Kaggle article basis",
@@ -229,6 +242,15 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
             FieldSpec("topk", "Top-k edges", "--topk", "int", 40, advanced=True),
             FieldSpec("save_npz", "Save .npz exports", "--save-npz", "bool", True),
             FieldSpec("group_by", "Group by", "--group-by", "choice", "subject", choices=("all", "subject")),
+            FieldSpec(
+                "preprocess",
+                "Preprocessing",
+                "--preprocess",
+                "choice",
+                "car_only",
+                choices=("car_only", "bandpass_0_5_48", "ocular_proxy_regression"),
+                advanced=True,
+            ),
         ),
         presets={
             "Kaggle standard": {
@@ -403,8 +425,340 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
         recommended_preset="Kaggle robustness grid",
     ),
     WorkflowSpec(
+        key="classification_benchmark",
+        title="6. Classification Benchmark",
+        module="scripts.kaggle_classification_benchmark",
+        description=(
+            "Train a Kaggle-style event classifier and compare baseline EEG features against MFG-assisted features."
+        ),
+        output_key="out_dir",
+        fields=(
+            FieldSpec("root", "Dataset root", "--root", "dir", "data/grasp-and-lift-eeg-detection/train", True),
+            FieldSpec("out_dir", "Benchmark output", "--out-dir", "dir", "out/classification_benchmark", True),
+            FieldSpec("edge_table", "MFG edge table", "--edge-table", "file_open", "out/article_meta_sensitivity/edge_stability.csv"),
+            FieldSpec("fallback_edge_table", "Fallback edge table", "--fallback-edge-table", "file_open", "out/article_meta_kaggle/meta_edges.csv", advanced=True),
+            FieldSpec("feature_sets", "Feature sets", "--feature-sets", "str_list", ["baseline", "mfg", "combined"]),
+            FieldSpec("subjects", "Subjects", "--subjects", "int_list", "", advanced=True),
+            FieldSpec("train_series", "Train series", "--train-series", "int_list", [1, 2, 3, 4, 5, 6, 7]),
+            FieldSpec("val_series", "Validation series", "--val-series", "int_list", [8]),
+            FieldSpec("max_train_files", "Max train files", "--max-train-files", "int", "", advanced=True),
+            FieldSpec("max_val_files", "Max validation files", "--max-val-files", "int", "", advanced=True),
+            FieldSpec("max_train_samples_per_file", "Max train samples/file", "--max-train-samples-per-file", "int", "", advanced=True),
+            FieldSpec("max_val_samples_per_file", "Max validation samples/file", "--max-val-samples-per-file", "int", "", advanced=True),
+            FieldSpec("val_keep_all_positive", "Keep validation events", "--val-keep-all-positive", "bool", True, advanced=True),
+            FieldSpec("test_root", "Test dataset root", "--test-root", "dir", "data/grasp-and-lift-eeg-detection/test"),
+            FieldSpec("test_series", "Test series", "--test-series", "int_list", "", advanced=True),
+            FieldSpec("max_test_files", "Max test files", "--max-test-files", "int", "", advanced=True),
+            FieldSpec("submission_out", "Submission CSV", "--submission-out", "file_save", "out/classification_benchmark/submission.csv"),
+            FieldSpec("submission_feature_set", "Submission feature set", "--submission-feature-set", "choice", "combined", choices=("baseline", "mfg", "combined", "fusion")),
+            FieldSpec("sample_submission", "Sample submission", "--sample-submission", "file_open", "data/grasp-and-lift-eeg-detection/sample_submission.csv", advanced=True),
+            FieldSpec("zip_submission", "Create submission ZIP", "--zip-submission", "bool", True),
+            FieldSpec("submission_zip_out", "Submission ZIP", "--submission-zip-out", "file_save", "out/classification_benchmark/submission.zip"),
+            FieldSpec("refit_for_submission", "Refit train+validation for submission", "--refit-for-submission", "bool", True),
+            FieldSpec("max_submission_train_samples_per_file", "Max submission train samples/file", "--max-submission-train-samples-per-file", "int", "", advanced=True),
+            FieldSpec("cache_dir", "Feature cache", "--cache-dir", "dir", "out/classification_benchmark/cache", advanced=True),
+            FieldSpec("max_edges", "MFG edges", "--max-edges", "int", 24),
+            FieldSpec("edge_selection", "Edge selection", "--edge-selection", "choice", "global", choices=("global", "event_union")),
+            FieldSpec("channel_set", "Channel set", "--channel-set", "choice", "all32", choices=("all32", "motor_premotor", "no_fp1_fp2", "occipital_visual", "ocular_proxy_only")),
+            FieldSpec("preprocess", "Preprocessing", "--preprocess", "choice", "car_only", choices=("car_only", "bandpass_0_5_48", "ocular_proxy_regression")),
+            FieldSpec("label_shift_ms", "Label shift control (ms)", "--label-shift-ms", "float", 0.0, advanced=True),
+            FieldSpec("mode", "Mode", "--mode", "choice", "gc", choices=("gc", "corr")),
+            FieldSpec("m", "Legendre m", "--m", "int", 4),
+            FieldSpec("ema_half_life_s", "EMA half-life (s)", "--ema-half-life-s", "float", 0.1),
+            FieldSpec("ar_order", "AR order", "--ar-order", "int", 10, advanced=True),
+            FieldSpec("student_nu", "Student nu", "--student-nu", "int", 10, advanced=True),
+            FieldSpec("baseline_windows_ms", "Baseline windows (ms)", "--baseline-windows-ms", "int_list", [100, 200, 500]),
+            FieldSpec("baseline_lags_ms", "Baseline lags (ms)", "--baseline-lags-ms", "int_list", [50, 100, 200]),
+            FieldSpec("baseline_context", "Baseline context", "--baseline-context", "choice", "causal", choices=("causal", "centered")),
+            FieldSpec("mfg_feature_mode", "MFG feature mode", "--mfg-feature-mode", "choice", "expanded", choices=("energy", "expanded")),
+            FieldSpec("fusion_weight", "Fusion weight", "--fusion-weight", "float", "", advanced=True),
+            FieldSpec("smooth_proba_ms", "Smooth probabilities (ms)", "--smooth-proba-ms", "float", 0.0, advanced=True),
+            FieldSpec("stride", "Sample stride", "--stride", "int", 10),
+            FieldSpec("classifier", "Classifier", "--classifier", "choice", "sgd_logistic", choices=("sgd_logistic", "extra_trees")),
+            FieldSpec("epochs", "Training epochs", "--epochs", "int", 1),
+            FieldSpec("alpha", "SGD alpha", "--alpha", "float", 0.0001, advanced=True),
+            FieldSpec("tree_estimators", "Tree estimators", "--tree-estimators", "int", 120, advanced=True),
+            FieldSpec("tree_max_depth", "Tree max depth", "--tree-max-depth", "int", "", advanced=True),
+            FieldSpec("tree_min_samples_leaf", "Tree min samples/leaf", "--tree-min-samples-leaf", "int", 5, advanced=True),
+            FieldSpec("random_state", "Random seed", "--random-state", "int", 42, advanced=True),
+            FieldSpec("balance_classes", "Balance event classes", "--balance-classes", "bool", True),
+        ),
+        presets={
+            "Kaggle MFG ablation": {
+                "root": "data/grasp-and-lift-eeg-detection/train",
+                "out_dir": "out/classification_benchmark",
+                "edge_table": "out/article_meta_sensitivity/edge_stability.csv",
+                "fallback_edge_table": "out/article_meta_kaggle/meta_edges.csv",
+                "feature_sets": ["baseline", "mfg", "combined"],
+                "train_series": [1, 2, 3, 4, 5, 6, 7],
+                "val_series": [8],
+                "val_keep_all_positive": True,
+                "test_root": "data/grasp-and-lift-eeg-detection/test",
+                "submission_out": "out/classification_benchmark/submission.csv",
+                "submission_feature_set": "fusion",
+                "sample_submission": "data/grasp-and-lift-eeg-detection/sample_submission.csv",
+                "zip_submission": True,
+                "submission_zip_out": "out/classification_benchmark/submission.zip",
+                "refit_for_submission": True,
+                "cache_dir": "out/classification_benchmark/cache",
+                "max_edges": 24,
+                "edge_selection": "event_union",
+                "channel_set": "all32",
+                "preprocess": "bandpass_0_5_48",
+                "label_shift_ms": 0.0,
+                "mode": "gc",
+                "m": 4,
+                "ema_half_life_s": 0.1,
+                "ar_order": 10,
+                "student_nu": 10,
+                "baseline_windows_ms": [100, 200, 500],
+                "baseline_lags_ms": [50, 100, 200],
+                "baseline_context": "causal",
+                "mfg_feature_mode": "expanded",
+                "fusion_weight": 0.25,
+                "smooth_proba_ms": 0.0,
+                "stride": 10,
+                "classifier": "extra_trees",
+                "epochs": 1,
+                "alpha": 0.0001,
+                "tree_estimators": 120,
+                "tree_max_depth": "",
+                "tree_min_samples_leaf": 5,
+                "random_state": 42,
+                "balance_classes": True,
+            }
+        },
+        recommended_preset="Kaggle MFG ablation",
+    ),
+    WorkflowSpec(
+        key="classification_sweep",
+        title="7. Classification Sweep",
+        module="scripts.kaggle_classification_sweep",
+        description=(
+            "Run a grid of classification ablations and rank when MFG-assisted features improve the EEG baseline."
+        ),
+        output_key="out_dir",
+        fields=(
+            FieldSpec("root", "Dataset root", "--root", "dir", "data/grasp-and-lift-eeg-detection/train", True),
+            FieldSpec("out_dir", "Sweep output", "--out-dir", "dir", "out/classification_sweep", True),
+            FieldSpec("edge_table", "MFG edge table", "--edge-table", "file_open", "out/article_meta_sensitivity/edge_stability.csv"),
+            FieldSpec("fallback_edge_table", "Fallback edge table", "--fallback-edge-table", "file_open", "out/article_meta_kaggle/meta_edges.csv", advanced=True),
+            FieldSpec("splits", "Train|validation splits", "--splits", "str_list", ["1 2 3 4 5 6|7", "1 2 3 4 5 6 7|8"]),
+            FieldSpec("modes", "Modes", "--modes", "str_list", ["corr", "gc"]),
+            FieldSpec("m_values", "Legendre m grid", "--m-values", "int_list", [2, 4]),
+            FieldSpec("max_edges", "MFG edge grid", "--max-edges", "int_list", [8, 16, 24]),
+            FieldSpec("edge_selections", "Edge selection grid", "--edge-selections", "str_list", ["global", "event_union"]),
+            FieldSpec("channel_sets", "Channel-set grid", "--channel-sets", "str_list", ["all32"]),
+            FieldSpec("preprocessings", "Preprocessing grid", "--preprocessings", "str_list", ["car_only"]),
+            FieldSpec("label_shift_ms_values", "Label-shift grid (ms)", "--label-shift-ms-values", "str_list", [0.0]),
+            FieldSpec("strides", "Stride grid", "--strides", "int_list", [10, 25]),
+            FieldSpec("mfg_feature_modes", "MFG feature modes", "--mfg-feature-modes", "str_list", ["energy", "expanded"]),
+            FieldSpec("fusion_weights", "Fusion weights", "--fusion-weights", "str_list", "", advanced=True),
+            FieldSpec("baseline_windows_ms", "Baseline windows (ms)", "--baseline-windows-ms", "int_list", [100, 200, 500]),
+            FieldSpec("baseline_lags_ms", "Baseline lags (ms)", "--baseline-lags-ms", "int_list", [50, 100, 200]),
+            FieldSpec("baseline_contexts", "Baseline contexts", "--baseline-contexts", "str_list", ["causal"]),
+            FieldSpec("smooth_proba_ms_values", "Smoothing grid (ms)", "--smooth-proba-ms-values", "str_list", [0.0], advanced=True),
+            FieldSpec("ema_half_life_s", "EMA half-life (s)", "--ema-half-life-s", "float", 0.1),
+            FieldSpec("classifiers", "Classifiers", "--classifiers", "str_list", ["sgd_logistic"]),
+            FieldSpec("epochs", "Epochs", "--epochs", "int", 1),
+            FieldSpec("tree_estimators", "Tree estimators", "--tree-estimators", "int", 120, advanced=True),
+            FieldSpec("tree_max_depth", "Tree max depth", "--tree-max-depth", "int", "", advanced=True),
+            FieldSpec("tree_min_samples_leaf", "Tree min samples/leaf", "--tree-min-samples-leaf", "int", 5, advanced=True),
+            FieldSpec("max_train_files", "Max train files", "--max-train-files", "int", "", advanced=True),
+            FieldSpec("max_val_files", "Max validation files", "--max-val-files", "int", "", advanced=True),
+            FieldSpec("max_train_samples_per_file", "Max train samples/file", "--max-train-samples-per-file", "int", 1200, advanced=True),
+            FieldSpec("max_val_samples_per_file", "Max validation samples/file", "--max-val-samples-per-file", "int", 1200, advanced=True),
+            FieldSpec("val_keep_all_positive", "Keep validation events", "--val-keep-all-positive", "bool", True, advanced=True, false_flag="--no-val-keep-all-positive"),
+            FieldSpec("cache_dir", "Sweep cache", "--cache-dir", "dir", "out/classification_sweep/cache", advanced=True),
+            FieldSpec("balance_classes", "Balance event classes", "--balance-classes", "bool", True),
+            FieldSpec("quiet", "Quiet run logs", "--quiet", "bool", False, advanced=True),
+        ),
+        presets={
+            "Kaggle MFG sweep": {
+                "root": "data/grasp-and-lift-eeg-detection/train",
+                "out_dir": "out/classification_sweep",
+                "edge_table": "out/article_meta_sensitivity/edge_stability.csv",
+                "fallback_edge_table": "out/article_meta_kaggle/meta_edges.csv",
+                "splits": ["1 2 3 4 5 6|7", "1 2 3 4 5 6 7|8"],
+                "modes": ["corr", "gc"],
+                "m_values": [2, 4],
+                "max_edges": [8, 16, 24],
+                "edge_selections": ["global", "event_union"],
+                "channel_sets": ["all32"],
+                "preprocessings": ["car_only"],
+                "label_shift_ms_values": [0.0],
+                "strides": [10, 25],
+                "mfg_feature_modes": ["energy", "expanded"],
+                "fusion_weights": [0.25],
+                "baseline_windows_ms": [100, 200, 500],
+                "baseline_lags_ms": [50, 100, 200],
+                "baseline_contexts": ["causal", "centered"],
+                "smooth_proba_ms_values": [0.0, 100.0],
+                "ema_half_life_s": 0.1,
+                "classifiers": ["sgd_logistic", "extra_trees"],
+                "epochs": 1,
+                "tree_estimators": 120,
+                "tree_max_depth": "",
+                "tree_min_samples_leaf": 5,
+                "max_train_samples_per_file": 1200,
+                "max_val_samples_per_file": 1200,
+                "val_keep_all_positive": True,
+                "cache_dir": "out/classification_sweep/cache",
+                "balance_classes": True,
+            }
+        },
+        recommended_preset="Kaggle MFG sweep",
+    ),
+    WorkflowSpec(
+        key="classification_controls",
+        title="8. Classification Controls",
+        module="scripts.kaggle_classification_controls",
+        description=(
+            "Run the artefact and channel-set control grid for article-facing classifier claims."
+        ),
+        output_key="out_dir",
+        fields=(
+            FieldSpec("root", "Dataset root", "--root", "dir", "data/grasp-and-lift-eeg-detection/train", True),
+            FieldSpec("out_dir", "Controls output", "--out-dir", "dir", "out/classification_controls", True),
+            FieldSpec("edge_table", "MFG edge table", "--edge-table", "file_open", "out/article_meta_sensitivity/edge_stability.csv"),
+            FieldSpec("fallback_edge_table", "Fallback edge table", "--fallback-edge-table", "file_open", "out/article_meta_kaggle/meta_edges.csv", advanced=True),
+            FieldSpec("splits", "Train|validation splits", "--splits", "str_list", ["1 2 3 4 5 6|7", "1 2 3 4 5 6 7|8"]),
+            FieldSpec("modes", "Modes", "--modes", "str_list", ["corr"]),
+            FieldSpec("m_values", "Legendre m grid", "--m-values", "int_list", [2]),
+            FieldSpec("max_edges", "MFG edge grid", "--max-edges", "int_list", [4, 8]),
+            FieldSpec("edge_selections", "Edge selection grid", "--edge-selections", "str_list", ["global", "event_union"]),
+            FieldSpec("channel_sets", "Channel-set grid", "--channel-sets", "str_list", ["all32", "no_fp1_fp2", "motor_premotor", "ocular_proxy_only"]),
+            FieldSpec("preprocessings", "Preprocessing grid", "--preprocessings", "str_list", ["car_only", "bandpass_0_5_48"]),
+            FieldSpec("label_shift_ms_values", "Label-shift controls (ms)", "--label-shift-ms-values", "str_list", [0.0, 500.0]),
+            FieldSpec("strides", "Stride grid", "--strides", "int_list", [25]),
+            FieldSpec("mfg_feature_modes", "MFG feature modes", "--mfg-feature-modes", "str_list", ["expanded"]),
+            FieldSpec("fusion_weights", "Fusion weights", "--fusion-weights", "str_list", [0.25], advanced=True),
+            FieldSpec("baseline_contexts", "Baseline contexts", "--baseline-contexts", "str_list", ["causal", "centered"], advanced=True),
+            FieldSpec("smooth_proba_ms_values", "Smoothing grid (ms)", "--smooth-proba-ms-values", "str_list", [0.0, 100.0], advanced=True),
+            FieldSpec("classifiers", "Classifiers", "--classifiers", "str_list", ["sgd_logistic"]),
+            FieldSpec("tree_estimators", "Tree estimators", "--tree-estimators", "int", 120, advanced=True),
+            FieldSpec("tree_max_depth", "Tree max depth", "--tree-max-depth", "int", "", advanced=True),
+            FieldSpec("tree_min_samples_leaf", "Tree min samples/leaf", "--tree-min-samples-leaf", "int", 5, advanced=True),
+            FieldSpec("max_train_samples_per_file", "Max train samples/file", "--max-train-samples-per-file", "int", 1200, advanced=True),
+            FieldSpec("max_val_samples_per_file", "Max validation samples/file", "--max-val-samples-per-file", "int", 1200, advanced=True),
+            FieldSpec("val_keep_all_positive", "Keep validation events", "--val-keep-all-positive", "bool", True, advanced=True, false_flag="--no-val-keep-all-positive"),
+            FieldSpec("cache_dir", "Controls cache", "--cache-dir", "dir", "out/classification_controls/cache", advanced=True),
+            FieldSpec("balance_classes", "Balance event classes", "--balance-classes", "bool", True),
+            FieldSpec("quiet", "Quiet run logs", "--quiet", "bool", False, advanced=True),
+        ),
+        presets={
+            "Kaggle artefact controls": {
+                "root": "data/grasp-and-lift-eeg-detection/train",
+                "out_dir": "out/classification_controls",
+                "edge_table": "out/article_meta_sensitivity/edge_stability.csv",
+                "fallback_edge_table": "out/article_meta_kaggle/meta_edges.csv",
+                "splits": ["1 2 3 4 5 6|7", "1 2 3 4 5 6 7|8"],
+                "modes": ["corr"],
+                "m_values": [2],
+                "max_edges": [4, 8],
+                "edge_selections": ["global", "event_union"],
+                "channel_sets": ["all32", "no_fp1_fp2", "motor_premotor", "ocular_proxy_only"],
+                "preprocessings": ["car_only", "bandpass_0_5_48"],
+                "label_shift_ms_values": [0.0, 500.0],
+                "strides": [25],
+                "mfg_feature_modes": ["expanded"],
+                "fusion_weights": [0.25],
+                "baseline_contexts": ["causal", "centered"],
+                "smooth_proba_ms_values": [0.0, 100.0],
+                "classifiers": ["sgd_logistic"],
+                "tree_estimators": 120,
+                "tree_max_depth": "",
+                "tree_min_samples_leaf": 5,
+                "max_train_samples_per_file": 1200,
+                "max_val_samples_per_file": 1200,
+                "val_keep_all_positive": True,
+                "cache_dir": "out/classification_controls/cache",
+                "balance_classes": True,
+            }
+        },
+        recommended_preset="Kaggle artefact controls",
+    ),
+    WorkflowSpec(
+        key="classification_subject",
+        title="9. Subject Classification",
+        module="scripts.kaggle_subject_classification",
+        description=(
+            "Run participant-specific event decoders and aggregate MFG-assisted classification lift."
+        ),
+        output_key="out_dir",
+        fields=(
+            FieldSpec("root", "Dataset root", "--root", "dir", "data/grasp-and-lift-eeg-detection/train", True),
+            FieldSpec("out_dir", "Subject output", "--out-dir", "dir", "out/classification_subject", True),
+            FieldSpec("edge_table", "MFG edge table", "--edge-table", "file_open", "out/article_meta_sensitivity/edge_stability.csv"),
+            FieldSpec("fallback_edge_table", "Fallback edge table", "--fallback-edge-table", "file_open", "out/article_meta_kaggle/meta_edges.csv", advanced=True),
+            FieldSpec("subjects", "Subjects", "--subjects", "int_list", list(range(1, 13))),
+            FieldSpec("splits", "Train|validation splits", "--splits", "str_list", ["1 2 3 4 5 6|7", "1 2 3 4 5 6 7|8"]),
+            FieldSpec("feature_sets", "Feature sets", "--feature-sets", "str_list", ["baseline", "mfg", "combined"]),
+            FieldSpec("mode", "Mode", "--mode", "choice", "corr", choices=("corr", "gc")),
+            FieldSpec("m", "Legendre m", "--m", "int", 2),
+            FieldSpec("max_edges", "MFG edges", "--max-edges", "int", 8),
+            FieldSpec("edge_selection", "Edge selection", "--edge-selection", "choice", "event_union", choices=("global", "event_union")),
+            FieldSpec("channel_set", "Channel set", "--channel-set", "choice", "all32", choices=("all32", "motor_premotor", "no_fp1_fp2", "occipital_visual", "ocular_proxy_only")),
+            FieldSpec("preprocess", "Preprocessing", "--preprocess", "choice", "bandpass_0_5_48", choices=("car_only", "bandpass_0_5_48", "ocular_proxy_regression")),
+            FieldSpec("label_shift_ms", "Label shift control (ms)", "--label-shift-ms", "float", 0.0, advanced=True),
+            FieldSpec("stride", "Sample stride", "--stride", "int", 100),
+            FieldSpec("baseline_windows_ms", "Baseline windows (ms)", "--baseline-windows-ms", "int_list", [100, 200, 500]),
+            FieldSpec("baseline_lags_ms", "Baseline lags (ms)", "--baseline-lags-ms", "int_list", [50, 100, 200]),
+            FieldSpec("baseline_context", "Baseline context", "--baseline-context", "choice", "causal", choices=("causal", "centered")),
+            FieldSpec("mfg_feature_mode", "MFG feature mode", "--mfg-feature-mode", "choice", "expanded", choices=("energy", "expanded")),
+            FieldSpec("smooth_proba_ms", "Smooth probabilities (ms)", "--smooth-proba-ms", "float", 0.0, advanced=True),
+            FieldSpec("fusion_weight", "Fusion weight", "--fusion-weight", "float", "", advanced=True),
+            FieldSpec("fusion_weight_values", "Fixed fusion sweep", "--fusion-weight-values", "str_list", [0.1, 0.15, 0.2, 0.25]),
+            FieldSpec("classifier", "Classifier", "--classifier", "choice", "sgd_logistic", choices=("sgd_logistic", "extra_trees")),
+            FieldSpec("epochs", "Training epochs", "--epochs", "int", 3),
+            FieldSpec("alpha", "SGD alpha", "--alpha", "float", 0.2, advanced=True),
+            FieldSpec("alpha_values", "Alpha grid", "--alpha-values", "str_list", [0.1, 0.2, 0.3]),
+            FieldSpec("max_train_samples_per_file", "Max train samples/file", "--max-train-samples-per-file", "int", 1200, advanced=True),
+            FieldSpec("max_val_samples_per_file", "Max validation samples/file", "--max-val-samples-per-file", "int", 1200, advanced=True),
+            FieldSpec("val_keep_all_positive", "Keep validation events", "--val-keep-all-positive", "bool", True, advanced=True, false_flag="--no-val-keep-all-positive"),
+            FieldSpec("balance_classes", "Balance event classes", "--balance-classes", "bool", True),
+            FieldSpec("quiet", "Quiet run logs", "--quiet", "bool", False, advanced=True),
+        ),
+        presets={
+            "Kaggle subject-aware validation": {
+                "root": "data/grasp-and-lift-eeg-detection/train",
+                "out_dir": "out/classification_subject",
+                "edge_table": "out/article_meta_sensitivity/edge_stability.csv",
+                "fallback_edge_table": "out/article_meta_kaggle/meta_edges.csv",
+                "subjects": list(range(1, 13)),
+                "splits": ["1 2 3 4 5 6|7", "1 2 3 4 5 6 7|8"],
+                "feature_sets": ["baseline", "mfg", "combined"],
+                "mode": "corr",
+                "m": 2,
+                "max_edges": 8,
+                "edge_selection": "event_union",
+                "channel_set": "all32",
+                "preprocess": "bandpass_0_5_48",
+                "label_shift_ms": 0.0,
+                "stride": 100,
+                "baseline_windows_ms": [100, 200, 500],
+                "baseline_lags_ms": [50, 100, 200],
+                "baseline_context": "causal",
+                "mfg_feature_mode": "expanded",
+                "smooth_proba_ms": 0.0,
+                "fusion_weight": "",
+                "fusion_weight_values": [0.1, 0.15, 0.2, 0.25],
+                "classifier": "sgd_logistic",
+                "epochs": 3,
+                "alpha": 0.2,
+                "alpha_values": [0.1, 0.2, 0.3],
+                "max_train_samples_per_file": 1200,
+                "max_val_samples_per_file": 1200,
+                "val_keep_all_positive": True,
+                "balance_classes": True,
+                "quiet": False,
+            }
+        },
+        recommended_preset="Kaggle subject-aware validation",
+    ),
+    WorkflowSpec(
         key="article_package",
-        title="6. Article Package",
+        title="10. Article Package",
         module="scripts.build_article_package",
         description=(
             "Collect article-facing tables, copied meta exports, figure indexes, and provenance into one package."
@@ -415,6 +769,10 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
             FieldSpec("pre_event_dir", "Pre-event results", "--pre-event-dir", "dir", "out/experimental_kaggle_by_subject", True),
             FieldSpec("meta_dir", "Meta-analysis exports", "--meta-dir", "dir", "out/article_meta_kaggle", True),
             FieldSpec("sensitivity_dir", "Sensitivity exports", "--sensitivity-dir", "dir", "out/article_meta_sensitivity"),
+            FieldSpec("classification_dir", "Classification benchmark", "--classification-dir", "dir", "out/classification_benchmark"),
+            FieldSpec("classification_sweep_dir", "Classification sweep", "--classification-sweep-dir", "dir", "out/classification_sweep"),
+            FieldSpec("classification_controls_dir", "Classification controls", "--classification-controls-dir", "dir", "out/classification_controls"),
+            FieldSpec("classification_subject_dir", "Subject classification", "--classification-subject-dir", "dir", "out/classification_subject_epochs3"),
             FieldSpec("out", "Article package", "--out", "dir", "out/article_package", True),
             FieldSpec("top_scenarios", "Top scenarios", "--top-scenarios", "int", 20),
             FieldSpec("top_edges", "Top edges", "--top-edges", "int", 50),
@@ -425,6 +783,10 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
                 "pre_event_dir": "out/experimental_kaggle_by_subject",
                 "meta_dir": "out/article_meta_kaggle",
                 "sensitivity_dir": "out/article_meta_sensitivity",
+                "classification_dir": "out/classification_benchmark",
+                "classification_sweep_dir": "out/classification_sweep",
+                "classification_controls_dir": "out/classification_controls",
+                "classification_subject_dir": "out/classification_subject_epochs3",
                 "out": "out/article_package",
                 "top_scenarios": 20,
                 "top_edges": 50,
@@ -449,6 +811,10 @@ def build_article_pipeline_inputs(
     pre_event_out = str(base / "experimental_kaggle_by_subject")
     meta_out = str(base / "article_meta_kaggle")
     sensitivity_out = str(base / "article_meta_sensitivity")
+    classification_out = str(base / "classification_benchmark")
+    classification_sweep_out = str(base / "classification_sweep")
+    classification_controls_out = str(base / "classification_controls")
+    classification_subject_out = str(base / "classification_subject_epochs3")
     package_out = str(base / "article_package")
 
     basis_spec = WORKFLOW_MAP["build_basis"]
@@ -497,6 +863,21 @@ def build_article_pipeline_inputs(
         }
     )
 
+    classification_spec = WORKFLOW_MAP["classification_benchmark"]
+    classification_values = get_initial_values(classification_spec)
+    classification_values.update(
+        {
+            "root": dataset_root,
+            "out_dir": classification_out,
+            "edge_table": str(base / "article_meta_sensitivity" / "edge_stability.csv"),
+            "fallback_edge_table": str(base / "article_meta_kaggle" / "meta_edges.csv"),
+            "submission_out": str(base / "classification_benchmark" / "submission.csv"),
+            "sample_submission": "data/grasp-and-lift-eeg-detection/sample_submission.csv",
+            "submission_zip_out": str(base / "classification_benchmark" / "submission.zip"),
+            "cache_dir": str(base / "classification_benchmark" / "cache"),
+        }
+    )
+
     package_spec = WORKFLOW_MAP["article_package"]
     package_values = get_initial_values(package_spec)
     package_values.update(
@@ -505,6 +886,10 @@ def build_article_pipeline_inputs(
             "pre_event_dir": pre_event_out,
             "meta_dir": meta_out,
             "sensitivity_dir": sensitivity_out,
+            "classification_dir": classification_out,
+            "classification_sweep_dir": classification_sweep_out,
+            "classification_controls_dir": classification_controls_out,
+            "classification_subject_dir": classification_subject_out,
             "out": package_out,
         }
     )
@@ -515,5 +900,6 @@ def build_article_pipeline_inputs(
         (pre_spec, pre_values),
         (meta_spec, meta_values),
         (sensitivity_spec, sensitivity_values),
+        (classification_spec, classification_values),
         (package_spec, package_values),
     ]

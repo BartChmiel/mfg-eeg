@@ -18,6 +18,10 @@ class GuiWorkflowTests(unittest.TestCase):
             "pre_event",
             "meta_analysis",
             "meta_sensitivity",
+            "classification_benchmark",
+            "classification_sweep",
+            "classification_controls",
+            "classification_subject",
             "article_package",
         ]:
             self.assertIsNotNone(WORKFLOW_MAP[key].recommended_preset)
@@ -29,6 +33,10 @@ class GuiWorkflowTests(unittest.TestCase):
                 "article_package",
                 "batch_phase",
                 "build_basis",
+                "classification_benchmark",
+                "classification_controls",
+                "classification_subject",
+                "classification_sweep",
                 "meta_analysis",
                 "meta_sensitivity",
                 "pre_event",
@@ -45,6 +53,10 @@ class GuiWorkflowTests(unittest.TestCase):
         expected_pre_event = str(Path("out/article_run/experimental_kaggle_by_subject"))
         expected_meta = str(Path("out/article_run/article_meta_kaggle"))
         expected_sensitivity = str(Path("out/article_run/article_meta_sensitivity"))
+        expected_classification = str(Path("out/article_run/classification_benchmark"))
+        expected_classification_sweep = str(Path("out/article_run/classification_sweep"))
+        expected_classification_controls = str(Path("out/article_run/classification_controls"))
+        expected_classification_subject = str(Path("out/article_run/classification_subject_epochs3"))
 
         self.assertEqual(
             [spec.key for spec, _ in steps],
@@ -54,6 +66,7 @@ class GuiWorkflowTests(unittest.TestCase):
                 "pre_event",
                 "meta_analysis",
                 "meta_sensitivity",
+                "classification_benchmark",
                 "article_package",
             ],
         )
@@ -68,10 +81,16 @@ class GuiWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(steps[4][1]["dir"], expected_phase)
         self.assertEqual(steps[4][1]["out_dir"], expected_sensitivity)
-        self.assertEqual(steps[5][1]["phase_dir"], expected_phase)
-        self.assertEqual(steps[5][1]["pre_event_dir"], expected_pre_event)
-        self.assertEqual(steps[5][1]["meta_dir"], expected_meta)
-        self.assertEqual(steps[5][1]["sensitivity_dir"], expected_sensitivity)
+        self.assertEqual(steps[5][1]["out_dir"], expected_classification)
+        self.assertEqual(steps[5][1]["edge_table"], str(Path("out/article_run/article_meta_sensitivity/edge_stability.csv")))
+        self.assertEqual(steps[6][1]["phase_dir"], expected_phase)
+        self.assertEqual(steps[6][1]["pre_event_dir"], expected_pre_event)
+        self.assertEqual(steps[6][1]["meta_dir"], expected_meta)
+        self.assertEqual(steps[6][1]["sensitivity_dir"], expected_sensitivity)
+        self.assertEqual(steps[6][1]["classification_dir"], expected_classification)
+        self.assertEqual(steps[6][1]["classification_sweep_dir"], expected_classification_sweep)
+        self.assertEqual(steps[6][1]["classification_controls_dir"], expected_classification_controls)
+        self.assertEqual(steps[6][1]["classification_subject_dir"], expected_classification_subject)
 
     def test_parse_int_list_accepts_spaces_and_commas(self) -> None:
         self.assertEqual(parse_int_list("0, 50 100;200"), [0, 50, 100, 200])
@@ -109,6 +128,20 @@ class GuiWorkflowTests(unittest.TestCase):
         self.assertNotIn("--subjects", command)
         self.assertNotIn("--series", command)
 
+    def test_basis_command_accepts_preprocessing(self) -> None:
+        spec = WORKFLOW_MAP["build_basis"]
+        preset = dict(spec.presets["Kaggle article basis"])
+        preset["preprocess"] = "bandpass_0_5_48"
+        command, values = build_command(
+            spec,
+            preset,
+            python_executable="python",
+        )
+
+        self.assertIn("--preprocess", command)
+        self.assertIn("bandpass_0_5_48", command)
+        self.assertEqual(values["preprocess"], "bandpass_0_5_48")
+
     def test_meta_preset_builds_expected_flags(self) -> None:
         spec = WORKFLOW_MAP["meta_analysis"]
         preset = spec.presets["Kaggle article meta"]
@@ -136,7 +169,135 @@ class GuiWorkflowTests(unittest.TestCase):
         self.assertIn("--pre-event-dir", command)
         self.assertIn("--meta-dir", command)
         self.assertIn("--sensitivity-dir", command)
+        self.assertIn("--classification-dir", command)
+        self.assertIn("--classification-sweep-dir", command)
+        self.assertIn("--classification-controls-dir", command)
+        self.assertIn("--classification-subject-dir", command)
         self.assertIn("--out", command)
+
+    def test_classification_preset_builds_expected_flags(self) -> None:
+        spec = WORKFLOW_MAP["classification_benchmark"]
+        preset = spec.presets["Kaggle MFG ablation"]
+        command, values = build_command(
+            spec,
+            preset,
+            python_executable="python",
+        )
+
+        self.assertEqual(values["feature_sets"], ["baseline", "mfg", "combined"])
+        self.assertIn("--feature-sets", command)
+        self.assertIn("--balance-classes", command)
+        self.assertIn("--zip-submission", command)
+        self.assertIn("--refit-for-submission", command)
+        self.assertIn("--edge-table", command)
+        self.assertIn("--edge-selection", command)
+        self.assertIn("--channel-set", command)
+        self.assertIn("--preprocess", command)
+        self.assertIn("--label-shift-ms", command)
+        self.assertIn("--classifier", command)
+        self.assertIn("--fusion-weight", command)
+        self.assertIn("--baseline-context", command)
+        self.assertIn("--smooth-proba-ms", command)
+        self.assertIn("--val-keep-all-positive", command)
+        self.assertEqual(values["edge_selection"], "event_union")
+        self.assertEqual(values["channel_set"], "all32")
+        self.assertEqual(values["preprocess"], "bandpass_0_5_48")
+        self.assertEqual(values["classifier"], "extra_trees")
+        self.assertEqual(values["label_shift_ms"], 0.0)
+        self.assertEqual(values["baseline_context"], "causal")
+        self.assertEqual(values["fusion_weight"], 0.25)
+        self.assertEqual(values["smooth_proba_ms"], 0.0)
+        self.assertTrue(values["val_keep_all_positive"])
+        self.assertEqual(values["submission_feature_set"], "fusion")
+
+    def test_classification_sweep_preset_builds_expected_flags(self) -> None:
+        spec = WORKFLOW_MAP["classification_sweep"]
+        preset = spec.presets["Kaggle MFG sweep"]
+        command, values = build_command(
+            spec,
+            preset,
+            python_executable="python",
+        )
+
+        self.assertEqual(values["modes"], ["corr", "gc"])
+        self.assertIn("--splits", command)
+        self.assertIn("--mfg-feature-modes", command)
+        self.assertIn("--edge-selections", command)
+        self.assertIn("--channel-sets", command)
+        self.assertIn("--preprocessings", command)
+        self.assertIn("--label-shift-ms-values", command)
+        self.assertIn("--classifiers", command)
+        self.assertIn("--fusion-weights", command)
+        self.assertIn("--baseline-contexts", command)
+        self.assertIn("--smooth-proba-ms-values", command)
+        self.assertIn("--val-keep-all-positive", command)
+        self.assertIn("--balance-classes", command)
+        self.assertEqual(values["classifiers"], ["sgd_logistic", "extra_trees"])
+        self.assertEqual(values["fusion_weights"], ["0.25"])
+        self.assertEqual(values["baseline_contexts"], ["causal", "centered"])
+        self.assertEqual(values["smooth_proba_ms_values"], ["0.0", "100.0"])
+        self.assertTrue(values["val_keep_all_positive"])
+
+    def test_classification_controls_preset_builds_expected_flags(self) -> None:
+        spec = WORKFLOW_MAP["classification_controls"]
+        preset = spec.presets["Kaggle artefact controls"]
+        command, values = build_command(
+            spec,
+            preset,
+            python_executable="python",
+        )
+
+        self.assertEqual(values["channel_sets"], ["all32", "no_fp1_fp2", "motor_premotor", "ocular_proxy_only"])
+        self.assertIn("--channel-sets", command)
+        self.assertIn("--preprocessings", command)
+        self.assertIn("--label-shift-ms-values", command)
+        self.assertIn("--edge-selections", command)
+        self.assertIn("--classifiers", command)
+        self.assertIn("--fusion-weights", command)
+        self.assertIn("--baseline-contexts", command)
+        self.assertIn("--smooth-proba-ms-values", command)
+        self.assertIn("--val-keep-all-positive", command)
+        self.assertIn("--balance-classes", command)
+        self.assertEqual(values["fusion_weights"], ["0.25"])
+        self.assertEqual(values["baseline_contexts"], ["causal", "centered"])
+        self.assertEqual(values["smooth_proba_ms_values"], ["0.0", "100.0"])
+        self.assertEqual(values["classifiers"], ["sgd_logistic"])
+        self.assertTrue(values["val_keep_all_positive"])
+
+    def test_classification_subject_preset_builds_expected_flags(self) -> None:
+        spec = WORKFLOW_MAP["classification_subject"]
+        preset = spec.presets["Kaggle subject-aware validation"]
+        command, values = build_command(
+            spec,
+            preset,
+            python_executable="python",
+        )
+
+        self.assertIn("--subjects", command)
+        self.assertIn("--splits", command)
+        self.assertIn("--fusion-weight-values", command)
+        self.assertIn("--epochs", command)
+        self.assertIn("--baseline-context", command)
+        self.assertIn("--alpha-values", command)
+        self.assertIn("--val-keep-all-positive", command)
+        self.assertIn("--balance-classes", command)
+        self.assertEqual(values["subjects"], list(range(1, 13)))
+        self.assertEqual(values["baseline_context"], "causal")
+        self.assertEqual(values["fusion_weight_values"], ["0.1", "0.15", "0.2", "0.25"])
+        self.assertEqual(values["epochs"], 3)
+        self.assertEqual(values["alpha_values"], ["0.1", "0.2", "0.3"])
+        self.assertTrue(values["val_keep_all_positive"])
+
+    def test_bool_field_can_emit_negative_flag(self) -> None:
+        spec = WORKFLOW_MAP["classification_subject"]
+        preset = dict(spec.presets["Kaggle subject-aware validation"])
+        preset["val_keep_all_positive"] = False
+
+        command, values = build_command(spec, preset, python_executable="python")
+
+        self.assertFalse(values["val_keep_all_positive"])
+        self.assertIn("--no-val-keep-all-positive", command)
+        self.assertNotIn("--val-keep-all-positive", command)
 
     def test_meta_sensitivity_preset_builds_expected_flags(self) -> None:
         spec = WORKFLOW_MAP["meta_sensitivity"]

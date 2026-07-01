@@ -1,11 +1,11 @@
 fs: 500
-maxlag_ms: 1000        
-lag_step_ms: 2          
-features_r: 4           
+maxlag_ms: 1000
+lag_step_ms: 2
+m: 4
+subtract_marginals: true
+features_r: 4
 pnorm:
   ar_order: 10
-  ema_half_life_s: 1.0
+  ema_half_life_s: 0.1
   student_nu: 10
-diagnostics:
-  ljung_box_lags: 50
-  n_permutation: 200
+pca_var_thresh: 0.90

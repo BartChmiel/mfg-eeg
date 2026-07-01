@@ -1,4 +1,5 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
+from pathlib import Path
 from typing import Any
 
 
@@ -39,3 +40,38 @@ def load_config(**overrides: Any) -> Config:
     base_params = asdict(Config())
     base_params.update(overrides)
     return Config(**base_params)
+
+
+def load_config_yaml(path: str | Path | None = None, **overrides: Any) -> Config:
+    """Load Config from configs/default.yaml unless another path is given."""
+    yaml_path = Path(path) if path is not None else Path(__file__).resolve().parents[1] / "configs" / "default.yaml"
+    params = asdict(Config())
+    if yaml_path.exists():
+        import yaml
+
+        raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+        if isinstance(raw, dict):
+            flat = _flatten_yaml_config(raw)
+            allowed = {field.name for field in fields(Config)}
+            params.update({key: flat[key] for key in flat if key in allowed})
+    params.update(overrides)
+    return Config(**params)
+
+
+def _flatten_yaml_config(raw: dict[str, Any]) -> dict[str, Any]:
+    """Map nested YAML keys to Config field names."""
+    out: dict[str, Any] = {}
+    for key, value in raw.items():
+        if key == "pnorm" and isinstance(value, dict):
+            if "ar_order" in value:
+                out["ar_order"] = value["ar_order"]
+            if "ema_half_life_s" in value:
+                out["ema_half_life_s"] = value["ema_half_life_s"]
+            if "student_nu" in value:
+                out["student_nu"] = value["student_nu"]
+            continue
+        if key == "features_r":
+            out["pca_max_r"] = value
+            continue
+        out[key] = value
+    return out

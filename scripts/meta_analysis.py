@@ -27,11 +27,11 @@ from scipy.stats import binomtest
 
 
 REGIONS: Dict[str, List[str]] = {
-    "F_Exec": ["Fp1", "Fp2", "Fz"],
-    "F_Motor": ["F3", "F4", "FC5", "FC1", "FC2", "FC6", "C3", "Cz", "C4"],
-    "P_Space": ["P7", "P3", "Pz", "P4", "P8", "CP1", "CP2", "CP5", "CP6"],
-    "O_Vis": ["PO9", "O1", "Oz", "O2", "PO10"],
-    "T_Temp": ["T7", "T8", "TP9", "TP10"],
+    "Frontal": ["Fp1", "Fp2", "Fz"],
+    "Frontocentral": ["F3", "F4", "FC5", "FC1", "FC2", "FC6", "C3", "Cz", "C4"],
+    "Parietal": ["P7", "P3", "Pz", "P4", "P8", "CP1", "CP2", "CP5", "CP6"],
+    "Occipital": ["PO9", "O1", "Oz", "O2", "PO10"],
+    "Temporal": ["T7", "T8", "TP9", "TP10"],
 }
 
 
@@ -39,55 +39,21 @@ def get_region(channel: str) -> str:
     for region, chans in REGIONS.items():
         if channel in chans:
             return region
-    return "X_Other"
+    return "Other"
 
 
-class BrainInsights:
+class RegionSummary:
     @staticmethod
     def get_context(r_src: str, r_dst: str) -> Tuple[str, str]:
         if r_src == r_dst:
-            if r_src == "O_Vis":
-                return (
-                    "VISUAL RECURRENCE / BINDING",
-                    "Recurrent processing within the visual network supporting stable representation.",
-                )
-            if r_src == "P_Space":
-                return (
-                    "SPATIAL INTEGRATION",
-                    "Integration of multisensory inputs into a coherent body/world spatial map.",
-                )
-            if r_src == "F_Motor":
-                return (
-                    "INTRA-MOTOR COORDINATION",
-                    "Coordination and synchronization within the motor planning/execution network.",
-                )
             return (
-                "LOCAL PROCESSING",
-                f"Predominantly local processing within region {r_src}.",
+                f"WITHIN {r_src.upper()} SENSOR GROUP",
+                f"Dominant reported edges connect sensors within the {r_src.lower()} group.",
             )
-
-        if r_src == "O_Vis" and (r_dst == "P_Space" or r_dst == "F_Motor"):
-            return (
-                "VISUO-MOTOR TRANSFORMATION",
-                "Transformation of visual information into spatial/motor coordinates.",
-            )
-        if r_src == "P_Space" and r_dst == "O_Vis":
-            return (
-                "TOP-DOWN VISUAL ATTENTION",
-                "Top-down feedback from parietal areas biasing visual processing (predictive attention).",
-            )
-        if r_src == "F_Motor" and (r_dst == "P_Space" or r_dst == "O_Vis"):
-            return (
-                "EFFERENCE COPY (PREDICTION)",
-                "Efference copy sent to sensory systems to predict the consequences of motor commands.",
-            )
-        if r_src == "F_Exec":
-            return (
-                "EXECUTIVE CONTROL",
-                "Executive control signals related to intention, inhibition, and task control.",
-            )
-
-        return ("FUNCTIONAL CONNECTIVITY", f"Information transfer: {r_src} -> {r_dst}.")
+        return (
+            f"{r_src.upper()} TO {r_dst.upper()} SENSOR FLOW",
+            f"Dominant reported edges run from the {r_src.lower()} to the {r_dst.lower()} sensor group.",
+        )
 
 
 _EDGE_RE = re.compile(
@@ -384,7 +350,7 @@ def build_reports(
             dom_di = directionality_index(flow, dom_src, dom_dst)
         else:
             dom_src, dom_dst, dom_cnt, dom_di = "X_Other", "X_Other", 0, 0.0
-        process_label, process_desc = BrainInsights.get_context(dom_src, dom_dst)
+        process_label, process_desc = RegionSummary.get_context(dom_src, dom_dst)
 
         scenario_rows.append(
             ScenarioResult(

@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.stats import chi2
 
-from src_mfg.config import load_config
+from src_mfg.config import load_config_yaml
 from src_mfg.basis import legendre_orthonormal
 from src_mfg.normalize import normalize_gauss, normalize_edf, pnorm_student
 from src_mfg.io import (
@@ -24,6 +24,7 @@ from src_mfg.io import (
     extract_grasp_cycles,
     phase_window_bounds,
 )
+from src_mfg.preprocessing import PREPROCESSING_CHOICES, apply_preprocessing
 
 
 PHASES = [
@@ -210,8 +211,9 @@ def _run_group(
     pca_r: int,
     topk: int,
     save_npz: bool,
+    preprocess: str,
 ) -> None:
-    cfg = load_config()
+    cfg = load_config_yaml()
     fs = int(cfg.fs)
 
     if not files:
@@ -261,6 +263,7 @@ def _run_group(
         "pca_r": int(pca_r),
         "topk": int(topk),
         "save_npz": bool(save_npz),
+        "preprocess": preprocess,
         "config": asdict(cfg),
         "input_files": [path.name for path in files],
         "used_files": [],
@@ -293,6 +296,13 @@ def _run_group(
                 )
             X = X[:, idx_map]
             ch_names = ch_names0
+
+        X = apply_preprocessing(
+            X,
+            preprocess=preprocess,
+            fs=fs,
+            all_channels=ch_names,
+        )
 
         T = X.shape[0]
         Y_all, Z_all = _normalize_series(X, mode=mode, fs=fs, cfg=cfg)
@@ -636,6 +646,12 @@ def main() -> None:
         default="all",
         help="all: single global aggregate; subject: separate outputs for each subject.",
     )
+    ap.add_argument(
+        "--preprocess",
+        choices=PREPROCESSING_CHOICES,
+        default="car_only",
+        help="EEG cleaning before MFG normalization. Use bandpass_0_5_48 for publication reruns.",
+    )
 
     args = ap.parse_args()
 
@@ -665,6 +681,7 @@ def main() -> None:
             pca_r=int(args.pca_r),
             topk=int(args.topk),
             save_npz=bool(args.save_npz),
+            preprocess=str(args.preprocess),
         )
         return
 
@@ -694,6 +711,7 @@ def main() -> None:
             pca_r=int(args.pca_r),
             topk=int(args.topk),
             save_npz=bool(args.save_npz),
+            preprocess=str(args.preprocess),
         )
 
 

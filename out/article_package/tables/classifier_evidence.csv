@@ -1,0 +1,2 @@
+matched_rows,row_mean_delta,row_median_delta,row_positive,row_sign_p,subjects,subject_mean_delta,subject_median_delta,subject_positive,subject_sign_p,subject_bootstrap_ci_low,subject_bootstrap_ci_high
+288,0.0014060231509069963,0.000850502790247941,175,0.00015484196762944761,12,0.0014060231509069963,0.0016415340683225126,7,0.38720703125,5.878834720386215e-06,0.002827120753724124

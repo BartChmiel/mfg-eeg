@@ -1,675 +1,536 @@
 N_subjects_total=12 | mode=gc | topk=10 | p0=0.100806 | FDR=True | significant_only=True
 BothStartLoadPhase__LiftOff | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  PO10->P8      8/12   3.629e-06   9.541e-06  ***
-  PO9 ->O1      8/12   3.629e-06   9.541e-06  ***
-  PO10->O2      7/12   5.288e-05   0.0001078  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  P4  ->Fp1     6/12   0.0005654    0.003746  **
+  F3  ->Fp1     5/12    0.004484       0.011  *
+  F7  ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Parietal->Frontal  DI=+1.00  (PARIETAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the frontal sensor group.
 
 BothStartLoadPhase__LiftOff | pc1 | lag=50ms
   scenario_subjects=12/12  reported_edges=8
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     10/12   5.902e-09   2.479e-08  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-BothStartLoadPhase__LiftOff | pc1 | lag=100ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     10/12   5.902e-09   2.479e-08  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Pz  ->CP2     6/12   0.0005654    0.003746  **
+  CP1 ->Cz      5/12    0.004484       0.011  *
+  P4  ->CP2     5/12    0.004484       0.011  *
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
 
 BothStartLoadPhase__LiftOff | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=7
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->Oz     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fz  ->FC1     5/12    0.004484       0.011  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 BothStartLoadPhase__LiftOff | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=12
+  scenario_subjects=12/12  reported_edges=7
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO10->P8     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F7  ->FC5     9/12   1.778e-07   6.733e-06  ***
+  CP1 ->Cz      6/12   0.0005654    0.003746  **
+  F8  ->FC6     6/12   0.0005654    0.003746  **
+  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontocentral sensor group.
 
 BothStartLoadPhase__LiftOff | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=12
-  edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  O2  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  Oz  ->O1      9/12   1.778e-07   5.866e-07  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  Oz  ->O2     12/12   1.101e-12   8.717e-12  ***
-  O1  ->PO9    10/12   5.902e-09   2.479e-08  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=9
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->PO10   10/12   5.902e-09   2.479e-08  ***
-  O1  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  O1  ->PO9     9/12   1.778e-07   5.866e-07  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz     11/12    1.19e-10   6.677e-10  ***
-  O2  ->PO10   11/12    1.19e-10   6.677e-10  ***
-  O1  ->PO9    10/12   5.902e-09   2.479e-08  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz     11/12    1.19e-10   6.677e-10  ***
-  O2  ->PO10   11/12    1.19e-10   6.677e-10  ***
-  O1  ->Oz     10/12   5.902e-09   2.479e-08  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=13
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      7/12   5.288e-05   0.0001078  ***
-  O1  ->FC1     6/12   0.0005654   0.0009576  ***
-  P4  ->CP6     5/12    0.004484    0.006065  **
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=9
-  edge        k/N    p-value      q(FDR)      sig
-  C4  ->FC2     8/12   3.629e-06   9.541e-06  ***
-  O1  ->FC1     8/12   3.629e-06   9.541e-06  ***
-  O2  ->C3      7/12   5.288e-05   0.0001078  ***
-  dominant_flow O_Vis->F_Motor  DI=+1.00  (VISUO-MOTOR TRANSFORMATION)
-  Transformation of visual information into spatial/motor coordinates.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=100ms
-  scenario_subjects=12/12  reported_edges=9
-  edge        k/N    p-value      q(FDR)      sig
-  CP6 ->C4      9/12   1.778e-07   5.866e-07  ***
-  C4  ->FC2     6/12   0.0005654   0.0009576  ***
-  P4  ->CP6     6/12   0.0005654   0.0009576  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=9
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      9/12   1.778e-07   5.866e-07  ***
-  CP6 ->P8      7/12   5.288e-05   0.0001078  ***
-  P7  ->O1      7/12   5.288e-05   0.0001078  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      9/12   1.778e-07   5.866e-07  ***
-  CP6 ->C4      8/12   3.629e-06   9.541e-06  ***
-  P4  ->CP6     7/12   5.288e-05   0.0001078  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->P8      8/12   3.629e-06   9.541e-06  ***
-  PO9 ->O1      8/12   3.629e-06   9.541e-06  ***
-  PO10->O2      7/12   5.288e-05   0.0001078  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=100ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->Oz     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->Oz     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=8
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO10->P8     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  O2  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  O2  ->PO10    8/12   3.629e-06   9.541e-06  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=9
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  Oz  ->O2     12/12   1.101e-12   8.717e-12  ***
-  O1  ->PO9    10/12   5.902e-09   2.479e-08  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  O1  ->PO9     9/12   1.778e-07   5.866e-07  ***
-  O2  ->PO10    9/12   1.778e-07   5.866e-07  ***
-  Oz  ->O1      9/12   1.778e-07   5.866e-07  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz     11/12    1.19e-10   6.677e-10  ***
-  O2  ->PO10   10/12   5.902e-09   2.479e-08  ***
-  Oz  ->O1     10/12   5.902e-09   2.479e-08  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=8
-  edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     11/12    1.19e-10   6.677e-10  ***
-  O2  ->Oz     11/12    1.19e-10   6.677e-10  ***
-  O2  ->PO10   11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=13
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      7/12   5.288e-05   0.0001078  ***
-  O1  ->FC1     6/12   0.0005654   0.0009576  ***
-  C4  ->FC6     5/12    0.004484    0.006065  **
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      8/12   3.629e-06   9.541e-06  ***
-  C4  ->FC2     7/12   5.288e-05   0.0001078  ***
-  O2  ->C3      7/12   5.288e-05   0.0001078  ***
-  dominant_flow F_Motor->F_Motor  DI=+0.00  (INTRA-MOTOR COORDINATION)
-  Coordination and synchronization within the motor planning/execution network.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=100ms
   scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  CP6 ->C4      9/12   1.778e-07   5.866e-07  ***
-  C4  ->FC2     5/12    0.004484    0.006065  **
-  P4  ->CP6     5/12    0.004484    0.006065  **
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  FC1 ->Fp1     6/12   0.0005654    0.003746  **
+  O2  ->Fp2     5/12    0.004484       0.011  *
+  F3  ->Fp2     4/12     0.02633     0.02633  *
+  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=50ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  Oz  ->O1      4/12     0.02633     0.02633  *
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=100ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  Fp2 ->F4      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=150ms
+  scenario_subjects=12/12  reported_edges=2
+  edge        k/N    p-value      q(FDR)      sig
+  Fp2 ->CP5     4/12     0.02633     0.02633  *
+  Fp2 ->P3      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=200ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  Fp2 ->Fp1     6/12   0.0005654    0.003746  **
+  Fp2 ->P7      6/12   0.0005654    0.003746  **
+  Fp1 ->F3      5/12    0.004484       0.011  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=0ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  Fp1 ->F7      6/12   0.0005654    0.003746  **
+  O1  ->PO9     5/12    0.004484       0.011  *
+  F3  ->F7      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
+  Dominant reported edges run from the frontal to the other sensor group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=50ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->PO10    5/12    0.004484       0.011  *
+  Fp1 ->F7      4/12     0.02633     0.02633  *
+  Fp2 ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=100ms
+  scenario_subjects=12/12  reported_edges=3
+  edge        k/N    p-value      q(FDR)      sig
+  Fp1 ->Fp2     4/12     0.02633     0.02633  *
+  Fp2 ->F7      4/12     0.02633     0.02633  *
+  Fp2 ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=150ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  Fz  ->P7      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=200ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  Fp2 ->F3      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=0ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->Fp1     6/12   0.0005654    0.003746  **
+  F3  ->Fp1     5/12    0.004484       0.011  *
+  F4  ->Fp2     4/12     0.02633     0.02633  *
+  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=50ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  Pz  ->CP2     5/12    0.004484       0.011  *
+  T7  ->TP9     5/12    0.004484       0.011  *
+  CP1 ->Cz      4/12     0.02633     0.02633  *
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=150ms
+  scenario_subjects=12/12  reported_edges=2
+  edge        k/N    p-value      q(FDR)      sig
+  F7  ->FC5     4/12     0.02633     0.02633  *
+  Fp2 ->Pz      4/12     0.02633     0.02633  *
+  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontocentral sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=200ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  F7  ->FC5     9/12   1.778e-07   6.733e-06  ***
+  F8  ->FC6     6/12   0.0005654    0.003746  **
+  CP1 ->Cz      5/12    0.004484       0.011  *
+  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontocentral sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=0ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  FC1 ->Fp1     6/12   0.0005654    0.003746  **
+  O2  ->Fp2     5/12    0.004484       0.011  *
+  CP2 ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Occipital->Frontal  DI=+1.00  (OCCIPITAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the occipital to the frontal sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=50ms
+  scenario_subjects=12/12  reported_edges=3
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz      4/12     0.02633     0.02633  *
+  Oz  ->O1      4/12     0.02633     0.02633  *
+  Oz  ->O2      4/12     0.02633     0.02633  *
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=150ms
+  scenario_subjects=12/12  reported_edges=2
+  edge        k/N    p-value      q(FDR)      sig
+  Fp2 ->P3      5/12    0.004484       0.011  *
+  Fp2 ->CP5     4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=200ms
+  scenario_subjects=12/12  reported_edges=10
+  edge        k/N    p-value      q(FDR)      sig
+  Fp2 ->Fp1     6/12   0.0005654    0.003746  **
+  Fp2 ->CP5     5/12    0.004484       0.011  *
+  Fp2 ->F4      5/12    0.004484       0.011  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc3 | lag=0ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  Fp1 ->F7      6/12   0.0005654    0.003746  **
+  O1  ->PO9     5/12    0.004484       0.011  *
+  F3  ->F7      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
+  Dominant reported edges run from the frontal to the other sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc3 | lag=50ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->PO10    5/12    0.004484       0.011  *
+  Fp1 ->F7      4/12     0.02633     0.02633  *
+  P3  ->O1      4/12     0.02633     0.02633  *
+  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the occipital sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc3 | lag=100ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  Fp1 ->Fp2     5/12    0.004484       0.011  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
 
 FirstDigitTouch__BothStartLoadPhase | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      8/12   3.629e-06   9.541e-06  ***
-  O2  ->C3      7/12   5.288e-05   0.0001078  ***
-  P8  ->PO10    6/12   0.0005654   0.0009576  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  Fp2 ->Fp1     4/12     0.02633     0.02633  *
+  Fz  ->P7      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
 
 FirstDigitTouch__BothStartLoadPhase | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      8/12   3.629e-06   9.541e-06  ***
-  CP6 ->C4      7/12   5.288e-05   0.0001078  ***
-  C4  ->FC2     5/12    0.004484    0.006065  **
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  Fp1 ->F4      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 HandStart__FirstDigitTouch | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  PO10->P8      9/12   1.778e-07   5.866e-07  ***
-  PO9 ->O1      8/12   3.629e-06   9.541e-06  ***
-  PO10->O2      7/12   5.288e-05   0.0001078  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  P4  ->Fp1     5/12    0.004484       0.011  *
+  F3  ->Fp1     4/12     0.02633     0.02633  *
+  F7  ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Parietal->Frontal  DI=+1.00  (PARIETAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the frontal sensor group.
 
 HandStart__FirstDigitTouch | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->Oz     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-HandStart__FirstDigitTouch | pc1 | lag=100ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-HandStart__FirstDigitTouch | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Cz  ->FC1     5/12    0.004484       0.011  *
+  FC2 ->Fz      5/12    0.004484       0.011  *
+  P4  ->CP2     5/12    0.004484       0.011  *
+  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
 
 HandStart__FirstDigitTouch | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F7  ->FC5     5/12    0.004484       0.011  *
+  F8  ->FC6     5/12    0.004484       0.011  *
+  CP1 ->Cz      4/12     0.02633     0.02633  *
+  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontocentral sensor group.
 
 HandStart__FirstDigitTouch | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=6
   edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  O2  ->PO10    8/12   3.629e-06   9.541e-06  ***
-  Oz  ->O2      8/12   3.629e-06   9.541e-06  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  FC1 ->Fp1     6/12   0.0005654    0.003746  **
+  FC2 ->Fp1     5/12    0.004484       0.011  *
+  F3  ->Fp2     4/12     0.02633     0.02633  *
+  dominant_flow Frontocentral->Frontal  DI=+0.50  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
 
 HandStart__FirstDigitTouch | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=13
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  Oz  ->O1     12/12   1.101e-12   8.717e-12  ***
-  Oz  ->O2     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F3  ->Fp2     4/12     0.02633     0.02633  *
+  FC1 ->Fp1     4/12     0.02633     0.02633  *
+  Fp2 ->F4      4/12     0.02633     0.02633  *
+  dominant_flow Frontocentral->Frontal  DI=+0.33  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
 
 HandStart__FirstDigitTouch | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  Oz  ->O1     12/12   1.101e-12   8.717e-12  ***
-  Oz  ->O2     12/12   1.101e-12   8.717e-12  ***
-  O1  ->Oz     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
-
-HandStart__FirstDigitTouch | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O2  ->PO10   12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  FC2 ->Fp1     4/12     0.02633     0.02633  *
+  O1  ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
 
 HandStart__FirstDigitTouch | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=7
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O2  ->PO10   12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->Fp1     7/12   5.288e-05   0.0008758  ***
+  Fp1 ->Fp2     5/12    0.004484       0.011  *
+  Fp2 ->P7      5/12    0.004484       0.011  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
 
 HandStart__FirstDigitTouch | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      7/12   5.288e-05   0.0001078  ***
-  O1  ->FC1     6/12   0.0005654   0.0009576  ***
-  CP6 ->P8      5/12    0.004484    0.006065  **
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  Fp1 ->F7      4/12     0.02633     0.02633  *
+  Fp2 ->F7      4/12     0.02633     0.02633  *
+  P7  ->PO10    4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
+  Dominant reported edges run from the frontal to the other sensor group.
 
 HandStart__FirstDigitTouch | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  O2  ->Cz     10/12   5.902e-09   2.479e-08  ***
-  O1  ->FC1     9/12   1.778e-07   5.866e-07  ***
-  O2  ->C3      7/12   5.288e-05   0.0001078  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-HandStart__FirstDigitTouch | pc3 | lag=100ms
-  scenario_subjects=12/12  reported_edges=9
-  edge        k/N    p-value      q(FDR)      sig
-  CP6 ->C4      8/12   3.629e-06   9.541e-06  ***
-  Fp1 ->PO10    6/12   0.0005654   0.0009576  ***
-  P4  ->CP6     6/12   0.0005654   0.0009576  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-HandStart__FirstDigitTouch | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      8/12   3.629e-06   9.541e-06  ***
-  P8  ->O2      8/12   3.629e-06   9.541e-06  ***
-  O1  ->FC1     7/12   5.288e-05   0.0001078  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-HandStart__FirstDigitTouch | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=11
-  edge        k/N    p-value      q(FDR)      sig
-  P7  ->O1      8/12   3.629e-06   9.541e-06  ***
-  CP6 ->C4      7/12   5.288e-05   0.0001078  ***
-  P4  ->CP6     7/12   5.288e-05   0.0001078  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  P4  ->Oz      5/12    0.004484       0.011  *
+  Fz  ->O2      4/12     0.02633     0.02633  *
+  Fz  ->Oz      4/12     0.02633     0.02633  *
+  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the occipital sensor group.
 
 LiftOff__Replace | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  PO9 ->O1      8/12   3.629e-06   9.541e-06  ***
-  PO9 ->Oz      8/12   3.629e-06   9.541e-06  ***
-  PO10->P8      7/12   5.288e-05   0.0001078  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  FC2 ->Fz      5/12    0.004484       0.011  *
+  FC1 ->Fz      4/12     0.02633     0.02633  *
+  FC5 ->F3      4/12     0.02633     0.02633  *
+  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
 
 LiftOff__Replace | pc1 | lag=50ms
   scenario_subjects=12/12  reported_edges=11
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     11/12    1.19e-10   6.677e-10  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Pz  ->CP2     9/12   1.778e-07   6.733e-06  ***
+  P4  ->CP2     7/12   5.288e-05   0.0008758  ***
+  Pz  ->CP1     7/12   5.288e-05   0.0008758  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
 
 LiftOff__Replace | pc1 | lag=100ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=3
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F8  ->FC6     4/12     0.02633     0.02633  *
+  Pz  ->CP2     4/12     0.02633     0.02633  *
+  TP10->T8      4/12     0.02633     0.02633  *
+  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontocentral sensor group.
 
 LiftOff__Replace | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F8  ->FC6     6/12   0.0005654    0.003746  **
+  TP10->T8      4/12     0.02633     0.02633  *
+  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontocentral sensor group.
 
 LiftOff__Replace | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=7
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO10->Oz     12/12   1.101e-12   8.717e-12  ***
-  PO10->P8     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F8  ->FC6     8/12   3.629e-06   9.616e-05  ***
+  TP10->T8      8/12   3.629e-06   9.616e-05  ***
+  CP1 ->Pz      6/12   0.0005654    0.003746  **
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
 
 LiftOff__Replace | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=16
+  scenario_subjects=12/12  reported_edges=6
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  Oz  ->O1      9/12   1.778e-07   5.866e-07  ***
-  Oz  ->O2      8/12   3.629e-06   9.541e-06  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  FC1 ->Fp1     5/12    0.004484       0.011  *
+  FC2 ->Fp1     5/12    0.004484       0.011  *
+  Oz  ->Fp1     5/12    0.004484       0.011  *
+  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the frontal sensor group.
 
 LiftOff__Replace | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O2  ->PO10   12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp1 ->P4      6/12   0.0005654    0.003746  **
+  Fp1 ->Pz      5/12    0.004484       0.011  *
+  Fp1 ->FC5     4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
 
 LiftOff__Replace | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=12
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  Oz  ->O1     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp1 ->FC1     4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 LiftOff__Replace | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O1  ->PO9    12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F8  ->T8      4/12     0.02633     0.02633  *
+  Fp2 ->F4      4/12     0.02633     0.02633  *
+  dominant_flow Other->Temporal  DI=+1.00  (OTHER TO TEMPORAL SENSOR FLOW)
+  Dominant reported edges run from the other to the temporal sensor group.
 
 LiftOff__Replace | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=7
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O1  ->PO9    12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->F4      6/12   0.0005654    0.003746  **
+  F7  ->FC5     5/12    0.004484       0.011  *
+  F8  ->T8      5/12    0.004484       0.011  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 LiftOff__Replace | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=14
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  CP6 ->C4      6/12   0.0005654   0.0009576  ***
-  P4  ->CP6     6/12   0.0005654   0.0009576  ***
-  P4  ->P8      6/12   0.0005654   0.0009576  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  Fp1 ->F7      6/12   0.0005654    0.003746  **
+  O1  ->PO9     5/12    0.004484       0.011  *
+  F3  ->F7      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
+  Dominant reported edges run from the frontal to the other sensor group.
 
 LiftOff__Replace | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=13
-  edge        k/N    p-value      q(FDR)      sig
-  O1  ->FC1    10/12   5.902e-09   2.479e-08  ***
-  C4  ->FC2     9/12   1.778e-07   5.866e-07  ***
-  P4  ->P8      8/12   3.629e-06   9.541e-06  ***
-  dominant_flow O_Vis->F_Motor  DI=+1.00  (VISUO-MOTOR TRANSFORMATION)
-  Transformation of visual information into spatial/motor coordinates.
-
-LiftOff__Replace | pc3 | lag=100ms
   scenario_subjects=12/12  reported_edges=9
   edge        k/N    p-value      q(FDR)      sig
-  P7  ->O1      9/12   1.778e-07   5.866e-07  ***
-  CP6 ->P8      8/12   3.629e-06   9.541e-06  ***
-  P4  ->P8      8/12   3.629e-06   9.541e-06  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
-
-LiftOff__Replace | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=12
-  edge        k/N    p-value      q(FDR)      sig
-  P8  ->PO10   11/12    1.19e-10   6.677e-10  ***
-  P4  ->P8     10/12   5.902e-09   2.479e-08  ***
-  CP6 ->P8      9/12   1.778e-07   5.866e-07  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  Fp1 ->F7      5/12    0.004484       0.011  *
+  O2  ->PO10    5/12    0.004484       0.011  *
+  P3  ->Oz      5/12    0.004484       0.011  *
+  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the occipital sensor group.
 
 LiftOff__Replace | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=13
+  scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8     11/12    1.19e-10   6.677e-10  ***
-  C4  ->FC2    10/12   5.902e-09   2.479e-08  ***
-  P4  ->CP6    10/12   5.902e-09   2.479e-08  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  Oz  ->P8      6/12   0.0005654    0.003746  **
+  CP1 ->TP10    5/12    0.004484       0.011  *
+  F4  ->PO10    5/12    0.004484       0.011  *
+  dominant_flow Frontocentral->Occipital  DI=+1.00  (FRONTOCENTRAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the frontocentral to the occipital sensor group.
 
 Replace__BothReleased | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=7
   edge        k/N    p-value      q(FDR)      sig
-  PO9 ->O1      9/12   1.778e-07   5.866e-07  ***
-  PO10->O2      8/12   3.629e-06   9.541e-06  ***
-  PO10->P8      8/12   3.629e-06   9.541e-06  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp1 ->PO9     6/12   0.0005654    0.003746  **
+  Fp1 ->T8      5/12    0.004484       0.011  *
+  Fp2 ->P7      5/12    0.004484       0.011  *
+  dominant_flow Frontal->Occipital  DI=+1.00  (FRONTAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the occipital sensor group.
 
 Replace__BothReleased | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     10/12   5.902e-09   2.479e-08  ***
-  PO9 ->O1      8/12   3.629e-06   9.541e-06  ***
-  Fp2 ->Fp1     6/12   0.0005654   0.0009576  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->O1      4/12     0.02633     0.02633  *
+  Fp2 ->O2      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Occipital  DI=+1.00  (FRONTAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the occipital sensor group.
 
 Replace__BothReleased | pc1 | lag=100ms
-  scenario_subjects=12/12  reported_edges=7
+  scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2      9/12   1.778e-07   5.866e-07  ***
-  PO9 ->O1      9/12   1.778e-07   5.866e-07  ***
-  PO10->Oz      8/12   3.629e-06   9.541e-06  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  F7  ->Fp1     4/12     0.02633     0.02633  *
+  P3  ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Other->Frontal  DI=+1.00  (OTHER TO FRONTAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontal sensor group.
 
 Replace__BothReleased | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     10/12   5.902e-09   2.479e-08  ***
-  PO9 ->O1     10/12   5.902e-09   2.479e-08  ***
-  PO10->Oz      8/12   3.629e-06   9.541e-06  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->F4      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 Replace__BothReleased | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  PO10->O2     12/12   1.101e-12   8.717e-12  ***
-  PO9 ->O1     11/12    1.19e-10   6.677e-10  ***
-  PO9 ->Oz      9/12   1.778e-07   5.866e-07  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->F4      8/12   3.629e-06   9.616e-05  ***
+  Fp1 ->PO9     5/12    0.004484       0.011  *
+  Fp2 ->P7      5/12    0.004484       0.011  *
+  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 Replace__BothReleased | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz     10/12   5.902e-09   2.479e-08  ***
-  Oz  ->O1     10/12   5.902e-09   2.479e-08  ***
-  Oz  ->O2      9/12   1.778e-07   5.866e-07  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp1 ->Fp2     9/12   1.778e-07   6.733e-06  ***
+  Fp2 ->Fp1     9/12   1.778e-07   6.733e-06  ***
+  F3  ->Fp2     5/12    0.004484       0.011  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
 
 Replace__BothReleased | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=6
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  O1  ->PO9     9/12   1.778e-07   5.866e-07  ***
-  O2  ->Oz      9/12   1.778e-07   5.866e-07  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->Fp1    10/12   5.902e-09   1.564e-06  ***
+  Fp1 ->Fp2     7/12   5.288e-05   0.0008758  ***
+  F3  ->Fp2     5/12    0.004484       0.011  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
 
 Replace__BothReleased | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=9
+  scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     10/12   5.902e-09   2.479e-08  ***
-  O1  ->PO9     9/12   1.778e-07   5.866e-07  ***
-  Oz  ->O2      9/12   1.778e-07   5.866e-07  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->Fp1     6/12   0.0005654    0.003746  **
+  Fp1 ->F7      4/12     0.02633     0.02633  *
+  Fp1 ->Fp2     4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
 
 Replace__BothReleased | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=7
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O1  ->PO9    12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp1 ->Fp2     7/12   5.288e-05   0.0008758  ***
+  F4  ->Fp2     5/12    0.004484       0.011  *
+  Fz  ->Fp2     5/12    0.004484       0.011  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
 
 Replace__BothReleased | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=10
+  scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  O1  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  O1  ->PO9    12/12   1.101e-12   8.717e-12  ***
-  O2  ->Oz     12/12   1.101e-12   8.717e-12  ***
-  dominant_flow O_Vis->O_Vis  DI=+0.00  (VISUAL RECURRENCE / BINDING)
-  Recurrent processing within the visual network supporting stable representation.
+  Fp2 ->Fp1     9/12   1.778e-07   6.733e-06  ***
+  Fp1 ->Fp2     7/12   5.288e-05   0.0008758  ***
+  F3  ->Fp1     4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the frontal group.
 
 Replace__BothReleased | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=12
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  P8  ->PO10    7/12   5.288e-05   0.0001078  ***
-  CP6 ->P8      6/12   0.0005654   0.0009576  ***
-  P4  ->P8      6/12   0.0005654   0.0009576  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  CP2 ->Pz      5/12    0.004484       0.011  *
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
 
 Replace__BothReleased | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=7
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  C4  ->FC2     7/12   5.288e-05   0.0001078  ***
-  Fp2 ->Fp1     6/12   0.0005654   0.0009576  ***
-  FC6 ->F4      5/12    0.004484    0.006065  **
-  dominant_flow F_Motor->F_Motor  DI=+0.00  (INTRA-MOTOR COORDINATION)
-  Coordination and synchronization within the motor planning/execution network.
-
-Replace__BothReleased | pc3 | lag=100ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1     7/12   5.288e-05   0.0001078  ***
-  Fp1 ->T7      5/12    0.004484    0.006065  **
-  P7  ->O1      5/12    0.004484    0.006065  **
-  dominant_flow X_Other->F_Exec  DI=+1.00  (FUNCTIONAL CONNECTIVITY)
-  Information transfer: X_Other -> F_Exec.
+  F8  ->FC5     4/12     0.02633     0.02633  *
+  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the other to the frontocentral sensor group.
 
 Replace__BothReleased | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=8
+  scenario_subjects=12/12  reported_edges=4
   edge        k/N    p-value      q(FDR)      sig
-  P4  ->P8      7/12   5.288e-05   0.0001078  ***
-  P7  ->O1      6/12   0.0005654   0.0009576  ***
-  Fp2 ->Fp1     5/12    0.004484    0.006065  **
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  Fp1 ->P3      5/12    0.004484       0.011  *
+  Fp1 ->Pz      4/12     0.02633     0.02633  *
+  Fp2 ->P3      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
 
 Replace__BothReleased | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=5
   edge        k/N    p-value      q(FDR)      sig
-  P7  ->O1      8/12   3.629e-06   9.541e-06  ***
-  P4  ->P8      7/12   5.288e-05   0.0001078  ***
-  P8  ->O2      7/12   5.288e-05   0.0001078  ***
-  dominant_flow P_Space->P_Space  DI=+0.00  (SPATIAL INTEGRATION)
-  Integration of multisensory inputs into a coherent body/world spatial map.
+  F4  ->PO10    4/12     0.02633     0.02633  *
+  Fp1 ->P7      4/12     0.02633     0.02633  *
+  Fp1 ->P8      4/12     0.02633     0.02633  *
+  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
+  Dominant reported edges run from the frontal to the parietal sensor group.
