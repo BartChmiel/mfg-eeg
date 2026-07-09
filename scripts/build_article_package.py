@@ -636,6 +636,7 @@ def _build_markdown(
     top_edges: list[dict[str, Any]],
     manifest_count: int,
     figure_count: int,
+    article_figure_count: int,
     sensitivity_count: int,
     classification_count: int,
     classification_sweep_count: int,
@@ -698,6 +699,7 @@ def _build_markdown(
         f"- Volume-conduction directory: `{volume_conduction_dir}`" if volume_conduction_dir else "- Volume-conduction directory: not provided",
         f"- Run manifests indexed: {manifest_count}",
         f"- Figure candidates indexed: {figure_count}",
+        f"- Article figures generated: {article_figure_count}",
         f"- Sensitivity files copied: {sensitivity_count}",
         f"- Classification files copied: {classification_count}",
         f"- Classification sweep files copied: {classification_sweep_count}",
@@ -792,6 +794,19 @@ def _build_markdown(
         lines.append("- No packaging warnings.")
     lines.append("")
     return "\n".join(lines)
+
+
+def _generate_article_figures(out_dir: Path) -> tuple[list[str], str | None]:
+    try:
+        from scripts.build_article_figures import build_article_figures
+    except Exception as exc:  # pragma: no cover - defensive import guard
+        return [], f"Article figure generation is unavailable: {exc}"
+
+    try:
+        figures = build_article_figures(out_dir)
+    except Exception as exc:  # pragma: no cover - figure failures are surfaced as package warnings
+        return [], f"Article figure generation failed: {exc}"
+    return [str(path) for path in figures], None
 
 
 def build_package(
@@ -964,6 +979,10 @@ def build_package(
     if not figures:
         warnings.append("No PNG figure candidates were found.")
 
+    article_figures, figure_warning = _generate_article_figures(out_path)
+    if figure_warning:
+        warnings.append(figure_warning)
+
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     summary_text = _build_markdown(
         generated_at=generated_at,
@@ -980,6 +999,7 @@ def build_package(
         top_edges=edge_top_rows,
         manifest_count=len(manifests),
         figure_count=len(figures),
+        article_figure_count=len(article_figures),
         sensitivity_count=len(copied_sensitivity),
         classification_count=len(copied_classification),
         classification_sweep_count=len(copied_classification_sweep),
@@ -1032,6 +1052,7 @@ def build_package(
             "volume_conduction": copied_volume_conduction,
             "evidence_tables": copied_evidence_tables,
             "documentation": copied_docs,
+            "article_figures": article_figures,
         },
         "counts": {
             "meta_scenarios": len(scenarios),
@@ -1047,9 +1068,11 @@ def build_package(
             "classification_subject_files": len(copied_classification_subject),
             "volume_conduction_files": len(copied_volume_conduction),
             "evidence_table_files": len(copied_evidence_tables),
+            "article_figures": len(article_figures),
         },
         "run_manifests": manifests,
         "figure_candidates": figures,
+        "article_figures": article_figures,
         "warnings": warnings,
         "classifier_snapshot": classifier_snapshot,
         "sensitivity_snapshot": sensitivity_snapshot,

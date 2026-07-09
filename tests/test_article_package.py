@@ -221,6 +221,7 @@ class ArticlePackageTests(unittest.TestCase):
         self.assertEqual(payload["counts"]["top_edges"], 1)
         self.assertEqual(payload["counts"]["run_manifests"], 1)
         self.assertEqual(payload["counts"]["evidence_table_files"], 2)
+        self.assertGreaterEqual(payload["counts"]["article_figures"], 1)
         self.assertTrue((self.out_dir / "article_summary.md").exists())
         self.assertTrue((self.out_dir / "package_manifest.json").exists())
         self.assertTrue((self.out_dir / "tables" / "top_scenarios.csv").exists())
@@ -236,6 +237,7 @@ class ArticlePackageTests(unittest.TestCase):
         self.assertTrue((self.out_dir / "documentation" / "eeg_mfg_article.pdf").exists())
         self.assertTrue((self.out_dir / "documentation" / "references.bib").exists())
         self.assertFalse((self.out_dir / "documentation" / "eeg_mfg_article.tex").exists())
+        self.assertTrue((self.out_dir / "figures" / "top_edges_replication.png").exists())
 
         with open(
             self.out_dir / "tables" / "top_edges.csv",

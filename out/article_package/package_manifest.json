@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-07-01T10:47:56+00:00",
+  "generated_at_utc": "2026-07-09T14:54:24+00:00",
   "inputs": {
     "phase_dir": "out\\phase_mats_pca_bandpass_by_subject",
     "pre_event_dir": "out\\experimental_kaggle_by_subject",
@@ -74,6 +74,11 @@
       "out\\article_package\\documentation\\METHODOLOGY.md",
       "out\\article_package\\documentation\\eeg_mfg_article.pdf",
       "out\\article_package\\documentation\\references.bib"
+    ],
+    "article_figures": [
+      "out\\article_package\\figures\\preprocessing_sensitivity.png",
+      "out\\article_package\\figures\\top_edges_replication.png",
+      "out\\article_package\\figures\\classification_timing_control.png"
     ]
   },
   "counts": {
@@ -89,7 +94,8 @@
     "classification_controls_files": 4,
     "classification_subject_files": 7,
     "volume_conduction_files": 4,
-    "evidence_table_files": 3
+    "evidence_table_files": 3,
+    "article_figures": 3
   },
   "run_manifests": [
     {
@@ -334,6 +340,11 @@
     "out\\phase_mats_pca_bandpass_by_subject\\subj12\\phasegrid_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.png",
     "out\\phase_mats_pca_bandpass_by_subject\\subj12\\phasegrid_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.png",
     "out\\phase_mats_pca_bandpass_by_subject\\subj12\\phasegrid_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.png"
+  ],
+  "article_figures": [
+    "out\\article_package\\figures\\preprocessing_sensitivity.png",
+    "out\\article_package\\figures\\top_edges_replication.png",
+    "out\\article_package\\figures\\classification_timing_control.png"
   ],
   "warnings": [],
   "classifier_snapshot": [

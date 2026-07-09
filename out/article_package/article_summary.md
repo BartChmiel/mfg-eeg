@@ -1,6 +1,6 @@
 # Article Evidence Bundle
 
-Generated at UTC: 2026-07-01T10:47:56+00:00
+Generated at UTC: 2026-07-09T14:54:24+00:00
 
 ## Purpose
 
@@ -19,6 +19,7 @@ This directory contains the results used in the Grasp-and-Lift EEG article: phas
 - Volume-conduction directory: `out\article_volume_conduction_bandpass`
 - Run manifests indexed: 12
 - Figure candidates indexed: 132
+- Article figures generated: 3
 - Sensitivity files copied: 4
 - Classification files copied: 5
 - Classification sweep files copied: 4

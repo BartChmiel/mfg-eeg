@@ -1,14 +1,14 @@
 # Methodology
 
 This project analyzes the Kaggle Grasp-and-Lift EEG Detection dataset with an
-event-locked, multi-feature dependence pipeline.
+event-locked, multi-feature Granger-style (MFG) dependence pipeline.
 
 The method estimates directed lagged dependence between EEG channels by:
 
 ```text
 EEG and event CSV files
 -> event alignment
--> common average reference
+-> common average reference (CAR)
 -> grasp-cycle reconstruction
 -> phase and pre-event windows
 -> marginal normalization
@@ -54,7 +54,7 @@ Replace -> BothReleased
 ## Preprocessing
 
 Data and event rows are aligned by sample ID. EEG channels are re-referenced
-with common average reference:
+with common average reference (CAR):
 
 ```text
 X_c(t) = X_c(t) - mean_j X_j(t)
@@ -251,7 +251,9 @@ p_fusion(y = 1 | x) = (1 - w) p_baseline(y = 1 | x) + w p_mfg(y = 1 | x)
 
 This is a score-level ablation. It tests whether the MFG predictor contributes
 useful probability information without forcing the final classifier to learn in
-one concatenated feature space.
+one concatenated feature space. In older output columns, `best_assisted` means
+the row-wise better of `combined` and `fusion`; it is not identical to
+`combined`.
 
 The default fast classifier is regularized logistic SGD. A stronger nonlinear
 `extra_trees` option is available for final classifier tuning; it uses the same
@@ -320,7 +322,7 @@ If Kaggle test files are available, the trained model can also export
 column. It is not scored locally because test labels are hidden.
 
 The classification sweep repeats the ablation across multiple splits and
-feature settings. The reported lift is computed for each assisted variant:
+feature settings. The reported lift is computed for each augmented variant:
 
 ```text
 lift_combined = ROC_AUC(combined) - ROC_AUC(baseline)
@@ -329,7 +331,7 @@ lift_fusion   = ROC_AUC(fusion) - ROC_AUC(baseline)
 
 Positive lift means that the MFG-derived features add predictive information
 beyond the direct EEG baseline for the same validation split. If multiple
-assisted variants are run, model selection must use held-out validation and the
+augmented variants are run, model selection must use held-out validation and the
 selected variant must still pass timing and artefact controls.
 
 ## Interpretation Scope

@@ -15,6 +15,7 @@
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
+\graphicspath{{../out/article_package/figures/}}
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\file}[1]{\path{#1}}
@@ -28,7 +29,7 @@
 \maketitle
 
 \begin{abstract}
-    We study event-locked scalp EEG from the public Grasp-and-Lift EEG Detection dataset with a multi-feature lagged-dependence method. The analysis aligns 32-channel recordings to movement phases, applies common-average referencing, maps marginal channel distributions to a common scale, estimates Legendre mixed moments for ordered channel pairs, and summarizes lag profiles with pair-specific PCA. A CAR-only run produces many reproducible edges, but most fully stable instances are short-range. We therefore repeat the connectivity analysis with 0.5--48 Hz band-pass filtering and a newly fitted PCA basis. Across 27 sensitivity settings, the filtered run gives 766 stable edge instances, only five fully stable instances, and two that pass our distance, lag, and asymmetry screen. Both are Fp2--Fp1 edges, so the cleaned result does not support a posterior-to-central cortical-connectivity claim. A subject-aware classifier remains a secondary check: assisted logistic decoding reaches mean ROC-AUC $0.8698$, while the matched gain over a 500 ms shifted-label control is $+0.0014$. The evidence supports reproducible sensor-level dependence, not anatomical causality.
+    We study event-locked scalp EEG from the public Grasp-and-Lift EEG Detection dataset with a multi-feature Granger-style (MFG) lagged-dependence method. The analysis aligns 32-channel recordings to movement phases, applies common-average reference (CAR), maps marginal channel distributions to a common scale, estimates Legendre mixed moments for ordered channel pairs, and summarizes lag profiles with pair-specific PCA. A CAR-only run produces many reproducible edges, but most fully stable instances are short-range. We therefore repeat the connectivity analysis with 0.5--48 Hz band-pass filtering and a newly fitted PCA basis. Across 27 sensitivity settings, the filtered run gives 766 stable edge instances, only five fully stable instances, and two that pass our distance, lag, and asymmetry screen. Both are Fp2--Fp1 edges, so the cleaned result does not support a posterior-to-central cortical-connectivity claim. A subject-aware classifier remains a secondary check: the best augmented logistic decoding reaches mean ROC-AUC $0.8698$, while the matched gain over a 500 ms shifted-label control is $+0.0014$. The evidence supports reproducible sensor-level dependence, not anatomical causality.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -38,7 +39,7 @@
 \section{Introduction}
 Grasp-and-lift movements unfold through a known sequence of reach, contact, loading, lifting, replacement, and release. This makes the task useful for asking whether delayed dependence between EEG sensors changes with movement phase. Scalar summaries such as Pearson correlation or mutual information reduce each channel pair to one value and may miss concurrent dependence modes at different lags.
 
-We apply a time-delay multi-feature dependence approach inspired by multi-feature correlation analysis~\cite{duda2023timedelay} to the public Grasp-and-Lift EEG Detection dataset derived from WAY-EEG-GAL~\cite{luciw2014wayeeggal,kagglegrasp}. For each ordered channel pair and lag, the method estimates a vector of mixed-moment coefficients and uses PCA to extract dominant dependence modes. The output is a set of component-wise sensor maps rather than one connectivity score.
+We apply a time-delay multi-feature dependence approach inspired by multi-feature correlation analysis~\cite{duda2023timedelay} to the public Grasp-and-Lift EEG Detection dataset derived from WAY-EEG-GAL~\cite{luciw2014wayeeggal,kagglegrasp}. We use MFG as shorthand for a multi-feature Granger-style lagged-dependence estimator: it is directional because the target is represented by an innovation-like signal, but it is not classical VAR Granger causality. For each ordered channel pair and lag, the method estimates a vector of mixed-moment coefficients and uses PCA to extract dominant dependence modes. The output is a set of component-wise sensor maps rather than one connectivity score.
 
 Our main question is which sensor-level dependencies recur across participants, phases, and lags. We then use a controlled classifier ablation to ask whether the same MFG-derived features add information beyond direct EEG time-domain features. This is not a Kaggle leaderboard system, and the maps are not treated as anatomical pathways. Competition solutions optimize prediction with high-capacity ensembles and stacking~\cite{barachant2015grasp}; here the classifier only checks whether the interpretable edge representation carries measurable decoding information.
 
@@ -68,7 +69,7 @@ The local Kaggle copy used by the repository contains 96 labelled training serie
 Each data file contains one \code{id} column and 32 scalp EEG channels sampled at 500 Hz. Event files contain six binary columns: \code{HandStart}, \code{FirstDigitTouch}, \code{BothStartLoadPhase}, \code{LiftOff}, \code{Replace}, and \code{BothReleased}. The labels are multi-label and frame-wise. The implementation reconstructs event centers from contiguous positive label blocks and uses these centers to build movement phases.
 
 \section{Preprocessing}
-Data and event rows are aligned by the shared sample identifier. For each time sample, common-average reference is applied across channels:
+Data and event rows are aligned by the shared sample identifier. For each time sample, common-average reference (CAR) is applied across channels:
 \begin{equation}
     X_{t,c} \leftarrow X_{t,c} - \frac{1}{C}\sum_{d=1}^{C}X_{t,d},
 \end{equation}
@@ -159,16 +160,16 @@ The classifier tests whether MFG-derived features add predictive information bey
         \text{combined} & = \text{baseline} + \text{mfg}.
     \end{split}
 \end{equation}
-Baseline features include standardized EEG samples, temporal differences, lagged samples, rolling means, and rolling RMS windows. MFG features are dynamic EMA summaries computed on stable directed edges selected from the meta-analysis. The reported controlled results use regularized logistic SGD. The code also supports nonlinear tree models, concatenated \code{combined} features, and score-level late fusion.
+Baseline features include standardized EEG samples, temporal differences, lagged samples, rolling means, and rolling RMS windows. MFG features are dynamic EMA summaries computed on stable directed edges selected from the meta-analysis. The reported controlled results use regularized logistic SGD. The code also supports nonlinear tree models, concatenated \code{combined} features, and score-level late fusion. We report \code{combined} and fusion separately where possible, because \code{combined} denotes feature concatenation whereas fusion denotes score-level averaging of separately trained baseline and MFG models.
 
 The primary quantity is
 \begin{equation}
     \Delta_{\mathrm{AUC}} =
-    \mathrm{ROC\mbox{-}AUC}(\mathrm{assisted})
+    \mathrm{ROC\mbox{-}AUC}(\mathrm{augmented})
     -
     \mathrm{ROC\mbox{-}AUC}(\mathrm{baseline}),
 \end{equation}
-where the assisted model is the better of the completed \code{combined} or fusion variants for the corresponding validation design. A positive value indicates that MFG-derived information improves held-out sample-level event prediction relative to the direct EEG baseline under the same split and model settings.
+where the augmented model is either the fixed \code{combined} feature set, a fixed fusion setting, or, when explicitly marked as best augmented, the row-wise better of those two completed variants. The legacy pipeline column name \code{best\_assisted} therefore should not be read as identical to \code{combined}. A positive value indicates that MFG-derived information improves held-out sample-level event prediction relative to the direct EEG baseline under the same split and model settings.
 
 \subsection{Controls}
 Classifier claims are evaluated with channel-set and timing controls. The channel sets are \code{all32}, \code{motor\_premotor}, \code{no\_fp1\_fp2}, and \code{ocular\_proxy\_only}. The first uses all EEG channels; the second focuses on motor and premotor electrodes; the third removes frontal eye-proxy channels; the fourth is a confound check and is not a target model. Timing controls compare aligned labels with labels shifted by 500 ms. A strong predictive claim requires aligned lift to exceed the matched shifted-label control under the same split and model settings. The stricter participant-specific validation trains and evaluates within held-out series for each subject, then aggregates matched aligned-versus-shifted comparisons across subjects, splits, and hyperparameters.
@@ -216,6 +217,13 @@ The regenerated band-pass run is much stricter. It contains 766 unique stable ed
     \end{tabular}
 \end{table}
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{preprocessing_sensitivity.png}
+    \caption{Preprocessing sensitivity summary. CAR-only analysis yields many stable edge instances, but band-pass filtering sharply reduces the fully stable and screen-passing subset, motivating the conservative interpretation used in the article.}
+    \label{fig:preprocess}
+\end{figure}
+
 \subsection{Band-Pass Stable Edges}
 The most replicated band-pass edge instances are listed in Table~\ref{tab:edges}. The top entries include frontal, parietal, and fronto-central pairs rather than the previous adjacent occipital pairs. Several of the strongest rows involve Fp1/Fp2, which is a useful warning: even after band-pass filtering, frontal eye-proxy structure can remain among the most stable directed dependencies.
 
@@ -224,7 +232,7 @@ Among the five fully stable band-pass instances, one is short-range, three occur
 
 \begin{table*}[t]
     \centering
-    \caption{Selected reproducible directed edges.}
+    \caption{Selected reproducible directed edge instances from the band-pass meta-analysis.}
     \label{tab:edges}
     \footnotesize
     \setlength{\tabcolsep}{4pt}
@@ -242,24 +250,40 @@ Among the five fully stable band-pass instances, one is short-range, three occur
     \end{tabular}
 \end{table*}
 
-\subsection{Classifier Ablation}
-The stricter subject-aware validation is the classifier result used for the paper. This decoder was developed on the earlier stable-edge table and is retained as a secondary test of whether MFG-style edge dynamics can add predictive information; it is not used as proof that the cleaned band-pass connectivity subset is cortical. The final decoder uses three online SGD passes over the participant-specific training files and a fixed sweep over \code{alpha} and fusion weights. Across 288 matched aligned-versus-shifted rows, mean aligned lift is $+0.0026$, mean shifted-control lift is $+0.0012$, and the mean aligned-minus-shifted difference is $+0.0014$. The best timing-control group uses \code{alpha=0.2} and fusion weight $0.25$, with mean baseline AUC $0.8609$, mean aligned assisted AUC $0.8634$, mean aligned lift $+0.0025$, and matched delta $+0.0020$. The best predictive group uses \code{alpha=0.1} and fusion weight $0.15$, reaching mean aligned assisted AUC $0.8698$ with matched delta $+0.0014$. Aggregating deltas by participant gives positive mean delta in 7 of 12 subjects; the subject-level bootstrap 95\% interval for the mean delta is approximately $[0.00001, 0.00283]$, and the one-sided subject sign-test gives $p=0.387$. The classifier result is therefore useful but deliberately modest: MFG-derived edge dynamics add a small amount of controlled information beyond the direct EEG baseline.
+Table~\ref{tab:edges} should be read as an evidence table for replicated sensor-level dependence. \code{Phase} is the task interval in which the edge was observed, \code{PC} is the pair-specific PCA dependence component, \code{Edge} gives the ordered source-target sensor pair, and \code{Lag} is the source-to-target offset in milliseconds. $K/N$ reports how many of the 12 subjects contained the edge in the top-$k$ list for that scenario, and $q_{\mathrm{FDR}}$ is the Benjamini-Hochberg adjusted edge-level significance. The table supports reproducibility of sensor-pair statistics; it does not by itself identify an anatomical pathway.
 
-\begin{table}[t]
+\begin{figure*}[t]
     \centering
-    \caption{Selected classifier validation results.}
+    \includegraphics[width=0.86\textwidth]{top_edges_replication.png}
+    \caption{Most replicated band-pass directed edge instances. The bar length shows the number of subjects in which the edge appears in the top-$k$ list. Orange marks rows involving Fp1/Fp2, which are interpreted as frontal eye-proxy warnings rather than direct cortical-connectivity evidence.}
+    \label{fig:top_edges}
+\end{figure*}
+
+\subsection{Classifier Ablation}
+The stricter subject-aware validation is the classifier result used for the paper. This decoder was developed on the earlier stable-edge table and is retained as a secondary test of whether MFG-style edge dynamics can add predictive information; it is not used as proof that the cleaned band-pass connectivity subset is cortical. The final decoder uses three online SGD passes over the participant-specific training files and a fixed sweep over \code{alpha} and fusion weights. Across 288 matched aligned-versus-shifted rows, mean aligned lift is $+0.0026$, mean shifted-control lift is $+0.0012$, and the mean aligned-minus-shifted difference is $+0.0014$. The best timing-control group uses \code{alpha=0.2} and fusion weight $0.25$; its mean baseline AUC is $0.8609$, mean \code{combined} AUC is $0.8616$, mean fusion AUC is $0.8616$, mean best-augmented AUC is $0.8634$, and matched delta is $+0.0020$. The best predictive group uses \code{alpha=0.1} and fusion weight $0.15$, reaching mean best-augmented AUC $0.8698$ with matched delta $+0.0014$. Aggregating deltas by participant gives positive mean delta in 7 of 12 subjects; the subject-level bootstrap 95\% interval for the mean delta is approximately $[0.00001, 0.00283]$, and the one-sided subject sign-test gives $p=0.387$. The classifier result is therefore useful but deliberately modest: MFG-derived edge dynamics add a small amount of controlled information beyond the direct EEG baseline.
+
+\begin{table*}[t]
+    \centering
+    \caption{Selected classifier validation results. Combined is baseline+MFG feature concatenation, fusion is score-level late fusion, and best aug. is the row-wise better augmented variant.}
     \label{tab:classification}
     \footnotesize
-    \begin{tabular}{p{0.40\columnwidth}ccc}
+    \begin{tabular}{p{0.30\textwidth}ccccc}
         \toprule
-        Setting                             & Baseline & Assisted & Lift    \\
+        Setting                             & Baseline & Combined & Fusion & Best aug. & Matched delta \\
         \midrule
-        Subject-aware best control group    & 0.8609   & 0.8634   & +0.0025 \\
-        Subject-aware best predictive group & 0.8674   & 0.8698   & +0.0024 \\
-        Subject-aware matched delta         & --       & --       & +0.0014 \\
+        Subject-aware best timing-control group & 0.8609 & 0.8616 & 0.8616 & 0.8634 & +0.0020 \\
+        Subject-aware best predictive group     & 0.8674 & 0.8668 & 0.8688 & 0.8698 & +0.0014 \\
+        All matched aligned-vs-shifted rows     & --     & --     & --     & --     & +0.0014 \\
         \bottomrule
     \end{tabular}
-\end{table}
+\end{table*}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.86\textwidth]{classification_timing_control.png}
+    \caption{Classifier ablation and timing control. The best predictive group shows that the MFG-only model is not the target model; the useful comparison is whether \code{combined} or fusion adds a small increment over the direct EEG baseline. The shifted-label panel shows that the aligned gain is positive but small after the 500~ms timing control.}
+    \label{fig:classification}
+\end{figure*}
 
 \subsection{Timing and Artefact Controls}
 Matched timing controls support a cautious interpretation. In the final subject-aware timing control, aligned rows beat shifted rows in 175 of 288 matched comparisons.
