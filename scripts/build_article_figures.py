@@ -51,14 +51,6 @@ def _human_phase(value: str) -> str:
     return value.replace("__", " -> ").replace("_", " ")
 
 
-def _human_preprocess(value: str) -> str:
-    if value.lower() == "car-only":
-        return "CAR only"
-    if value == "bandpass_0_5_48":
-        return "Band-pass 0.5-48 Hz"
-    return value.replace("_", " ")
-
-
 def _scientific(value: Any) -> str:
     number = _safe_float(value, 0.0)
     if number <= 0:
@@ -83,56 +75,6 @@ def _load_pyplot():
         }
     )
     return plt
-
-
-def _plot_preprocessing(package_dir: Path, out_dir: Path) -> Path | None:
-    rows = _read_csv(package_dir / "tables" / "preprocessing_comparison.csv")
-    if not rows:
-        return None
-
-    plt = _load_pyplot()
-    labels = [_human_preprocess(row.get("preprocessing", "")) for row in rows]
-    metrics = [
-        ("Stable", "stable_edge_count", "#4c78a8"),
-        ("Fully stable", "fully_stable_edges", "#59a14f"),
-        ("Screen-passing", "vc_robust_edges", "#f28e2b"),
-    ]
-
-    y_positions = list(range(len(labels)))
-    height = 0.22
-    fig, ax = plt.subplots(figsize=(6.8, 3.1))
-    for offset, (name, column, color) in zip([-height, 0.0, height], metrics):
-        values = [max(_safe_float(row.get(column)), 0.01) for row in rows]
-        bars = ax.barh(
-            [pos + offset for pos in y_positions],
-            values,
-            height=height,
-            label=name,
-            color=color,
-        )
-        for bar, raw_value in zip(bars, values):
-            shown = int(round(raw_value))
-            ax.text(
-                raw_value * 1.08,
-                bar.get_y() + bar.get_height() / 2,
-                f"{shown}",
-                va="center",
-                fontsize=7,
-            )
-
-    ax.set_yticks(y_positions)
-    ax.set_yticklabels(labels)
-    ax.set_xscale("log")
-    ax.set_xlabel("Edge instances, log scale")
-    ax.set_title("Preprocessing sharply narrows stable connectivity")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), frameon=False, ncol=3)
-    ax.grid(axis="x", alpha=0.18)
-    fig.tight_layout()
-
-    out_path = out_dir / "preprocessing_sensitivity.png"
-    fig.savefig(out_path, bbox_inches="tight")
-    plt.close(fig)
-    return out_path
 
 
 def _plot_top_edges(package_dir: Path, out_dir: Path) -> Path | None:
@@ -309,7 +251,7 @@ def build_article_figures(package_dir: Path | str = "out/article_package") -> li
     out_dir.mkdir(parents=True, exist_ok=True)
 
     figures: list[Path] = []
-    for builder in (_plot_preprocessing, _plot_top_edges, _plot_classifier):
+    for builder in (_plot_top_edges, _plot_classifier):
         path = builder(package_path, out_dir)
         if path is not None:
             figures.append(path)

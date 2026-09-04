@@ -76,7 +76,7 @@
       "out\\article_package\\documentation\\references.bib"
     ],
     "article_figures": [
-      "out\\article_package\\figures\\preprocessing_sensitivity.png",
+      "out\\article_package\\figures\\article_dense_pca_modes_by_lag.png",
       "out\\article_package\\figures\\top_edges_replication.png",
       "out\\article_package\\figures\\classification_timing_control.png"
     ]
@@ -342,7 +342,7 @@
     "out\\phase_mats_pca_bandpass_by_subject\\subj12\\phasegrid_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.png"
   ],
   "article_figures": [
-    "out\\article_package\\figures\\preprocessing_sensitivity.png",
+    "out\\article_package\\figures\\article_dense_pca_modes_by_lag.png",
     "out\\article_package\\figures\\top_edges_replication.png",
     "out\\article_package\\figures\\classification_timing_control.png"
   ],

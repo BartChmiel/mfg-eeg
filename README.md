@@ -19,9 +19,23 @@ Place the Kaggle files in `data/grasp-and-lift-eeg-detection/train/` and
 `data/grasp-and-lift-eeg-detection/test/`. Raw data and exploratory outputs are
 ignored by Git.
 
+## Repository Contents
+
+- `docs/` contains the final article PDF/source, bibliography, and technical
+  method notes.
+- `src_mfg/` contains reusable preprocessing, normalization, basis, montage,
+  configuration, and IO code.
+- `scripts/` contains the article pipeline and reproducibility utilities.
+- `out/article_package/` contains the final evidence bundle used by the article:
+  compact tables, selected figures, reports, and provenance metadata.
+- `tests/` contains regression checks for the pipeline components.
+
+Raw Kaggle data, local virtual environments, temporary logs, caches, private
+transfer bundles, and exploratory outputs are intentionally ignored.
+
 ## Run
 
-Open the GUI with `launch_gui.bat`, or run the cleaned article workflow:
+Run the cleaned article workflow:
 
 ```powershell
 python -m scripts.run_resumable_article_pipeline
@@ -36,6 +50,10 @@ To rebuild only the bundle from existing outputs, run:
 ```powershell
 python -m scripts.build_article_package --help
 ```
+
+The lightweight GUI entry point `launch_gui.bat` is kept for local workflow
+execution, but the command-line pipeline above is the canonical reproduction
+path.
 
 ## Outputs
 
