@@ -13,8 +13,15 @@
 \usepackage{booktabs}
 \usepackage{cite}
 \usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{balance}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
+
+\raggedbottom
+\setlength{\textfloatsep}{12pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{14pt plus 2pt minus 2pt}
+\renewcommand{\arraystretch}{1.12}
 
 \graphicspath{{figures/}{out/article_package/figures/}{../out/article_package/figures/}}
 
@@ -148,10 +155,11 @@ Baseline features include standardized EEG samples, temporal differences, lagged
 
 The primary quantity is
 \begin{equation}
-    \Delta_{\mathrm{AUC}} =
-    \mathrm{ROC\mbox{-}AUC}(\mathrm{augmented})
-    -
-    \mathrm{ROC\mbox{-}AUC}(\mathrm{baseline}),
+    \begin{aligned}
+        \Delta_{\mathrm{AUC}} & =
+        \mathrm{ROC\mbox{-}AUC}(\mathrm{augmented}) \\
+        & \quad - \mathrm{ROC\mbox{-}AUC}(\mathrm{baseline}),
+    \end{aligned}
 \end{equation}
 where the augmented model is either the fixed \code{combined} feature set or a fixed fusion setting. When explicitly reported, best augmented denotes the better of these two completed variants for the specified evaluation row. A positive value indicates higher measured held-out AUC relative to the direct EEG baseline under the same split and model settings; because selection is not fully nested, the difference is descriptive rather than an unbiased estimate of generalization gain.
 
@@ -162,12 +170,12 @@ Classifier comparisons are evaluated with timing controls. Timing controls compa
 \subsection{Representative Dependence Scenarios}
 Table~\ref{tab:scenarios} summarizes the ten significant band-pass instances in the fixed reference analysis. All listed scenarios include all 12 subjects. Each instance specifies a phase, PC, lag, and ordered sensor pair; recurrence, primary $q$-values, and sensitivity counts are reported separately.
 
-\begin{table*}[t]
+\begin{table*}[!t]
     \centering
     \caption{Significant band-pass instances in the fixed reference analysis. $K/N$ is recurrence across participants; $q$ is from the reference setting. Settings counts significance and reportability across the 27-setting sensitivity grid.}
     \label{tab:scenarios}
-    \scriptsize
-    \setlength{\tabcolsep}{3pt}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
     \IfFileExists{tables/primary_edge_sensitivity.tex}{\input{tables/primary_edge_sensitivity.tex}}{%
         \IfFileExists{out/article_package/tables/primary_edge_sensitivity.tex}{\input{out/article_package/tables/primary_edge_sensitivity.tex}}{\input{../out/article_package/tables/primary_edge_sensitivity.tex}}}
 \end{table*}
@@ -177,7 +185,7 @@ The CAR-only and band-pass analyses yielded markedly different robustness profil
 
 Under band-pass preprocessing, 62 unique edge instances satisfy at least one sensitivity setting, but none remains significant in all settings. The ten significant instances include frontal, parietal, fronto-central, and temporal pairs rather than the predominantly occipital pattern observed with CAR-only preprocessing (Table~\ref{tab:scenarios}). Thus the band-pass analysis yields fewer exactly recurring directed edge instances and does not reproduce the CAR-only posterior-to-central pattern.
 
-\begin{table}[t]
+\begin{table}[!t]
     \centering
     \caption{Directed-dependence summary before and after band-pass preprocessing. The final column counts edges passing the distance/lag/asymmetry screen.}
     \label{tab:preprocess_compare}
@@ -194,7 +202,7 @@ Under band-pass preprocessing, 62 unique edge instances satisfy at least one sen
 
 Figure~\ref{fig:dense_modes} provides a representative view of the dense signed scores from the band-pass analysis for \code{FirstDigitTouch -> BothStartLoadPhase}. It displays PC1--PC3 across all five lags before subject-level edge selection. The matrices aggregate accepted phase windows across the labelled recordings and do not encode $K/N$, edge-level significance, or stability. This interval also contains the replicated \code{F7 -> FC5} PC1 edge at 200 ms reported below, but the dense display is not an inferential selection.
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
     \centering
     \includegraphics[width=\textwidth]{article_dense_pca_modes_by_lag}
     \caption{Dense signed pair-specific PCA score matrices for \code{FirstDigitTouch -> BothStartLoadPhase} after CAR and 0.5--48 Hz band-pass preprocessing. Columns show lags of 0, 50, 100, 150, and 200 ms, and figure rows show PC1--PC3. Within each matrix, rows are source sensors at $t$ and columns target sensors at $t+\ell$. Each PC row uses one symmetric scale across its five lags; because the rows use separate ranges, color magnitudes should not be compared directly between PC rows. The matrices show the full pre-selection score landscape; cross-subject inference uses subject-level top-$k$ recurrence. PCA bases are fitted separately for each ordered sensor pair.}
@@ -206,7 +214,7 @@ The dense maps show distinct distributed structures across pair-specific modes a
 Full stability denotes significance across all 27 sensitivity settings; the distance, lag, and asymmetry screen is applied subsequently. Similar edge magnitudes can produce between-subject rank changes without eliminating the broader dense pattern.
 
 \subsection{Band-Pass Significant Edges}
-\begin{figure*}[t]
+\begin{figure*}[!t]
     \centering
     \includegraphics[width=0.86\textwidth]{top_edges_replication.png}
     \caption{Most replicated band-pass directed edge instances. Bar length gives cross-subject recurrence $K/N$, and labels report the BH-FDR-adjusted $q$-value for each phase/PC/lag instance. Orange marks rows involving Fp1/Fp2, interpreted as frontal eye-proxy warnings rather than evidence of cortical connectivity.}
@@ -221,7 +229,7 @@ No band-pass instance is fully stable across all 27 settings, leaving zero candi
 \subsection{Classifier Ablation}
 Subject-aware validation provides a secondary test of whether MFG-style edge dynamics add predictive information. The decoder uses three online SGD passes over the participant-specific training files and a fixed sweep over \code{alpha} and fusion weights. Across 288 matched aligned-versus-shifted rows, mean aligned lift is $+0.0026$, mean shifted-control lift is $+0.0012$, and the mean aligned-minus-shifted difference is $+0.0014$. The best timing-control group uses \code{alpha=0.2} and fusion weight $0.25$; its mean baseline AUC is $0.8609$, mean \code{combined} AUC is $0.8616$, mean fusion AUC is $0.8616$, mean best-augmented AUC is $0.8634$, and matched delta is $+0.0020$. The best predictive group uses \code{alpha=0.1} and fusion weight $0.15$: its mean MFG-only AUC is $0.7010$, whereas the mean best-augmented AUC is $0.8698$ with matched delta $+0.0014$. Aggregating deltas by participant gives positive mean delta in 7 of 12 subjects; the subject-level bootstrap 95\% interval for the mean delta is approximately $[0.00001, 0.00283]$, and the one-sided subject sign-test gives $p=0.387$. The classifier therefore provides a small descriptive incremental signal, motivating a fully nested follow-up.
 
-\begin{table*}[t]
+\begin{table*}[!t]
     \centering
     \caption{Selected classifier validation results. Combined is baseline+MFG feature concatenation, fusion is score-level late fusion, and best aug. is the row-wise better augmented variant.}
     \label{tab:classification}
@@ -237,7 +245,7 @@ Subject-aware validation provides a secondary test of whether MFG-style edge dyn
     \end{tabular}
 \end{table*}
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
     \centering
     \includegraphics[width=0.86\textwidth]{classification_timing_control.png}
     \caption{Classifier ablation and timing control. In the best predictive group, the relevant comparison is the increment from \code{combined} or fusion over the direct EEG baseline; the MFG-only model is shown for context. The shifted-label panel shows a small positive aligned gain after the 500~ms timing control.}
@@ -256,7 +264,6 @@ Unlike competition entries optimized for frame-wise AUC with high-capacity ensem
 
 Direction and lag are statistical sensor-level properties rather than anatomical pathways. Source-level interpretation would require source localization, volume-conduction-robust estimators, and independent validation.
 
-\newpage
 \section{Limitations}
 The analysis has several limitations:
 \begin{itemize}
@@ -275,16 +282,16 @@ Future work should first assess the effects of source mixing and volume conducti
 
 A full Fp1/Fp2 proxy-regression rerun is also warranted. Participant-level held-out discovery should fit stable edges and PCA bases only on training subjects within each split. Because PCA optimizes variance rather than cross-view association, correlation-oriented approaches such as canonical correlation analysis could be investigated as future alternatives; such approaches are not part of the present analysis. Multimodal WAY-EEG-GAL recordings (EMG, kinematics, force) and an independent EEG grasp dataset would be needed before stronger anatomical or causal language is justified.
 
-\newpage
+\balance
 \section{Conclusion}
 We find reproducible event-locked directed lagged dependence in Grasp-and-Lift EEG, while band-pass preprocessing substantially changes the recovered dependence structure. After global BH adjustment, ten recurrent band-pass instances remain significant in the fixed reference analysis. The strongest non-zero-lag Fp2--Fp1 observations recur in $10/12$ and $9/12$ participants and are retained in $24/27$ and $21/27$ sensitivity settings, although no instance survives the full 27-setting intersection. Classifier ablation adds a small descriptive predictive increment. Taken together, the results support a reproducible sensor-level analysis; they do not support an anatomical connectivity claim.
 
 \section{Code Availability}
 Code for preprocessing, directed-dependence estimation, cross-subject meta-analysis, classifier validation, and figure generation is available at \url{https://github.com/BartChmiel/mfg-eeg}. A versioned archival release corresponding to the submitted manuscript will be provided before submission.
 
-\newpage
 \bibliographystyle{IEEEtran}
 \begingroup
+\raggedright
 \hyphenpenalty=10000
 \exhyphenpenalty=10000
 \emergencystretch=1em

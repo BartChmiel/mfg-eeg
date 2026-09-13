@@ -145,7 +145,7 @@ def primary_sensitivity_rows(
 def write_primary_sensitivity_table(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     fields = EDGE_FIELDS + ["config_count", "successful_config_count", "stability_fraction"]
     _write_csv(out_dir / "primary_edge_sensitivity.csv", rows, fields)
-    lines = [r"\begin{tabular}{p{0.34\textwidth}clcccc}", r"\toprule",
+    lines = [r"\begin{tabular}{>{\raggedright\arraybackslash}p{0.38\textwidth}clcccc}", r"\toprule",
         r"Phase & PC & Edge & Lag (ms) & $K/N$ & $q$ & Settings \\", r"\midrule"]
     for row in rows:
         phase = str(row["phase"]).replace("__", " -> ").replace("_", r"\_")
