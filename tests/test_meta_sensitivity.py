@@ -53,6 +53,10 @@ class MetaSensitivityTests(unittest.TestCase):
         self.assertEqual(payload["configs_successful"], 4)
         self.assertTrue((self.out_dir / "edge_stability.csv").exists())
         self.assertTrue((self.out_dir / "sensitivity_summary.md").exists())
+        summary = (self.out_dir / "sensitivity_summary.md").read_text(encoding="utf-8")
+        self.assertIn("Instances significant in at least one setting:", summary)
+        self.assertIn("Reference-setting q-values", summary)
+        self.assertNotIn("stronger candidates for article claims", summary)
 
         with open(
             self.out_dir / "edge_stability.csv",

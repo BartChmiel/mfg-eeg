@@ -1,39 +1,39 @@
 # Meta-Analysis Sensitivity Report
 
-Input directory: `out\phase_mats_pca_bandpass_by_subject`
+Input directory: `out\article_package\reproduction\bandpass_0_5_48_rankings.csv.gz`
 Requested parameter configurations: 27
 Successful configurations: 27
-Significant edge observations: 4288
-Unique stable edges: 766
+Significant edge observations: 414
+Instances significant in at least one setting: 62
 
-## Most Stable Edges
+## Most Frequently Retained Instances
 
 | phase | pc | lag_ms | edge | configs | stability | max_k | best_q_or_p |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Replace__BothReleased | pc2 | 50 | Fp2->Fp1 | 27/27 | 1.0 | 10 | 1.1721155763334154e-13 |
-| Replace__BothReleased | pc2 | 0 | Fp1->Fp2 | 27/27 | 1.0 | 10 | 4.414103477523732e-10 |
-| Replace__BothReleased | pc2 | 200 | Fp2->Fp1 | 27/27 | 1.0 | 9 | 4.414103477523732e-10 |
-| FirstDigitTouch__BothStartLoadPhase | pc1 | 200 | F7->FC5 | 27/27 | 1.0 | 9 | 6.200376927702528e-09 |
-| Replace__BothReleased | pc2 | 0 | Fp2->Fp1 | 27/27 | 1.0 | 9 | 6.200376927702528e-09 |
-| LiftOff__Replace | pc1 | 200 | F8->FC6 | 26/27 | 0.9629629629629629 | 8 | 1.1762870294953607e-08 |
-| Replace__BothReleased | pc1 | 200 | Fp2->F4 | 26/27 | 0.9629629629629629 | 8 | 1.8541277913284212e-07 |
-| HandStart__FirstDigitTouch | pc2 | 200 | Fp2->Fp1 | 26/27 | 0.9629629629629629 | 8 | 2.4922105647274695e-07 |
-| Replace__BothReleased | pc2 | 50 | Fp1->Fp2 | 26/27 | 0.9629629629629629 | 8 | 2.4922105647274695e-07 |
-| BothStartLoadPhase__LiftOff | pc1 | 200 | F8->FC6 | 25/27 | 0.9259259259259259 | 8 | 2.4922105647274695e-07 |
-| FirstDigitTouch__BothStartLoadPhase | pc1 | 200 | F8->FC6 | 25/27 | 0.9259259259259259 | 8 | 2.4922105647274695e-07 |
-| Replace__BothReleased | pc2 | 200 | Fp1->Fp2 | 25/27 | 0.9259259259259259 | 7 | 1.1762870294953607e-08 |
-| Replace__BothReleased | pc2 | 150 | Fp1->Fp2 | 25/27 | 0.9259259259259259 | 7 | 2.4922105647274695e-07 |
-| LiftOff__Replace | pc1 | 50 | Pz->CP2 | 24/27 | 0.8888888888888888 | 11 | 1.216035901020426e-09 |
-| BothStartLoadPhase__LiftOff | pc1 | 200 | F7->FC5 | 24/27 | 0.8888888888888888 | 9 | 6.200376927702528e-09 |
-| BothStartLoadPhase__LiftOff | pc2 | 200 | Fp2->Fp1 | 24/27 | 0.8888888888888888 | 7 | 2.4922105647274695e-07 |
-| HandStart__FirstDigitTouch | pc2 | 0 | FC1->Fp1 | 24/27 | 0.8888888888888888 | 7 | 6.941643366319013e-06 |
-| LiftOff__Replace | pc1 | 200 | F7->FC5 | 24/27 | 0.8888888888888888 | 7 | 6.941643366319013e-06 |
-| LiftOff__Replace | pc1 | 50 | Pz->CP1 | 23/27 | 0.8518518518518519 | 8 | 3.5272891748982306e-06 |
-| Replace__BothReleased | pc2 | 100 | Fp2->Fp1 | 23/27 | 0.8518518518518519 | 6 | 2.4922105647274695e-07 |
+| Replace__BothReleased | pc2 | 50 | Fp2->Fp1 | 24/27 | 0.8888888888888888 | 10 | 4.844744382178117e-10 |
+| Replace__BothReleased | pc2 | 0 | Fp1->Fp2 | 21/27 | 0.7777777777777778 | 10 | 1.8244961040431427e-06 |
+| Replace__BothReleased | pc2 | 200 | Fp2->Fp1 | 21/27 | 0.7777777777777778 | 9 | 1.8244961040431427e-06 |
+| FirstDigitTouch__BothStartLoadPhase | pc1 | 200 | F7->FC5 | 18/27 | 0.6666666666666666 | 9 | 4.271370772417297e-06 |
+| Replace__BothReleased | pc2 | 0 | Fp2->Fp1 | 18/27 | 0.6666666666666666 | 9 | 4.271370772417297e-06 |
+| LiftOff__Replace | pc1 | 200 | F8->FC6 | 15/27 | 0.5555555555555556 | 8 | 4.861986388580824e-05 |
+| LiftOff__Replace | pc1 | 50 | Pz->CP2 | 12/27 | 0.4444444444444444 | 11 | 3.8336047049118517e-07 |
+| BothStartLoadPhase__LiftOff | pc1 | 200 | F7->FC5 | 12/27 | 0.4444444444444444 | 9 | 4.271370772417297e-06 |
+| LiftOff__Replace | pc1 | 200 | TP10->T8 | 12/27 | 0.4444444444444444 | 9 | 0.00011883806212569653 |
+| Replace__BothReleased | pc1 | 200 | Fp2->F4 | 12/27 | 0.4444444444444444 | 8 | 0.00012772880340262456 |
+| Replace__BothReleased | pc2 | 200 | Fp1->Fp2 | 12/27 | 0.4444444444444444 | 7 | 4.861986388580824e-05 |
+| Replace__BothReleased | pc1 | 0 | Fp1->PO9 | 9/27 | 0.3333333333333333 | 10 | 6.497139204868006e-06 |
+| BothStartLoadPhase__LiftOff | pc1 | 200 | F8->FC6 | 9/27 | 0.3333333333333333 | 8 | 0.0010301137000873542 |
+| FirstDigitTouch__BothStartLoadPhase | pc1 | 200 | F8->FC6 | 9/27 | 0.3333333333333333 | 8 | 0.0010301137000873542 |
+| HandStart__FirstDigitTouch | pc2 | 200 | Fp2->Fp1 | 9/27 | 0.3333333333333333 | 8 | 0.0010301137000873542 |
+| Replace__BothReleased | pc2 | 50 | Fp1->Fp2 | 9/27 | 0.3333333333333333 | 8 | 0.0010301137000873542 |
+| BothStartLoadPhase__LiftOff | pc2 | 200 | Fp2->Fp1 | 9/27 | 0.3333333333333333 | 7 | 0.0010301137000873542 |
+| Replace__BothReleased | pc2 | 150 | Fp1->Fp2 | 9/27 | 0.3333333333333333 | 7 | 0.0010301137000873542 |
+| HandStart__FirstDigitTouch | pc2 | 0 | FC1->Fp1 | 9/27 | 0.3333333333333333 | 7 | 0.011827721705814124 |
+| LiftOff__Replace | pc1 | 200 | F7->FC5 | 9/27 | 0.3333333333333333 | 7 | 0.011827721705814124 |
 
-## Interpretation
+## Columns
 
-Edges that remain significant across multiple top-k, minimum-subject, and p0-inflation settings are stronger candidates for article claims. This analysis does not replace the main FDR table; it checks whether the conclusions are parameter-stable.
+`configs` counts retention across the grid; `best_q_or_p` is the minimum across those settings. Reference-setting q-values are reported in the meta-analysis edge table.
 
 ## Warnings
 

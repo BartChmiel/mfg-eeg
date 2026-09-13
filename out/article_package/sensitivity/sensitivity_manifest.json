@@ -1,5 +1,5 @@
 {
-  "dir": "out\\phase_mats_pca_bandpass_by_subject",
+  "dir": "out\\article_package\\reproduction\\bandpass_0_5_48_rankings.csv.gz",
   "configs_requested": 27,
   "configs_successful": 27,
   "topk_values": [
@@ -22,252 +22,306 @@
   "alpha": 0.05,
   "use_fdr": true,
   "significant_only": true,
-  "observation_count": 4288,
-  "stable_edge_count": 766,
+  "observation_count": 414,
+  "stable_edge_count": 62,
   "warnings": [],
   "config_results": [
     {
       "config_id": "cfg001_topk5_min3_p0x5",
       "topk": 5,
       "min_subjects": 3,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 213,
-      "p0_effective": 0.025201612903225805
+      "p0_effective": 0.025201612903225805,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg002_topk5_min3_p0x10",
       "topk": 5,
       "min_subjects": 3,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 213,
-      "p0_effective": 0.05040322580645161
+      "p0_effective": 0.05040322580645161,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg003_topk5_min3_p0x15",
       "topk": 5,
       "min_subjects": 3,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 213,
-      "p0_effective": 0.07560483870967742
+      "p0_effective": 0.07560483870967742,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg004_topk5_min4_p0x5",
       "topk": 5,
       "min_subjects": 4,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 72,
-      "p0_effective": 0.025201612903225805
+      "p0_effective": 0.025201612903225805,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg005_topk5_min4_p0x10",
       "topk": 5,
       "min_subjects": 4,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 72,
-      "p0_effective": 0.05040322580645161
+      "p0_effective": 0.05040322580645161,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg006_topk5_min4_p0x15",
       "topk": 5,
       "min_subjects": 4,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 72,
-      "p0_effective": 0.07560483870967742
+      "p0_effective": 0.07560483870967742,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg007_topk5_min5_p0x5",
       "topk": 5,
       "min_subjects": 5,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 18,
-      "p0_effective": 0.025201612903225805
+      "p0_effective": 0.025201612903225805,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg008_topk5_min5_p0x10",
       "topk": 5,
       "min_subjects": 5,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 18,
-      "p0_effective": 0.05040322580645161
+      "p0_effective": 0.05040322580645161,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg009_topk5_min5_p0x15",
       "topk": 5,
       "min_subjects": 5,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 18,
-      "p0_effective": 0.07560483870967742
+      "p0_effective": 0.07560483870967742,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg010_topk10_min3_p0x5",
       "topk": 10,
       "min_subjects": 3,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 662,
-      "p0_effective": 0.05040322580645161
+      "p0_effective": 0.05040322580645161,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg011_topk10_min3_p0x10",
       "topk": 10,
       "min_subjects": 3,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 662,
-      "p0_effective": 0.10080645161290322
+      "p0_effective": 0.10080645161290322,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg012_topk10_min3_p0x15",
       "topk": 10,
       "min_subjects": 3,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 662,
-      "p0_effective": 0.15120967741935484
+      "p0_effective": 0.15120967741935484,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg013_topk10_min4_p0x5",
       "topk": 10,
       "min_subjects": 4,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 265,
-      "p0_effective": 0.05040322580645161
+      "p0_effective": 0.05040322580645161,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg014_topk10_min4_p0x10",
       "topk": 10,
       "min_subjects": 4,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 265,
-      "p0_effective": 0.10080645161290322
+      "p0_effective": 0.10080645161290322,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg015_topk10_min4_p0x15",
       "topk": 10,
       "min_subjects": 4,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 265,
-      "p0_effective": 0.15120967741935484
+      "p0_effective": 0.15120967741935484,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg016_topk10_min5_p0x5",
       "topk": 10,
       "min_subjects": 5,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 108,
-      "p0_effective": 0.05040322580645161
+      "p0_effective": 0.05040322580645161,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg017_topk10_min5_p0x10",
       "topk": 10,
       "min_subjects": 5,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 108,
-      "p0_effective": 0.10080645161290322
+      "p0_effective": 0.10080645161290322,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg018_topk10_min5_p0x15",
       "topk": 10,
       "min_subjects": 5,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 108,
-      "p0_effective": 0.15120967741935484
+      "p0_effective": 0.15120967741935484,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg019_topk15_min3_p0x5",
       "topk": 15,
       "min_subjects": 3,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 1118,
-      "p0_effective": 0.07560483870967742
+      "p0_effective": 0.07560483870967742,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg020_topk15_min3_p0x10",
       "topk": 15,
       "min_subjects": 3,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 1118,
-      "p0_effective": 0.15120967741935484
+      "p0_effective": 0.15120967741935484,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg021_topk15_min3_p0x15",
       "topk": 15,
       "min_subjects": 3,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 1118,
-      "p0_effective": 0.22681451612903225
+      "p0_effective": 0.22681451612903225,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg022_topk15_min4_p0x5",
       "topk": 15,
       "min_subjects": 4,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 535,
-      "p0_effective": 0.07560483870967742
+      "p0_effective": 0.07560483870967742,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg023_topk15_min4_p0x10",
       "topk": 15,
       "min_subjects": 4,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 535,
-      "p0_effective": 0.15120967741935484
+      "p0_effective": 0.15120967741935484,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg024_topk15_min4_p0x15",
       "topk": 15,
       "min_subjects": 4,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 535,
-      "p0_effective": 0.22681451612903225
+      "p0_effective": 0.22681451612903225,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg025_topk15_min5_p0x5",
       "topk": 15,
       "min_subjects": 5,
-      "p0_inflate": 5.0,
+      "p0_inflate": 5,
       "ok": true,
       "edge_rows": 236,
-      "p0_effective": 0.07560483870967742
+      "p0_effective": 0.07560483870967742,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg026_topk15_min5_p0x10",
       "topk": 15,
       "min_subjects": 5,
-      "p0_inflate": 10.0,
+      "p0_inflate": 10,
       "ok": true,
       "edge_rows": 236,
-      "p0_effective": 0.15120967741935484
+      "p0_effective": 0.15120967741935484,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     },
     {
       "config_id": "cfg027_topk15_min5_p0x15",
       "topk": 15,
       "min_subjects": 5,
-      "p0_inflate": 15.0,
+      "p0_inflate": 15,
       "ok": true,
       "edge_rows": 236,
-      "p0_effective": 0.22681451612903225
+      "p0_effective": 0.22681451612903225,
+      "fdr_total_tests": 74400,
+      "min_subjects_applied_after_fdr": true
     }
   ]
 }

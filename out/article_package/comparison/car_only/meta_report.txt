@@ -1,0 +1,631 @@
+N_subjects_total=12 | mode=gc | topk=10 | p0=0.100806 | FDR=True | significant_only=True
+BothStartLoadPhase__LiftOff | pc1 | lag=0ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->P8      9/12   1.778e-07   4.993e-05  ***
+  PO9 ->O1      9/12   1.778e-07   4.993e-05  ***
+  PO10->O2      7/12   5.288e-05    0.009666  **
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc1 | lag=50ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc1 | lag=100ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc1 | lag=150ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO10->P8     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc1 | lag=200ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=0ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  O2  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  Oz  ->O1      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=50ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    10/12   5.902e-09   2.174e-06  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=100ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  O2  ->PO10   11/12    1.19e-10   5.464e-08  ***
+  O1  ->PO9    10/12   5.902e-09   2.174e-06  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=150ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O2  ->PO10   12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc2 | lag=200ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->PO9    12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O2  ->PO10   12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=50ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  C4  ->FC2     8/12   3.629e-06   0.0008231  ***
+  Oz  ->FC5     8/12   3.629e-06   0.0008231  ***
+  P4  ->P8      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Occipital->Frontocentral  DI=+1.00  (OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the occipital to the frontocentral sensor group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=100ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  CP6 ->C4      9/12   1.778e-07   4.993e-05  ***
+  CP6 ->P8      7/12   5.288e-05    0.009666  **
+  O2  ->TP9     7/12   5.288e-05    0.009666  **
+  dominant_flow Parietal->Frontocentral  DI=+1.00  (PARIETAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the frontocentral sensor group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=150ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     10/12   5.902e-09   2.174e-06  ***
+  CP6 ->P8      9/12   1.778e-07   4.993e-05  ***
+  FC5 ->F3      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+BothStartLoadPhase__LiftOff | pc3 | lag=200ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     11/12    1.19e-10   5.464e-08  ***
+  C4  ->FC2     9/12   1.778e-07   4.993e-05  ***
+  CP6 ->C4      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=0ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->P8      9/12   1.778e-07   4.993e-05  ***
+  PO9 ->O1      8/12   3.629e-06   0.0008231  ***
+  PO10->O2      7/12   5.288e-05    0.009666  **
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=50ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=100ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->Oz     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=150ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO10->P8     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc1 | lag=200ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO10->P8     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=0ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  O2  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  O2  ->PO10    8/12   3.629e-06   0.0008231  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=50ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=100ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     11/12    1.19e-10   5.464e-08  ***
+  O2  ->PO10   11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=150ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O2  ->PO10   12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc2 | lag=200ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O2  ->PO10   12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+FirstDigitTouch__BothStartLoadPhase | pc3 | lag=50ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  Oz  ->FC5     9/12   1.778e-07   4.993e-05  ***
+  P4  ->P8      9/12   1.778e-07   4.993e-05  ***
+  C4  ->FC2     8/12   3.629e-06   0.0008231  ***
+  dominant_flow Occipital->Frontocentral  DI=+1.00  (OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the occipital to the frontocentral sensor group.
+
+FirstDigitTouch__BothStartLoadPhase | pc3 | lag=100ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  CP6 ->C4     10/12   5.902e-09   2.174e-06  ***
+  CP6 ->P8      7/12   5.288e-05    0.009666  **
+  O2  ->TP9     7/12   5.288e-05    0.009666  **
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+FirstDigitTouch__BothStartLoadPhase | pc3 | lag=150ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     10/12   5.902e-09   2.174e-06  ***
+  CP6 ->P8      9/12   1.778e-07   4.993e-05  ***
+  FC5 ->F3      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+FirstDigitTouch__BothStartLoadPhase | pc3 | lag=200ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     10/12   5.902e-09   2.174e-06  ***
+  Oz  ->FC5     9/12   1.778e-07   4.993e-05  ***
+  CP6 ->C4      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Occipital->Frontocentral  DI=+1.00  (OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the occipital to the frontocentral sensor group.
+
+HandStart__FirstDigitTouch | pc1 | lag=0ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->P8      9/12   1.778e-07   4.993e-05  ***
+  PO9 ->O1      8/12   3.629e-06   0.0008231  ***
+  PO10->O2      7/12   5.288e-05    0.009666  **
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc1 | lag=50ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->Oz     11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc1 | lag=100ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc1 | lag=150ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc1 | lag=200ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     12/12   1.101e-12   7.516e-10  ***
+  PO10->P8     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc2 | lag=0ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  O1  ->Oz      8/12   3.629e-06   0.0008231  ***
+  O2  ->PO10    8/12   3.629e-06   0.0008231  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc2 | lag=50ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc2 | lag=100ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O1     12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc2 | lag=150ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc2 | lag=200ms
+  scenario_subjects=12/12  reported_edges=9
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+HandStart__FirstDigitTouch | pc3 | lag=0ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  Oz  ->FC5     7/12   5.288e-05    0.009666  **
+  dominant_flow Occipital->Frontocentral  DI=+1.00  (OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the occipital to the frontocentral sensor group.
+
+HandStart__FirstDigitTouch | pc3 | lag=50ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Cz     10/12   5.902e-09   2.174e-06  ***
+  O1  ->FC1     9/12   1.778e-07   4.993e-05  ***
+  C4  ->FC2     7/12   5.288e-05    0.009666  **
+  dominant_flow Occipital->Frontocentral  DI=+1.00  (OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the occipital to the frontocentral sensor group.
+
+HandStart__FirstDigitTouch | pc3 | lag=100ms
+  scenario_subjects=12/12  reported_edges=3
+  edge        k/N    p-value      q(FDR)      sig
+  CP6 ->C4      9/12   1.778e-07   4.993e-05  ***
+  P4  ->CP6     8/12   3.629e-06   0.0008231  ***
+  P7  ->O1      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Parietal->Frontocentral  DI=+1.00  (PARIETAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the frontocentral sensor group.
+
+HandStart__FirstDigitTouch | pc3 | lag=150ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8      9/12   1.778e-07   4.993e-05  ***
+  P7  ->O1      8/12   3.629e-06   0.0008231  ***
+  CP6 ->P8      7/12   5.288e-05    0.009666  **
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+HandStart__FirstDigitTouch | pc3 | lag=200ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     10/12   5.902e-09   2.174e-06  ***
+  P7  ->O1     10/12   5.902e-09   2.174e-06  ***
+  CP6 ->P8      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+LiftOff__Replace | pc1 | lag=0ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  PO9 ->O1      8/12   3.629e-06   0.0008231  ***
+  PO9 ->Oz      8/12   3.629e-06   0.0008231  ***
+  PO10->O2      7/12   5.288e-05    0.009666  **
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc1 | lag=50ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO10->Oz     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc1 | lag=100ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc1 | lag=150ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc1 | lag=200ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->O1     12/12   1.101e-12   7.516e-10  ***
+  PO9 ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc2 | lag=0ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  Oz  ->O1      9/12   1.778e-07   4.993e-05  ***
+  O1  ->PO9     8/12   3.629e-06   0.0008231  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc2 | lag=50ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O2  ->PO10   12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O1     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc2 | lag=100ms
+  scenario_subjects=12/12  reported_edges=9
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O1     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    11/12    1.19e-10   5.464e-08  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc2 | lag=150ms
+  scenario_subjects=12/12  reported_edges=9
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc2 | lag=200ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+LiftOff__Replace | pc3 | lag=50ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->FC1    12/12   1.101e-12   7.516e-10  ***
+  C4  ->FC2     9/12   1.778e-07   4.993e-05  ***
+  O2  ->Cz      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Occipital->Frontocentral  DI=+1.00  (OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW)
+  Dominant reported edges run from the occipital to the frontocentral sensor group.
+
+LiftOff__Replace | pc3 | lag=100ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  P7  ->O1     10/12   5.902e-09   2.174e-06  ***
+  P4  ->P8      9/12   1.778e-07   4.993e-05  ***
+  CP6 ->P8      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+LiftOff__Replace | pc3 | lag=150ms
+  scenario_subjects=12/12  reported_edges=7
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     10/12   5.902e-09   2.174e-06  ***
+  P7  ->O1     10/12   5.902e-09   2.174e-06  ***
+  CP6 ->P8      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+LiftOff__Replace | pc3 | lag=200ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     11/12    1.19e-10   5.464e-08  ***
+  P7  ->O1     11/12    1.19e-10   5.464e-08  ***
+  FC6 ->F4      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+Replace__BothReleased | pc1 | lag=0ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2      9/12   1.778e-07   4.993e-05  ***
+  PO10->P8      9/12   1.778e-07   4.993e-05  ***
+  PO9 ->O1      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc1 | lag=50ms
+  scenario_subjects=12/12  reported_edges=4
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2      9/12   1.778e-07   4.993e-05  ***
+  PO9 ->O1      9/12   1.778e-07   4.993e-05  ***
+  PO10->Oz      7/12   5.288e-05    0.009666  **
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc1 | lag=100ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  Fp2 ->Fp1     9/12   1.778e-07   4.993e-05  ***
+  PO10->O2      9/12   1.778e-07   4.993e-05  ***
+  PO9 ->O1      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc1 | lag=150ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     11/12    1.19e-10   5.464e-08  ***
+  PO9 ->O1     10/12   5.902e-09   2.174e-06  ***
+  PO9 ->Oz      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc1 | lag=200ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  PO10->O2     11/12    1.19e-10   5.464e-08  ***
+  PO9 ->O1     11/12    1.19e-10   5.464e-08  ***
+  PO10->Oz     10/12   5.902e-09   2.174e-06  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc2 | lag=0ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  O2  ->Oz     10/12   5.902e-09   2.174e-06  ***
+  Oz  ->O1     10/12   5.902e-09   2.174e-06  ***
+  Oz  ->O2      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc2 | lag=50ms
+  scenario_subjects=12/12  reported_edges=5
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  O1  ->PO9     9/12   1.778e-07   4.993e-05  ***
+  O2  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc2 | lag=100ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     11/12    1.19e-10   5.464e-08  ***
+  Oz  ->O2     10/12   5.902e-09   2.174e-06  ***
+  O2  ->Oz      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc2 | lag=150ms
+  scenario_subjects=12/12  reported_edges=6
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->PO9    12/12   1.101e-12   7.516e-10  ***
+  O2  ->PO10   12/12   1.101e-12   7.516e-10  ***
+  Oz  ->O2     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc2 | lag=200ms
+  scenario_subjects=12/12  reported_edges=8
+  edge        k/N    p-value      q(FDR)      sig
+  O1  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  O1  ->PO9    12/12   1.101e-12   7.516e-10  ***
+  O2  ->Oz     12/12   1.101e-12   7.516e-10  ***
+  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the occipital group.
+
+Replace__BothReleased | pc3 | lag=0ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  P8  ->PO10    7/12   5.288e-05    0.009666  **
+  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the occipital sensor group.
+
+Replace__BothReleased | pc3 | lag=100ms
+  scenario_subjects=12/12  reported_edges=1
+  edge        k/N    p-value      q(FDR)      sig
+  P7  ->O1      7/12   5.288e-05    0.009666  **
+  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
+  Dominant reported edges run from the parietal to the occipital sensor group.
+
+Replace__BothReleased | pc3 | lag=150ms
+  scenario_subjects=12/12  reported_edges=2
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8      8/12   3.629e-06   0.0008231  ***
+  P7  ->O1      8/12   3.629e-06   0.0008231  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.
+
+Replace__BothReleased | pc3 | lag=200ms
+  scenario_subjects=12/12  reported_edges=2
+  edge        k/N    p-value      q(FDR)      sig
+  P4  ->P8     10/12   5.902e-09   2.174e-06  ***
+  P7  ->O1      9/12   1.778e-07   4.993e-05  ***
+  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
+  Dominant reported edges connect sensors within the parietal group.

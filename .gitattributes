@@ -1,0 +1,5 @@
+# Preserve the bytes covered by archived-input SHA256 checksums on every OS.
+out/article_package/classification_subject/*.csv -text
+out/article_package/classification_subject/*.json -text
+out/article_package/reproduction/*.csv -text
+out/article_package/reproduction/*.json -text

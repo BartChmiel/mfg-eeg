@@ -1,0 +1,9 @@
+{
+  "car_only": [826, 244, 70],
+  "bandpass_0_5_48": [62, 0, 0],
+  "primary_bandpass_count": 10,
+  "frontopolar_sensitivity": [
+    {"phase": "Replace__BothReleased", "pc": "pc2", "lag_ms": 50, "src": "Fp2", "dst": "Fp1", "k": 10, "config_count": 24, "successful_config_count": 27},
+    {"phase": "Replace__BothReleased", "pc": "pc2", "lag_ms": 200, "src": "Fp2", "dst": "Fp1", "k": 9, "config_count": 21, "successful_config_count": 27}
+  ]
+}

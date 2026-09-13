@@ -7,7 +7,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.meta_analysis import RegionSummary, build_reports, get_region  # noqa: E402
+import numpy as np
+from scipy.stats import false_discovery_control
+from scripts.meta_analysis import RegionSummary, build_reports, fdr_bh, get_region  # noqa: E402
 
 
 def _write_top_edges(path: Path, edges: list[tuple[str, str, float]]) -> None:
@@ -26,6 +28,32 @@ def _make_case_root(case_name: str) -> Path:
 
 
 class MetaAnalysisTests(unittest.TestCase):
+    def test_sparse_bh_equals_full_family(self) -> None:
+        p = [0.0001, 0.003, 0.4]
+        expected = false_discovery_control(p + [1.0] * 997)[:3]
+        np.testing.assert_allclose(fdr_bh(p, total_tests=1000), expected)
+
+    def test_reporting_threshold_does_not_change_q(self) -> None:
+        root = _make_case_root("fdr_family")
+        try:
+            name = "phase_top_edges_A__B_gc_m4_pc1_lag50ms.txt"
+            for subject in range(6):
+                edges = [("Fp1", "Fp2", 1.0)]
+                if subject < 2:
+                    edges.append(("F3", "F4", 0.5))
+                _write_top_edges(root / f"subj{subject:02d}" / name, edges)
+            kwargs = dict(dir_root=str(root), topk=2, channels=32, p0=0.1,
+                p0_inflate=1, mode_filter="gc", use_fdr=True, alpha=0.05,
+                significant_only=True, dominant_flow_scope="reported", max_edges=3)
+            low, _, _, meta = build_reports(min_subjects=1, **kwargs)
+            high, _, _, _ = build_reports(min_subjects=3, **kwargs)
+            self.assertEqual(high[0].q_value, low[0].q_value)
+            self.assertEqual(meta["fdr_total_tests"], 992)
+            self.assertEqual(meta["zero_recurrence_tests"], 990)
+            self.assertAlmostEqual(high[0].q_value, 992 * 0.1**6)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_region_labels_are_anatomical_and_non_interpretive(self) -> None:
         self.assertEqual(get_region("Fp1"), "Frontal")
         self.assertEqual(get_region("C3"), "Frontocentral")

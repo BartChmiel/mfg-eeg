@@ -1,0 +1,76 @@
+phase,pc,lag_ms,n_subjects,total_subjects_in_dir,candidate_edges,reported_edges,dominant_flow_src,dominant_flow_dst,dominant_flow_count,dominant_flow_di,process_label,process_desc
+BothStartLoadPhase__LiftOff,pc1,0,12,12,9,4,Occipital,Occipital,3,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc1,50,12,12,10,7,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc1,100,12,12,7,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc1,150,12,12,8,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc1,200,12,12,12,6,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc2,0,12,12,12,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc2,50,12,12,13,7,Occipital,Occipital,7,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc2,100,12,12,10,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc2,150,12,12,10,8,Occipital,Occipital,7,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc2,200,12,12,11,7,Occipital,Occipital,7,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+BothStartLoadPhase__LiftOff,pc3,0,12,12,8,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc3,50,12,12,13,5,Occipital,Frontocentral,2,1.0,OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the occipital to the frontocentral sensor group.
+BothStartLoadPhase__LiftOff,pc3,100,12,12,11,4,Parietal,Frontocentral,1,1.0,PARIETAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the parietal to the frontocentral sensor group.
+BothStartLoadPhase__LiftOff,pc3,150,12,12,11,7,Parietal,Parietal,2,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+BothStartLoadPhase__LiftOff,pc3,200,12,12,12,8,Parietal,Parietal,3,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+FirstDigitTouch__BothStartLoadPhase,pc1,0,12,12,10,5,Occipital,Occipital,3,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc1,50,12,12,10,7,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc1,100,12,12,10,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc1,150,12,12,12,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc1,200,12,12,11,6,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc2,0,12,12,11,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc2,50,12,12,13,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc2,100,12,12,11,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc2,150,12,12,10,8,Occipital,Occipital,7,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc2,200,12,12,13,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+FirstDigitTouch__BothStartLoadPhase,pc3,0,12,12,8,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc3,50,12,12,15,5,Occipital,Frontocentral,3,1.0,OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the occipital to the frontocentral sensor group.
+FirstDigitTouch__BothStartLoadPhase,pc3,100,12,12,12,5,Parietal,Parietal,2,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+FirstDigitTouch__BothStartLoadPhase,pc3,150,12,12,13,6,Parietal,Parietal,2,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+FirstDigitTouch__BothStartLoadPhase,pc3,200,12,12,13,6,Occipital,Frontocentral,2,1.0,OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the occipital to the frontocentral sensor group.
+HandStart__FirstDigitTouch,pc1,0,12,12,10,5,Occipital,Occipital,3,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc1,50,12,12,11,7,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc1,100,12,12,9,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc1,150,12,12,10,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc1,200,12,12,9,8,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc2,0,12,12,12,5,Occipital,Occipital,5,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc2,50,12,12,13,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc2,100,12,12,12,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc2,150,12,12,12,8,Occipital,Occipital,8,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc2,200,12,12,11,9,Occipital,Occipital,9,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+HandStart__FirstDigitTouch,pc3,0,12,12,9,1,Occipital,Frontocentral,1,1.0,OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the occipital to the frontocentral sensor group.
+HandStart__FirstDigitTouch,pc3,50,12,12,12,5,Occipital,Frontocentral,3,1.0,OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the occipital to the frontocentral sensor group.
+HandStart__FirstDigitTouch,pc3,100,12,12,12,3,Parietal,Frontocentral,1,1.0,PARIETAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the parietal to the frontocentral sensor group.
+HandStart__FirstDigitTouch,pc3,150,12,12,12,6,Parietal,Parietal,3,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+HandStart__FirstDigitTouch,pc3,200,12,12,12,4,Parietal,Parietal,3,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+LiftOff__Replace,pc1,0,12,12,10,6,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc1,50,12,12,11,8,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc1,100,12,12,9,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc1,150,12,12,10,6,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc1,200,12,12,12,6,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc2,0,12,12,14,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc2,50,12,12,10,8,Occipital,Occipital,8,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc2,100,12,12,12,9,Occipital,Occipital,8,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc2,150,12,12,11,9,Occipital,Occipital,9,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc2,200,12,12,12,8,Occipital,Occipital,8,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+LiftOff__Replace,pc3,0,12,12,13,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc3,50,12,12,13,7,Occipital,Frontocentral,3,1.0,OCCIPITAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the occipital to the frontocentral sensor group.
+LiftOff__Replace,pc3,100,12,12,11,5,Parietal,Parietal,3,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+LiftOff__Replace,pc3,150,12,12,11,7,Parietal,Parietal,2,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+LiftOff__Replace,pc3,200,12,12,14,8,Parietal,Parietal,3,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+Replace__BothReleased,pc1,0,12,12,10,4,Occipital,Occipital,3,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc1,50,12,12,9,4,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc1,100,12,12,6,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc1,150,12,12,11,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc1,200,12,12,10,5,Occipital,Occipital,4,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc2,0,12,12,10,5,Occipital,Occipital,5,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc2,50,12,12,9,5,Occipital,Occipital,5,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc2,100,12,12,10,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc2,150,12,12,10,6,Occipital,Occipital,6,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc2,200,12,12,9,8,Occipital,Occipital,8,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
+Replace__BothReleased,pc3,0,12,12,9,1,Parietal,Occipital,1,1.0,PARIETAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the parietal to the occipital sensor group.
+Replace__BothReleased,pc3,50,12,12,10,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc3,100,12,12,10,1,Parietal,Occipital,1,1.0,PARIETAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the parietal to the occipital sensor group.
+Replace__BothReleased,pc3,150,12,12,11,2,Parietal,Parietal,1,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+Replace__BothReleased,pc3,200,12,12,12,2,Parietal,Parietal,1,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.

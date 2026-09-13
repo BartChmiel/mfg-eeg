@@ -132,6 +132,15 @@ class VolumeConductionControlTests(unittest.TestCase):
         self.assertEqual(result["n_edges"], 0)
         self.assertIsNone(result["permutation_p_shorter"])
 
+    def test_control_exports_empty_screen_without_failure(self) -> None:
+        result = run_control(edge_table=str(self.edge_table), out_dir=str(self.root / "empty"),
+            short_range_cm=100.0, min_stability=1.0, n_permutations=10, seed=1)
+        self.assertEqual(result["vc_robust_edges"], 0)
+        with open(result["vc_robust_edge_table"], newline="") as handle:
+            reader = csv.DictReader(handle)
+            self.assertIn("src", reader.fieldnames)
+            self.assertEqual(list(reader), [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -248,6 +248,8 @@ def summarize(
 
 
 def _verdict(summary: Dict[str, Any]) -> str:
+    if summary["total_edges"] == 0:
+        return "- No fully stable candidates enter this screen; spatial enrichment and leakage cannot be assessed."
     enr = summary["spatial_enrichment"]
     p_shorter = enr.get("permutation_p_shorter")
     robust = summary["vc_robust_edges"]
@@ -262,8 +264,8 @@ def _verdict(summary: Dict[str, Any]) -> str:
         )
     else:
         lines.append(
-            f"Reproducible edges are NOT significantly shorter than chance "
-            f"(permutation p={p_shorter}); spatial-adjacency leakage is not the dominant driver."
+            f"No significant short-range enrichment was detected "
+            f"(permutation p={p_shorter}); this does not rule out spatial-adjacency leakage."
         )
     if short_frac >= 0.5:
         lines.append(
@@ -406,10 +408,10 @@ def export_vc_robust_edge_table(
         for r in stability_rows
         if (r["phase"], r["pc"], str(r["lag_ms"]), r["src"], r["dst"]) in robust_keys
     ]
-    if not filtered:
-        raise ValueError("No screen-passing edges matched the stability table.")
-
-    fieldnames = list(filtered[0].keys())
+    if robust_keys and not filtered:
+        raise ValueError("Screen-passing edges did not match the stability table.")
+    with open(stability_table, "r", encoding="utf-8", newline="") as handle:
+        fieldnames = csv.DictReader(handle).fieldnames
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     with open(out_path, "w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)

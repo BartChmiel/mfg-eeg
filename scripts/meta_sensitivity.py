@@ -116,7 +116,7 @@ def _format_values(values: set[Any]) -> str:
 
 def _markdown_table(headers: list[str], rows: list[list[Any]]) -> list[str]:
     if not rows:
-        return ["No stable edges available."]
+        return ["No instances retained in the sensitivity grid."]
     out = [
         "| " + " | ".join(headers) + " |",
         "| " + " | ".join(["---"] * len(headers)) + " |",
@@ -155,9 +155,9 @@ def _build_summary(
         f"Requested parameter configurations: {configs_requested}",
         f"Successful configurations: {configs_successful}",
         f"Significant edge observations: {observation_count}",
-        f"Unique stable edges: {len(stability_rows)}",
+        f"Instances significant in at least one setting: {len(stability_rows)}",
         "",
-        "## Most Stable Edges",
+        "## Most Frequently Retained Instances",
         "",
     ]
     lines.extend(
@@ -178,13 +178,12 @@ def _build_summary(
     lines.extend(
         [
             "",
-            "## Interpretation",
+            "## Columns",
             "",
             (
-                "Edges that remain significant across multiple top-k, minimum-subject, "
-                "and p0-inflation settings are stronger candidates for article claims. "
-                "This analysis does not replace the main FDR table; it checks whether "
-                "the conclusions are parameter-stable."
+                "`configs` counts retention across the grid; `best_q_or_p` is the minimum "
+                "across those settings. Reference-setting q-values are reported in the "
+                "meta-analysis edge table."
             ),
             "",
             "## Warnings",
@@ -265,6 +264,8 @@ def build_sensitivity(
                         "ok": True,
                         "edge_rows": len(edge_rows),
                         "p0_effective": metadata.get("p0"),
+                        "fdr_total_tests": metadata.get("fdr_total_tests"),
+                        "min_subjects_applied_after_fdr": True,
                     }
                 )
 

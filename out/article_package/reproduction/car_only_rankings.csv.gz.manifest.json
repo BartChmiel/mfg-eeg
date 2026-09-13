@@ -1,0 +1,248 @@
+{
+  "topk": 15,
+  "rows": 13500,
+  "score_payloads": [
+    {
+      "file": "subj01/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "e2f9158afd40d6b91f452e89a9169699b0351b28e1843c0e35ea64e7cd8913ad"
+    },
+    {
+      "file": "subj01/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "0bc99b45fd51066cc8f465459b3740addc709d3cf812747974f8206b96a57b05"
+    },
+    {
+      "file": "subj01/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "645c924adbd26e3a9b37b74ae8f27fc7208bd58d6193baf3224d7c59cd459045"
+    },
+    {
+      "file": "subj01/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "022e34a0a9cd2d32523d816759a7d0ca864a182bddde4b0d0bd0cae228f91af8"
+    },
+    {
+      "file": "subj01/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "d5a00d35072b64e0fde94feee8af8d96f396dcedabd595ec2b0ffbccb67f3544"
+    },
+    {
+      "file": "subj02/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "c28429525c2228d91bbea73c60e7d5a25936924f52541943434c04fde2b54573"
+    },
+    {
+      "file": "subj02/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "ebe51d8a49c2b38d65c6d85c7084ed08088f99902603b3d578bc26f17487c62d"
+    },
+    {
+      "file": "subj02/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "e96c03d465f28c5abaa34b4516166dda1e509e1078afef3b283574a26a964615"
+    },
+    {
+      "file": "subj02/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "c303eacacc603f2bc5aac8e9bec64a04cb1fe48a9b14e60b63325dd81125fdb9"
+    },
+    {
+      "file": "subj02/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "29e041e452f3714a401ec04cfe0a32e63db1e496d3bf5a2b856ace34542d748b"
+    },
+    {
+      "file": "subj03/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "c54fbb555a4d19fa9c355f3c8f9731449e19fa2e9f7f37c413c89c9b90864b13"
+    },
+    {
+      "file": "subj03/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "482fd0ca9420459ae0c813b32a5caddb6de9812cb6695d61039dc77465b4e140"
+    },
+    {
+      "file": "subj03/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "9bc20bd9fa1e650b41b9fb23d690e597e22904aebf3827085141fad62c1047d1"
+    },
+    {
+      "file": "subj03/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "f7048e1b2edc190d254889426257ecb5e2d5da4716587cb5abddda3738c06cae"
+    },
+    {
+      "file": "subj03/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "df2b14a666db1e8eae1cc79e15cd00dc68e5955e06de6ed673d59c87c9487153"
+    },
+    {
+      "file": "subj04/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "a99c9fd72f6e5bcdcc890a72f5a1dc0a6e084c4bc6d0036fa70288662ef66805"
+    },
+    {
+      "file": "subj04/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "07dde17377d5ab6a89d872c01bba677d2cd88d6395ebc6e78b4aee9b35bde88e"
+    },
+    {
+      "file": "subj04/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "15888264d5a373ce07281c22983fde3d8101515bba73032f283e418cc1ea8136"
+    },
+    {
+      "file": "subj04/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "75eb1955e994228a36db6527de8ad1c0571b16114682b85445c95a6a7f2a746c"
+    },
+    {
+      "file": "subj04/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "7d17aab225078bbd98e8f5d564012950012046fa12bf468e60e7added7c6aaa4"
+    },
+    {
+      "file": "subj05/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "d766553a83f4b555b080ad172477622f28cae2336a0b8d0d86a803bd52ba8c51"
+    },
+    {
+      "file": "subj05/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "7e091da773994f6febad674ea0495b1fa6915ed58f7893d3b504370a3873f4c5"
+    },
+    {
+      "file": "subj05/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "657ff0a637fc4d1bd3a9eba50cbf1cb60b3d80c6ce5619fa474865546d90fbe1"
+    },
+    {
+      "file": "subj05/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "e8b11d20b4709b21db9839d1826fa4fae4e112465335c66410e38c4e05735a47"
+    },
+    {
+      "file": "subj05/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "759ead814eaf46694d9e6f1f654afaffbb2c05245ebed67e9be6f36d48983482"
+    },
+    {
+      "file": "subj06/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "85c8d86a5d61f8589667bd159127be293602877d5dae7aba6636e936c1b4744a"
+    },
+    {
+      "file": "subj06/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "c111346fc811975ed014aed2b2e4fa8b20de00ca095b48194d81eb9add3f41ea"
+    },
+    {
+      "file": "subj06/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "f03d8a835a129504a1599d259d5494fb0c3b45c7b100eb50b136c38eac48735f"
+    },
+    {
+      "file": "subj06/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "08de2b67f1b983c9cff6aa4218300ca3df71d84c340f815ae3e1bc02a414532e"
+    },
+    {
+      "file": "subj06/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "67b3eed1cddf454d7c7756c18907a13389c76134b505e8a8ef27038c73c4d57a"
+    },
+    {
+      "file": "subj07/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "83b5a037a2f4b96cc0982d6f78715ca010530c1ab6aa594822ee88f23d4518a3"
+    },
+    {
+      "file": "subj07/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "dba4767d7afd43cdf85e6fa3bd2d1d8deb607e98ab92a157ebcfa6a5b1fe67f1"
+    },
+    {
+      "file": "subj07/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "fd0aa4c8bda0ae29c4d8079b7fc68f2ae78fe22064473d4400a96166a653cf81"
+    },
+    {
+      "file": "subj07/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "6ae3db8b2840a4615f7d9305598fbcb321b294d5d4234e30f168c6815d2a9233"
+    },
+    {
+      "file": "subj07/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "f9fc0b84b65782d440cef432e1e56b1533c184900945fc422d0c5d9abc03f613"
+    },
+    {
+      "file": "subj08/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "bedaa626c020018030de6da0750abc9c95dbace382c3ff141926b5b5c30fca03"
+    },
+    {
+      "file": "subj08/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "3c610c6e8a7c5c7400b6ef44af1577f8933720ee5855104664bfa9b661918cbd"
+    },
+    {
+      "file": "subj08/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "dc558080c478df5bdc3489bff5aa4726ac95dc4d905a85d31f88ea65f43df40b"
+    },
+    {
+      "file": "subj08/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "7d2b68847645faf06c831713677586943efe9e906f0e6e1d0ed9c64ec6c2f57f"
+    },
+    {
+      "file": "subj08/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "abc922545ec147fcde1223efa243914d5fcaa3ced593ad416bc23af542c109d6"
+    },
+    {
+      "file": "subj09/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "95b40affdcfaf6376c960c43745d433a05b70c4412accd16bcd112439ea496ab"
+    },
+    {
+      "file": "subj09/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "3fcc681c735fadb97572d283acb5d368ea881934481b168a1c194c4086ac26c7"
+    },
+    {
+      "file": "subj09/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "ca8f70e40454bb017e745c1907f208292dfa04da909eb95cf25be77a23a80d2c"
+    },
+    {
+      "file": "subj09/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "bc70efdbd41aa9c7b1e80e42b13b25f0bd61fcf2b928387b1c23e5c53eb9d91f"
+    },
+    {
+      "file": "subj09/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "70fe2a463357e81ed2e694b65bdcf84924ad5e55d94108055aa4e058a9c4478e"
+    },
+    {
+      "file": "subj10/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "d2c0ac626159470fcdc3bda311f134821ad295ac7226eccd991ad87fc0905972"
+    },
+    {
+      "file": "subj10/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "96908e1f86fe88a008676d557ae83fdbde1597eb610f7c8d8c6367e1c8a05ad4"
+    },
+    {
+      "file": "subj10/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "466f93ac8ec778cacc0d0be1074682c69875ef0168f063bb826bc4a71a403e63"
+    },
+    {
+      "file": "subj10/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "1d3fa42c72e811ccd1feb73a88896088a46c383796bf6364e1921e0c5ba27299"
+    },
+    {
+      "file": "subj10/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "fb82f5e6505422ec7cdcbed6595e8d7aecf19ba40a295fa483ead1f913dab2df"
+    },
+    {
+      "file": "subj11/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "980f2d8a56299addf43e4f7c0ae70dba7b325646d6ff8fc6064ca0f6f09539f9"
+    },
+    {
+      "file": "subj11/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "ad50db0c383a7f3c90941a91ba07d6c4d11ccaeafaabb5e405bfabe836ebc6d6"
+    },
+    {
+      "file": "subj11/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "0b1f8ffc79099004ebee9d507d9c5958e0c68fd684d0e17dbe99e2eadd2c88dd"
+    },
+    {
+      "file": "subj11/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "3a0cb59e8356f56b1c1b7ada87e964948b777f554d96ec2e510c55fae7ea497d"
+    },
+    {
+      "file": "subj11/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "4b559110185eeb650366c37b6590ed52f524b89a1cc18b1f83e95fc6da911e6d"
+    },
+    {
+      "file": "subj12/phasegrid_data_BothStartLoadPhase__LiftOff_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "bdc79399af5115bd722fe33a175211abe5d8c93ef30c79e9474c517bf66ef4c0"
+    },
+    {
+      "file": "subj12/phasegrid_data_FirstDigitTouch__BothStartLoadPhase_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "5f3a67af32a6c85af83bfc08581cc9e09c65e9121d07735fe9c347e9ac5f2561"
+    },
+    {
+      "file": "subj12/phasegrid_data_HandStart__FirstDigitTouch_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "736cd266721ef6124f49e430176447c8f7845733bba4308959107932ea928142"
+    },
+    {
+      "file": "subj12/phasegrid_data_LiftOff__Replace_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "e0e2741cd725be72fa802ba8660f8c9b66e92ee2bdf75e880e9c4bbdb646f80b"
+    },
+    {
+      "file": "subj12/phasegrid_data_Replace__BothReleased_gc_m4_pca_r3_lags0-50-100-150-200.npz",
+      "sha256": "7aa8d2169c534be6c56e438ab9a99a3745902ff2a49d6936a8beca3053a11c7b"
+    }
+  ],
+  "ranking": "descending absolute pair-specific PCA score; no diagonal",
+  "output_sha256": "8c6c8da47d399bb81b43318e1d0af237a59701d59c4001fdd77113cac24999ff"
+}

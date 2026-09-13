@@ -8,7 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.build_article_package import build_package  # noqa: E402
+from scripts.build_article_package import build_package, primary_sensitivity_rows  # noqa: E402
 
 
 class ArticlePackageTests(unittest.TestCase):
@@ -254,6 +254,22 @@ class ArticlePackageTests(unittest.TestCase):
         self.assertIn("Classifier Evidence Snapshot", summary)
         self.assertIn("Sensitivity Evidence Snapshot", summary)
         self.assertNotIn("process", summary.split("## Top Replicated Edges", 1)[0].lower())
+        self.assertIn("significant in the fixed reference setting", summary)
+        self.assertEqual(summary.count("classifier increment is descriptive"), 1)
+        for obsolete_term in ("primary result", "fixed main setting", "independent replications"):
+            self.assertNotIn(obsolete_term, summary)
+
+    def test_primary_table_keeps_primary_q_and_partial_grid_support(self) -> None:
+        edge = dict(phase="A__B", pc="pc2", lag_ms="50", src="Fp2", dst="Fp1",
+            k="10", q_value="0.000439", significant="True")
+        support = {**edge, "min_q_value": "1e-10", "config_count": "24",
+            "successful_config_count": "27", "stability_fraction": str(24 / 27)}
+        rows = primary_sensitivity_rows([edge, {**edge, "significant": "False"}], [support])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["q_value"], "0.000439")
+        self.assertEqual(rows[0]["config_count"], "24")
+        with self.assertRaises(ValueError):
+            primary_sensitivity_rows([edge], [])
 
 
 if __name__ == "__main__":

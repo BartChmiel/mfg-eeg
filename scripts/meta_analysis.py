@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import csv
 import glob
+import gzip
 import json
 import os
 import re
@@ -27,7 +28,7 @@ from scipy.stats import binomtest
 
 
 REGIONS: Dict[str, List[str]] = {
-    "Frontal": ["Fp1", "Fp2", "Fz"],
+    "Frontal": ["Fp1", "Fp2", "F7", "F8", "Fz"],
     "Frontocentral": ["F3", "F4", "FC5", "FC1", "FC2", "FC6", "C3", "Cz", "C4"],
     "Parietal": ["P7", "P3", "Pz", "P4", "P8", "CP1", "CP2", "CP5", "CP6"],
     "Occipital": ["PO9", "O1", "Oz", "O2", "PO10"],
@@ -84,14 +85,18 @@ def parse_filename(fname: str) -> Optional[Tuple[str, str, int, str, int]]:
     return phase, pc, lag_ms, mode, deg_m
 
 
-def fdr_bh(pvals: List[float]) -> List[float]:
+def fdr_bh(pvals: List[float], *, total_tests: int | None = None) -> List[float]:
     p = np.asarray(pvals, float)
     m = p.size
+    family_size = m if total_tests is None else int(total_tests)
+    if family_size < m or np.any(~np.isfinite(p)) or np.any((p < 0) | (p > 1)):
+        raise ValueError("Invalid p-values or multiple-testing family size")
     if m == 0:
         return []
     idx = np.argsort(p)
     ranked = p[idx]
-    q = ranked * (m / np.arange(1, m + 1))
+    # Unobserved pairs have K=0 and p=1, so their ranks need not be materialized.
+    q = ranked * (family_size / np.arange(1, m + 1))
     q = np.minimum.accumulate(q[::-1])[::-1]
     q = np.clip(q, 0.0, 1.0)
     out = np.empty_like(q)
@@ -186,6 +191,8 @@ def collect_edge_presence(
     dict[tuple[str, str, int], set[str]],
     set[str],
 ]:
+    if os.path.isfile(dir_root):
+        return _collect_ranking_table(dir_root, topk=topk, mode_filter=mode_filter)
     pattern = os.path.join(dir_root, "**", "phase_top_edges_*.txt")
     all_files = glob.glob(pattern, recursive=True)
     if not all_files:
@@ -235,6 +242,36 @@ def collect_edge_presence(
     return subj_edge_presence, region_flow_by_scenario, scenario_subjects, subjects_all
 
 
+def _collect_ranking_table(path: str, *, topk: int, mode_filter: str):
+    presence = defaultdict(lambda: defaultdict(set))
+    flows = defaultdict(list)
+    subjects = defaultdict(set)
+    all_subjects = set()
+    ranks = defaultdict(set)
+    opener = gzip.open if path.endswith(".gz") else open
+    with opener(path, "rt", encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if mode_filter != "any" and row["mode"] != mode_filter:
+                continue
+            scenario = (row["phase"], row["pc"], int(row["lag_ms"]))
+            subject = row["subject"]
+            rank = int(row["rank"])
+            ranks[(scenario, subject)].add(rank)
+            subjects[scenario].add(subject)
+            all_subjects.add(subject)
+            if rank <= topk:
+                src, dst = row["src"], row["dst"]
+                if src == dst:
+                    raise ValueError("Self-pairs are not part of the test family")
+                presence[scenario][(src, dst)].add(subject)
+                flows[scenario].append((get_region(src), get_region(dst)))
+    if not all_subjects:
+        raise ValueError("No matching ranking rows")
+    if any(not set(range(1, topk + 1)).issubset(values) for values in ranks.values()):
+        raise ValueError(f"Ranking table must contain ranks 1 through {topk} for every subject/scenario")
+    return presence, flows, subjects, all_subjects
+
+
 def build_reports(
     *,
     dir_root: str,
@@ -264,17 +301,19 @@ def build_reports(
     else:
         p0_eff = float(p0)
 
-    scenarios = sorted(subj_edge_presence.keys(), key=_scenario_sort_key)
+    scenarios = sorted(scenario_subjects.keys(), key=_scenario_sort_key)
+    family_size = len(scenarios) * M
 
     all_edge_rows: list[EdgeResult] = []
+    p_cache: dict[tuple[int, int], float] = {}
     for scenario in scenarios:
         phase, pc, lag_ms = scenario
         N = len(scenario_subjects[scenario])
         for (src, dst), subjs in subj_edge_presence[scenario].items():
             k = len(subjs)
-            if k < int(min_subjects):
-                continue
-            p_value = binomtest(k, N, p=p0_eff, alternative="greater").pvalue
+            if (k, N) not in p_cache:
+                p_cache[(k, N)] = binomtest(k, N, p=p0_eff, alternative="greater").pvalue
+            p_value = p_cache[(k, N)]
             all_edge_rows.append(
                 EdgeResult(
                     phase=phase,
@@ -294,7 +333,7 @@ def build_reports(
             )
 
     if use_fdr and all_edge_rows:
-        qvals = fdr_bh([row.p_value for row in all_edge_rows])
+        qvals = fdr_bh([row.p_value for row in all_edge_rows], total_tests=family_size)
         all_edge_rows = [
             EdgeResult(
                 **{
@@ -317,6 +356,9 @@ def build_reports(
             for row in all_edge_rows
         ]
 
+    observed_tests = len(all_edge_rows)
+    # Minimum recurrence controls reporting only; it must not change the BH family.
+    all_edge_rows = [row for row in all_edge_rows if row.k >= int(min_subjects)]
     rows_by_scenario: dict[tuple[str, str, int], list[EdgeResult]] = defaultdict(list)
     for row in all_edge_rows:
         rows_by_scenario[(row.phase, row.pc, row.lag_ms)].append(row)
@@ -339,7 +381,7 @@ def build_reports(
         ]
 
         flow_source: Iterable[tuple[str, str]]
-        if dominant_flow_scope == "reported" and reported_rows:
+        if dominant_flow_scope == "reported":
             flow_source = [(row.region_src, row.region_dst) for row in reported_rows]
         else:
             flow_source = region_flow_by_scenario[scenario]
@@ -349,8 +391,9 @@ def build_reports(
             (dom_src, dom_dst), dom_cnt = flow.most_common(1)[0]
             dom_di = directionality_index(flow, dom_src, dom_dst)
         else:
-            dom_src, dom_dst, dom_cnt, dom_di = "X_Other", "X_Other", 0, 0.0
-        process_label, process_desc = RegionSummary.get_context(dom_src, dom_dst)
+            dom_src, dom_dst, dom_cnt, dom_di = "", "", 0, 0.0
+        process_label, process_desc = (RegionSummary.get_context(dom_src, dom_dst) if flow
+            else ("NO REPORTED FLOW", "No edges pass the requested reporting criteria."))
 
         scenario_rows.append(
             ScenarioResult(
@@ -413,6 +456,11 @@ def build_reports(
         "significant_only": bool(significant_only),
         "dominant_flow_scope": dominant_flow_scope,
         "total_subjects": int(total_subjects),
+        "fdr_family": "all_ordered_pairs_across_all_scenarios",
+        "fdr_total_tests": family_size,
+        "observed_tests": observed_tests,
+        "zero_recurrence_tests": family_size - observed_tests,
+        "min_subjects_applied_after_fdr": True,
     }
     return all_edge_rows, scenario_rows, report_text, metadata
 
@@ -500,7 +548,7 @@ def main() -> None:
     ap.add_argument(
         "--dir",
         default="out/phase_mats_pca_by_subject",
-        help="Root directory containing subject subfolders with phase_top_edges_*.txt files.",
+        help="Subject ranking directory or exported ranking CSV/CSV.GZ table.",
     )
     ap.add_argument("--topk", type=int, default=10, help="Top-k edges to read per file.")
     ap.add_argument(
@@ -536,7 +584,7 @@ def main() -> None:
     ap.add_argument(
         "--use-fdr",
         action="store_true",
-        help="Compute BH FDR q-values across all reported edges.",
+        help="Compute BH FDR over all ordered pairs and scenarios before reporting filters.",
     )
     ap.add_argument(
         "--alpha",

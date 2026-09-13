@@ -69,7 +69,7 @@ def _run_with_retries(
     raise RuntimeError(f"{name} failed after {retries + 1} attempt(s), last exit code {last_rc}")
 
 
-def _subject_done(phase_dir: Path, subject: int) -> bool:
+def _subject_done(phase_dir: Path, subject: int, preprocess: str = "bandpass_0_5_48") -> bool:
     manifest = phase_dir / f"subj{subject:02d}" / "run_manifest.json"
     if not manifest.exists():
         return False
@@ -77,7 +77,7 @@ def _subject_done(phase_dir: Path, subject: int) -> bool:
         data = json.loads(manifest.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return False
-    return bool(data.get("used_files")) and data.get("preprocess") == "bandpass_0_5_48"
+    return bool(data.get("used_files")) and data.get("preprocess") == preprocess and bool(data.get("save_npz"))
 
 
 def _write_manifest(paths: Paths, *, preprocess: str, subjects: list[int]) -> None:
@@ -103,6 +103,7 @@ def run_pipeline(
     force_basis: bool,
     force_phase: bool,
     force_derived: bool,
+    skip_package: bool = False,
 ) -> None:
     py = sys.executable
     _write_manifest(paths, preprocess=preprocess, subjects=subjects)
@@ -144,7 +145,7 @@ def run_pipeline(
 
     for subject in subjects:
         name = f"02_phase_subj{subject:02d}"
-        if not force_phase and _subject_done(paths.phase_dir, subject):
+        if not force_phase and _subject_done(paths.phase_dir, subject, preprocess):
             print(f"[SKIP] {name} already has a matching run_manifest.json", flush=True)
             continue
         _run_with_retries(
@@ -175,6 +176,7 @@ def run_pipeline(
                 "3",
                 "--group-by",
                 "subject",
+                "--save-npz",
                 "--subjects",
                 str(subject),
                 "--preprocess",
@@ -273,6 +275,8 @@ def run_pipeline(
     else:
         print(f"[SKIP] volume-conduction exports exist: {paths.vc_dir}", flush=True)
 
+    if skip_package:
+        return
     _run_with_retries(
         name="06_article_package",
         retries=retries,
@@ -318,7 +322,8 @@ def parse_args() -> argparse.Namespace:
         description="Run the article-facing cleaned pipeline with retries and resume points."
     )
     parser.add_argument("--root", default="data/grasp-and-lift-eeg-detection/train")
-    parser.add_argument("--preprocess", default="bandpass_0_5_48", choices=("bandpass_0_5_48",))
+    parser.add_argument("--preprocess", default="bandpass_0_5_48", choices=("car_only", "bandpass_0_5_48"))
+    parser.add_argument("--skip-package", action="store_true")
     parser.add_argument("--subjects", type=int, nargs="+", default=list(range(1, 13)))
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--force-basis", action="store_true")
@@ -360,6 +365,7 @@ def main() -> None:
         force_basis=bool(args.force_basis),
         force_phase=bool(args.force_phase),
         force_derived=bool(args.force_derived),
+        skip_package=bool(args.skip_package),
     )
     print("[DONE] resumable article pipeline completed", flush=True)
 

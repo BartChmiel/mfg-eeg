@@ -1,76 +1,76 @@
 phase,pc,lag_ms,n_subjects,total_subjects_in_dir,candidate_edges,reported_edges,dominant_flow_src,dominant_flow_dst,dominant_flow_count,dominant_flow_di,process_label,process_desc
-BothStartLoadPhase__LiftOff,pc1,0,12,12,4,4,Parietal,Frontal,1,1.0,PARIETAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the parietal to the frontal sensor group.
-BothStartLoadPhase__LiftOff,pc1,50,12,12,8,8,Parietal,Parietal,3,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-BothStartLoadPhase__LiftOff,pc1,100,12,12,0,0,Parietal,Parietal,17,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-BothStartLoadPhase__LiftOff,pc1,150,12,12,1,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-BothStartLoadPhase__LiftOff,pc1,200,12,12,7,7,Other,Frontocentral,2,1.0,OTHER TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the other to the frontocentral sensor group.
-BothStartLoadPhase__LiftOff,pc2,0,12,12,5,5,Frontocentral,Frontal,2,1.0,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-BothStartLoadPhase__LiftOff,pc2,50,12,12,1,1,Occipital,Occipital,1,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
-BothStartLoadPhase__LiftOff,pc2,100,12,12,1,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-BothStartLoadPhase__LiftOff,pc2,150,12,12,2,2,Frontal,Parietal,2,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-BothStartLoadPhase__LiftOff,pc2,200,12,12,8,8,Frontal,Parietal,4,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-BothStartLoadPhase__LiftOff,pc3,0,12,12,5,5,Frontal,Other,2,1.0,FRONTAL TO OTHER SENSOR FLOW,Dominant reported edges run from the frontal to the other sensor group.
-BothStartLoadPhase__LiftOff,pc3,50,12,12,5,5,Occipital,Occipital,1,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
-BothStartLoadPhase__LiftOff,pc3,100,12,12,3,3,Frontal,Frontal,2,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-BothStartLoadPhase__LiftOff,pc3,150,12,12,1,1,Frontal,Parietal,1,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-BothStartLoadPhase__LiftOff,pc3,200,12,12,1,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc1,0,12,12,4,4,Frontocentral,Frontal,2,1.0,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc1,50,12,12,8,8,Parietal,Parietal,2,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-FirstDigitTouch__BothStartLoadPhase,pc1,100,12,12,0,0,Parietal,Parietal,17,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-FirstDigitTouch__BothStartLoadPhase,pc1,150,12,12,2,2,Other,Frontocentral,1,1.0,OTHER TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the other to the frontocentral sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc1,200,12,12,6,6,Other,Frontocentral,2,1.0,OTHER TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the other to the frontocentral sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc2,0,12,12,5,5,Occipital,Frontal,2,1.0,OCCIPITAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the occipital to the frontal sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc2,50,12,12,3,3,Occipital,Occipital,3,0.0,WITHIN OCCIPITAL SENSOR GROUP,Dominant reported edges connect sensors within the occipital group.
-FirstDigitTouch__BothStartLoadPhase,pc2,100,12,12,0,0,Frontal,Frontocentral,18,0.3333333333333333,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc2,150,12,12,2,2,Frontal,Parietal,2,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc2,200,12,12,10,10,Frontal,Parietal,5,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc3,0,12,12,4,4,Frontal,Other,2,1.0,FRONTAL TO OTHER SENSOR FLOW,Dominant reported edges run from the frontal to the other sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc3,50,12,12,4,4,Parietal,Occipital,2,1.0,PARIETAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the parietal to the occipital sensor group.
-FirstDigitTouch__BothStartLoadPhase,pc3,100,12,12,1,1,Frontal,Frontal,1,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-FirstDigitTouch__BothStartLoadPhase,pc3,150,12,12,2,2,Frontal,Frontal,1,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-FirstDigitTouch__BothStartLoadPhase,pc3,200,12,12,1,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-HandStart__FirstDigitTouch,pc1,0,12,12,4,4,Parietal,Frontal,1,1.0,PARIETAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the parietal to the frontal sensor group.
-HandStart__FirstDigitTouch,pc1,50,12,12,5,5,Frontocentral,Frontal,2,1.0,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-HandStart__FirstDigitTouch,pc1,100,12,12,0,0,Parietal,Parietal,17,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-HandStart__FirstDigitTouch,pc1,150,12,12,0,0,Frontal,Parietal,17,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-HandStart__FirstDigitTouch,pc1,200,12,12,4,4,Other,Frontocentral,2,1.0,OTHER TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the other to the frontocentral sensor group.
-HandStart__FirstDigitTouch,pc2,0,12,12,6,6,Frontocentral,Frontal,3,0.5,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-HandStart__FirstDigitTouch,pc2,50,12,12,4,4,Frontocentral,Frontal,2,0.3333333333333333,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-HandStart__FirstDigitTouch,pc2,100,12,12,2,2,Frontocentral,Frontal,1,1.0,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-HandStart__FirstDigitTouch,pc2,150,12,12,0,0,Frontal,Parietal,23,0.2777777777777778,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-HandStart__FirstDigitTouch,pc2,200,12,12,7,7,Frontal,Parietal,3,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-HandStart__FirstDigitTouch,pc3,0,12,12,4,4,Frontal,Other,2,1.0,FRONTAL TO OTHER SENSOR FLOW,Dominant reported edges run from the frontal to the other sensor group.
-HandStart__FirstDigitTouch,pc3,50,12,12,4,4,Parietal,Occipital,2,1.0,PARIETAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the parietal to the occipital sensor group.
-HandStart__FirstDigitTouch,pc3,100,12,12,0,0,Frontal,Parietal,15,0.7647058823529411,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-HandStart__FirstDigitTouch,pc3,150,12,12,0,0,Frontal,Frontocentral,15,0.875,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-HandStart__FirstDigitTouch,pc3,200,12,12,0,0,Frontal,Frontocentral,19,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-LiftOff__Replace,pc1,0,12,12,4,4,Frontocentral,Frontal,2,1.0,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-LiftOff__Replace,pc1,50,12,12,11,11,Parietal,Parietal,6,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-LiftOff__Replace,pc1,100,12,12,3,3,Other,Frontocentral,1,1.0,OTHER TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the other to the frontocentral sensor group.
-LiftOff__Replace,pc1,150,12,12,2,2,Other,Frontocentral,1,1.0,OTHER TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the other to the frontocentral sensor group.
-LiftOff__Replace,pc1,200,12,12,7,7,Parietal,Parietal,3,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-LiftOff__Replace,pc2,0,12,12,6,6,Frontocentral,Frontal,3,1.0,FRONTOCENTRAL TO FRONTAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the frontal sensor group.
-LiftOff__Replace,pc2,50,12,12,5,5,Frontal,Parietal,4,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-LiftOff__Replace,pc2,100,12,12,1,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-LiftOff__Replace,pc2,150,12,12,2,2,Other,Temporal,1,1.0,OTHER TO TEMPORAL SENSOR FLOW,Dominant reported edges run from the other to the temporal sensor group.
-LiftOff__Replace,pc2,200,12,12,7,7,Frontal,Frontocentral,2,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-LiftOff__Replace,pc3,0,12,12,4,4,Frontal,Other,1,1.0,FRONTAL TO OTHER SENSOR FLOW,Dominant reported edges run from the frontal to the other sensor group.
-LiftOff__Replace,pc3,50,12,12,9,9,Parietal,Occipital,3,1.0,PARIETAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the parietal to the occipital sensor group.
-LiftOff__Replace,pc3,100,12,12,0,0,Parietal,Parietal,15,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-LiftOff__Replace,pc3,150,12,12,0,0,Parietal,Parietal,19,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-LiftOff__Replace,pc3,200,12,12,5,5,Frontocentral,Occipital,2,1.0,FRONTOCENTRAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the frontocentral to the occipital sensor group.
-Replace__BothReleased,pc1,0,12,12,7,7,Frontal,Occipital,3,1.0,FRONTAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the frontal to the occipital sensor group.
-Replace__BothReleased,pc1,50,12,12,2,2,Frontal,Occipital,2,1.0,FRONTAL TO OCCIPITAL SENSOR FLOW,Dominant reported edges run from the frontal to the occipital sensor group.
-Replace__BothReleased,pc1,100,12,12,2,2,Other,Frontal,1,1.0,OTHER TO FRONTAL SENSOR FLOW,Dominant reported edges run from the other to the frontal sensor group.
-Replace__BothReleased,pc1,150,12,12,1,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-Replace__BothReleased,pc1,200,12,12,5,5,Frontal,Frontocentral,2,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
-Replace__BothReleased,pc2,0,12,12,4,4,Frontal,Frontal,2,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-Replace__BothReleased,pc2,50,12,12,6,6,Frontal,Frontal,2,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-Replace__BothReleased,pc2,100,12,12,5,5,Frontal,Frontal,2,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-Replace__BothReleased,pc2,150,12,12,7,7,Frontal,Frontal,3,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-Replace__BothReleased,pc2,200,12,12,5,5,Frontal,Frontal,2,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
-Replace__BothReleased,pc3,0,12,12,1,1,Parietal,Parietal,1,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
-Replace__BothReleased,pc3,50,12,12,1,1,Other,Frontocentral,1,1.0,OTHER TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the other to the frontocentral sensor group.
-Replace__BothReleased,pc3,100,12,12,0,0,Frontal,Parietal,21,0.8260869565217391,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-Replace__BothReleased,pc3,150,12,12,4,4,Frontal,Parietal,4,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
-Replace__BothReleased,pc3,200,12,12,5,5,Frontal,Parietal,4,1.0,FRONTAL TO PARIETAL SENSOR FLOW,Dominant reported edges run from the frontal to the parietal sensor group.
+BothStartLoadPhase__LiftOff,pc1,0,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc1,50,12,12,8,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc1,100,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc1,150,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc1,200,12,12,7,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
+BothStartLoadPhase__LiftOff,pc2,0,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc2,50,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc2,100,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc2,150,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc2,200,12,12,8,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc3,0,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc3,50,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc3,100,12,12,3,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc3,150,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+BothStartLoadPhase__LiftOff,pc3,200,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc1,0,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc1,50,12,12,8,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc1,100,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc1,150,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc1,200,12,12,6,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
+FirstDigitTouch__BothStartLoadPhase,pc2,0,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc2,50,12,12,3,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc2,100,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc2,150,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc2,200,12,12,10,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc3,0,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc3,50,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc3,100,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc3,150,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+FirstDigitTouch__BothStartLoadPhase,pc3,200,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc1,0,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc1,50,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc1,100,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc1,150,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc1,200,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc2,0,12,12,6,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc2,50,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc2,100,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc2,150,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc2,200,12,12,7,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc3,0,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc3,50,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc3,100,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc3,150,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+HandStart__FirstDigitTouch,pc3,200,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc1,0,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc1,50,12,12,11,1,Parietal,Parietal,1,0.0,WITHIN PARIETAL SENSOR GROUP,Dominant reported edges connect sensors within the parietal group.
+LiftOff__Replace,pc1,100,12,12,3,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc1,150,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc1,200,12,12,7,2,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
+LiftOff__Replace,pc2,0,12,12,6,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc2,50,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc2,100,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc2,150,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc2,200,12,12,7,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc3,0,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc3,50,12,12,9,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc3,100,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc3,150,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+LiftOff__Replace,pc3,200,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc1,0,12,12,7,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc1,50,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc1,100,12,12,2,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc1,150,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc1,200,12,12,5,1,Frontal,Frontocentral,1,1.0,FRONTAL TO FRONTOCENTRAL SENSOR FLOW,Dominant reported edges run from the frontal to the frontocentral sensor group.
+Replace__BothReleased,pc2,0,12,12,4,2,Frontal,Frontal,2,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
+Replace__BothReleased,pc2,50,12,12,6,1,Frontal,Frontal,1,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
+Replace__BothReleased,pc2,100,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc2,150,12,12,7,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc2,200,12,12,5,1,Frontal,Frontal,1,0.0,WITHIN FRONTAL SENSOR GROUP,Dominant reported edges connect sensors within the frontal group.
+Replace__BothReleased,pc3,0,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc3,50,12,12,1,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc3,100,12,12,0,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc3,150,12,12,4,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.
+Replace__BothReleased,pc3,200,12,12,5,0,,,0,0.0,NO REPORTED FLOW,No edges pass the requested reporting criteria.

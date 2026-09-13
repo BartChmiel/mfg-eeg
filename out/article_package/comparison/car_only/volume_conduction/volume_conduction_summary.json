@@ -1,0 +1,56 @@
+{
+  "source_edge_table": "out/article_package/comparison/car_only\\sensitivity\\edge_stability.csv",
+  "short_range_cm_threshold": 4.5,
+  "min_stability": 1.0,
+  "seed": 20240617,
+  "total_edges": 244,
+  "short_range_edges": 174,
+  "short_range_fraction": 0.7131,
+  "long_range_edges": 70,
+  "zero_lag_edges": 17,
+  "nonzero_lag_edges": 227,
+  "nonzero_lag_fraction": 0.9303,
+  "asymmetric_edges": 178,
+  "asymmetric_fraction": 0.7295,
+  "vc_robust_edges": 70,
+  "vc_robust_fraction": 0.2869,
+  "vc_robust_region_flow_top": [
+    {
+      "flow": "Occipital->Occipital",
+      "count": 37
+    },
+    {
+      "flow": "Parietal->Parietal",
+      "count": 13
+    },
+    {
+      "flow": "Occipital->Frontocentral",
+      "count": 6
+    },
+    {
+      "flow": "Parietal->Occipital",
+      "count": 6
+    },
+    {
+      "flow": "Parietal->Frontocentral",
+      "count": 5
+    },
+    {
+      "flow": "Frontocentral->Frontocentral",
+      "count": 2
+    },
+    {
+      "flow": "Frontal->Frontal",
+      "count": 1
+    }
+  ],
+  "spatial_enrichment": {
+    "n_edges": 244,
+    "observed_mean_distance_cm": 3.945,
+    "null_mean_distance_cm": 14.051,
+    "null_sd_distance_cm": 0.411,
+    "permutation_p_shorter": 4.999750012499375e-05,
+    "z_score": -24.568,
+    "n_permutations": 20000
+  }
+}

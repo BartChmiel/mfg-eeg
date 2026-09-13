@@ -1,536 +1,58 @@
 N_subjects_total=12 | mode=gc | topk=10 | p0=0.100806 | FDR=True | significant_only=True
-BothStartLoadPhase__LiftOff | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->Fp1     6/12   0.0005654    0.003746  **
-  F3  ->Fp1     5/12    0.004484       0.011  *
-  F7  ->Fp1     4/12     0.02633     0.02633  *
-  dominant_flow Parietal->Frontal  DI=+1.00  (PARIETAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the parietal to the frontal sensor group.
-
-BothStartLoadPhase__LiftOff | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=8
-  edge        k/N    p-value      q(FDR)      sig
-  Pz  ->CP2     6/12   0.0005654    0.003746  **
-  CP1 ->Cz      5/12    0.004484       0.011  *
-  P4  ->CP2     5/12    0.004484       0.011  *
-  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the parietal group.
-
-BothStartLoadPhase__LiftOff | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  Fz  ->FC1     5/12    0.004484       0.011  *
-  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the frontocentral sensor group.
-
 BothStartLoadPhase__LiftOff | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  F7  ->FC5     9/12   1.778e-07   6.733e-06  ***
-  CP1 ->Cz      6/12   0.0005654    0.003746  **
-  F8  ->FC6     6/12   0.0005654    0.003746  **
-  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontocentral sensor group.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  FC1 ->Fp1     6/12   0.0005654    0.003746  **
-  O2  ->Fp2     5/12    0.004484       0.011  *
-  F3  ->Fp2     4/12     0.02633     0.02633  *
-  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=50ms
   scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  Oz  ->O1      4/12     0.02633     0.02633  *
-  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the occipital group.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->F4      4/12     0.02633     0.02633  *
+  F7  ->FC5     9/12   1.778e-07     0.00189  **
   dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
   Dominant reported edges run from the frontal to the frontocentral sensor group.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->CP5     4/12     0.02633     0.02633  *
-  Fp2 ->P3      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-BothStartLoadPhase__LiftOff | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=8
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1     6/12   0.0005654    0.003746  **
-  Fp2 ->P7      6/12   0.0005654    0.003746  **
-  Fp1 ->F3      5/12    0.004484       0.011  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->F7      6/12   0.0005654    0.003746  **
-  O1  ->PO9     5/12    0.004484       0.011  *
-  F3  ->F7      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
-  Dominant reported edges run from the frontal to the other sensor group.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->PO10    5/12    0.004484       0.011  *
-  Fp1 ->F7      4/12     0.02633     0.02633  *
-  Fp2 ->Fp1     4/12     0.02633     0.02633  *
-  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the occipital group.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=100ms
-  scenario_subjects=12/12  reported_edges=3
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->Fp2     4/12     0.02633     0.02633  *
-  Fp2 ->F7      4/12     0.02633     0.02633  *
-  Fp2 ->Fp1     4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the frontal group.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  Fz  ->P7      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-BothStartLoadPhase__LiftOff | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->F3      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the frontocentral sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->Fp1     6/12   0.0005654    0.003746  **
-  F3  ->Fp1     5/12    0.004484       0.011  *
-  F4  ->Fp2     4/12     0.02633     0.02633  *
-  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=8
-  edge        k/N    p-value      q(FDR)      sig
-  Pz  ->CP2     5/12    0.004484       0.011  *
-  T7  ->TP9     5/12    0.004484       0.011  *
-  CP1 ->Cz      4/12     0.02633     0.02633  *
-  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the parietal group.
-
-FirstDigitTouch__BothStartLoadPhase | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  F7  ->FC5     4/12     0.02633     0.02633  *
-  Fp2 ->Pz      4/12     0.02633     0.02633  *
-  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontocentral sensor group.
 
 FirstDigitTouch__BothStartLoadPhase | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=6
-  edge        k/N    p-value      q(FDR)      sig
-  F7  ->FC5     9/12   1.778e-07   6.733e-06  ***
-  F8  ->FC6     6/12   0.0005654    0.003746  **
-  CP1 ->Cz      5/12    0.004484       0.011  *
-  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontocentral sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  FC1 ->Fp1     6/12   0.0005654    0.003746  **
-  O2  ->Fp2     5/12    0.004484       0.011  *
-  CP2 ->Fp1     4/12     0.02633     0.02633  *
-  dominant_flow Occipital->Frontal  DI=+1.00  (OCCIPITAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the occipital to the frontal sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=3
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->Oz      4/12     0.02633     0.02633  *
-  Oz  ->O1      4/12     0.02633     0.02633  *
-  Oz  ->O2      4/12     0.02633     0.02633  *
-  dominant_flow Occipital->Occipital  DI=+0.00  (WITHIN OCCIPITAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the occipital group.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->P3      5/12    0.004484       0.011  *
-  Fp2 ->CP5     4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=10
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1     6/12   0.0005654    0.003746  **
-  Fp2 ->CP5     5/12    0.004484       0.011  *
-  Fp2 ->F4      5/12    0.004484       0.011  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->F7      6/12   0.0005654    0.003746  **
-  O1  ->PO9     5/12    0.004484       0.011  *
-  F3  ->F7      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
-  Dominant reported edges run from the frontal to the other sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  O2  ->PO10    5/12    0.004484       0.011  *
-  Fp1 ->F7      4/12     0.02633     0.02633  *
-  P3  ->O1      4/12     0.02633     0.02633  *
-  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
-  Dominant reported edges run from the parietal to the occipital sensor group.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=100ms
   scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->Fp2     5/12    0.004484       0.011  *
-  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the frontal group.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1     4/12     0.02633     0.02633  *
-  Fz  ->P7      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the frontal group.
-
-FirstDigitTouch__BothStartLoadPhase | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->F4      4/12     0.02633     0.02633  *
+  F7  ->FC5     9/12   1.778e-07     0.00189  **
   dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
   Dominant reported edges run from the frontal to the frontocentral sensor group.
-
-HandStart__FirstDigitTouch | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->Fp1     5/12    0.004484       0.011  *
-  F3  ->Fp1     4/12     0.02633     0.02633  *
-  F7  ->Fp1     4/12     0.02633     0.02633  *
-  dominant_flow Parietal->Frontal  DI=+1.00  (PARIETAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the parietal to the frontal sensor group.
-
-HandStart__FirstDigitTouch | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  Cz  ->FC1     5/12    0.004484       0.011  *
-  FC2 ->Fz      5/12    0.004484       0.011  *
-  P4  ->CP2     5/12    0.004484       0.011  *
-  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
-
-HandStart__FirstDigitTouch | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  F7  ->FC5     5/12    0.004484       0.011  *
-  F8  ->FC6     5/12    0.004484       0.011  *
-  CP1 ->Cz      4/12     0.02633     0.02633  *
-  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontocentral sensor group.
-
-HandStart__FirstDigitTouch | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=6
-  edge        k/N    p-value      q(FDR)      sig
-  FC1 ->Fp1     6/12   0.0005654    0.003746  **
-  FC2 ->Fp1     5/12    0.004484       0.011  *
-  F3  ->Fp2     4/12     0.02633     0.02633  *
-  dominant_flow Frontocentral->Frontal  DI=+0.50  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
-
-HandStart__FirstDigitTouch | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  F3  ->Fp2     4/12     0.02633     0.02633  *
-  FC1 ->Fp1     4/12     0.02633     0.02633  *
-  Fp2 ->F4      4/12     0.02633     0.02633  *
-  dominant_flow Frontocentral->Frontal  DI=+0.33  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
-
-HandStart__FirstDigitTouch | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  FC2 ->Fp1     4/12     0.02633     0.02633  *
-  O1  ->Fp1     4/12     0.02633     0.02633  *
-  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
-
-HandStart__FirstDigitTouch | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1     7/12   5.288e-05   0.0008758  ***
-  Fp1 ->Fp2     5/12    0.004484       0.011  *
-  Fp2 ->P7      5/12    0.004484       0.011  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-HandStart__FirstDigitTouch | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->F7      4/12     0.02633     0.02633  *
-  Fp2 ->F7      4/12     0.02633     0.02633  *
-  P7  ->PO10    4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
-  Dominant reported edges run from the frontal to the other sensor group.
-
-HandStart__FirstDigitTouch | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  P4  ->Oz      5/12    0.004484       0.011  *
-  Fz  ->O2      4/12     0.02633     0.02633  *
-  Fz  ->Oz      4/12     0.02633     0.02633  *
-  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
-  Dominant reported edges run from the parietal to the occipital sensor group.
-
-LiftOff__Replace | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  FC2 ->Fz      5/12    0.004484       0.011  *
-  FC1 ->Fz      4/12     0.02633     0.02633  *
-  FC5 ->F3      4/12     0.02633     0.02633  *
-  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
 
 LiftOff__Replace | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=11
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  Pz  ->CP2     9/12   1.778e-07   6.733e-06  ***
-  P4  ->CP2     7/12   5.288e-05   0.0008758  ***
-  Pz  ->CP1     7/12   5.288e-05   0.0008758  ***
+  Pz  ->CP2     9/12   1.778e-07     0.00189  **
   dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
   Dominant reported edges connect sensors within the parietal group.
-
-LiftOff__Replace | pc1 | lag=100ms
-  scenario_subjects=12/12  reported_edges=3
-  edge        k/N    p-value      q(FDR)      sig
-  F8  ->FC6     4/12     0.02633     0.02633  *
-  Pz  ->CP2     4/12     0.02633     0.02633  *
-  TP10->T8      4/12     0.02633     0.02633  *
-  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontocentral sensor group.
-
-LiftOff__Replace | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  F8  ->FC6     6/12   0.0005654    0.003746  **
-  TP10->T8      4/12     0.02633     0.02633  *
-  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontocentral sensor group.
 
 LiftOff__Replace | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  F8  ->FC6     8/12   3.629e-06   9.616e-05  ***
-  TP10->T8      8/12   3.629e-06   9.616e-05  ***
-  CP1 ->Pz      6/12   0.0005654    0.003746  **
-  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the parietal group.
-
-LiftOff__Replace | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=6
-  edge        k/N    p-value      q(FDR)      sig
-  FC1 ->Fp1     5/12    0.004484       0.011  *
-  FC2 ->Fp1     5/12    0.004484       0.011  *
-  Oz  ->Fp1     5/12    0.004484       0.011  *
-  dominant_flow Frontocentral->Frontal  DI=+1.00  (FRONTOCENTRAL TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the frontal sensor group.
-
-LiftOff__Replace | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->P4      6/12   0.0005654    0.003746  **
-  Fp1 ->Pz      5/12    0.004484       0.011  *
-  Fp1 ->FC5     4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-LiftOff__Replace | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->FC1     4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the frontocentral sensor group.
-
-LiftOff__Replace | pc2 | lag=150ms
   scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  F8  ->T8      4/12     0.02633     0.02633  *
-  Fp2 ->F4      4/12     0.02633     0.02633  *
-  dominant_flow Other->Temporal  DI=+1.00  (OTHER TO TEMPORAL SENSOR FLOW)
-  Dominant reported edges run from the other to the temporal sensor group.
-
-LiftOff__Replace | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->F4      6/12   0.0005654    0.003746  **
-  F7  ->FC5     5/12    0.004484       0.011  *
-  F8  ->T8      5/12    0.004484       0.011  *
-  dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the frontocentral sensor group.
-
-LiftOff__Replace | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->F7      6/12   0.0005654    0.003746  **
-  O1  ->PO9     5/12    0.004484       0.011  *
-  F3  ->F7      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Other  DI=+1.00  (FRONTAL TO OTHER SENSOR FLOW)
-  Dominant reported edges run from the frontal to the other sensor group.
-
-LiftOff__Replace | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=9
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->F7      5/12    0.004484       0.011  *
-  O2  ->PO10    5/12    0.004484       0.011  *
-  P3  ->Oz      5/12    0.004484       0.011  *
-  dominant_flow Parietal->Occipital  DI=+1.00  (PARIETAL TO OCCIPITAL SENSOR FLOW)
-  Dominant reported edges run from the parietal to the occipital sensor group.
-
-LiftOff__Replace | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  Oz  ->P8      6/12   0.0005654    0.003746  **
-  CP1 ->TP10    5/12    0.004484       0.011  *
-  F4  ->PO10    5/12    0.004484       0.011  *
-  dominant_flow Frontocentral->Occipital  DI=+1.00  (FRONTOCENTRAL TO OCCIPITAL SENSOR FLOW)
-  Dominant reported edges run from the frontocentral to the occipital sensor group.
-
-Replace__BothReleased | pc1 | lag=0ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->PO9     6/12   0.0005654    0.003746  **
-  Fp1 ->T8      5/12    0.004484       0.011  *
-  Fp2 ->P7      5/12    0.004484       0.011  *
-  dominant_flow Frontal->Occipital  DI=+1.00  (FRONTAL TO OCCIPITAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the occipital sensor group.
-
-Replace__BothReleased | pc1 | lag=50ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->O1      4/12     0.02633     0.02633  *
-  Fp2 ->O2      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Occipital  DI=+1.00  (FRONTAL TO OCCIPITAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the occipital sensor group.
-
-Replace__BothReleased | pc1 | lag=100ms
-  scenario_subjects=12/12  reported_edges=2
-  edge        k/N    p-value      q(FDR)      sig
-  F7  ->Fp1     4/12     0.02633     0.02633  *
-  P3  ->Fp1     4/12     0.02633     0.02633  *
-  dominant_flow Other->Frontal  DI=+1.00  (OTHER TO FRONTAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontal sensor group.
-
-Replace__BothReleased | pc1 | lag=150ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->F4      4/12     0.02633     0.02633  *
+  F8  ->FC6     8/12   3.629e-06       0.027  *
+  TP10->T8      8/12   3.629e-06       0.027  *
   dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
   Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 Replace__BothReleased | pc1 | lag=200ms
-  scenario_subjects=12/12  reported_edges=5
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->F4      8/12   3.629e-06   9.616e-05  ***
-  Fp1 ->PO9     5/12    0.004484       0.011  *
-  Fp2 ->P7      5/12    0.004484       0.011  *
+  Fp2 ->F4      8/12   3.629e-06       0.027  *
   dominant_flow Frontal->Frontocentral  DI=+1.00  (FRONTAL TO FRONTOCENTRAL SENSOR FLOW)
   Dominant reported edges run from the frontal to the frontocentral sensor group.
 
 Replace__BothReleased | pc2 | lag=0ms
-  scenario_subjects=12/12  reported_edges=4
+  scenario_subjects=12/12  reported_edges=2
   edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->Fp2     9/12   1.778e-07   6.733e-06  ***
-  Fp2 ->Fp1     9/12   1.778e-07   6.733e-06  ***
-  F3  ->Fp2     5/12    0.004484       0.011  *
+  Fp1 ->Fp2     9/12   1.778e-07     0.00189  **
+  Fp2 ->Fp1     9/12   1.778e-07     0.00189  **
   dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
   Dominant reported edges connect sensors within the frontal group.
 
 Replace__BothReleased | pc2 | lag=50ms
-  scenario_subjects=12/12  reported_edges=6
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1    10/12   5.902e-09   1.564e-06  ***
-  Fp1 ->Fp2     7/12   5.288e-05   0.0008758  ***
-  F3  ->Fp2     5/12    0.004484       0.011  *
-  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the frontal group.
-
-Replace__BothReleased | pc2 | lag=100ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1     6/12   0.0005654    0.003746  **
-  Fp1 ->F7      4/12     0.02633     0.02633  *
-  Fp1 ->Fp2     4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the frontal group.
-
-Replace__BothReleased | pc2 | lag=150ms
-  scenario_subjects=12/12  reported_edges=7
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->Fp2     7/12   5.288e-05   0.0008758  ***
-  F4  ->Fp2     5/12    0.004484       0.011  *
-  Fz  ->Fp2     5/12    0.004484       0.011  *
+  Fp2 ->Fp1    10/12   5.902e-09   0.0004391  ***
   dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
   Dominant reported edges connect sensors within the frontal group.
 
 Replace__BothReleased | pc2 | lag=200ms
-  scenario_subjects=12/12  reported_edges=5
+  scenario_subjects=12/12  reported_edges=1
   edge        k/N    p-value      q(FDR)      sig
-  Fp2 ->Fp1     9/12   1.778e-07   6.733e-06  ***
-  Fp1 ->Fp2     7/12   5.288e-05   0.0008758  ***
-  F3  ->Fp1     4/12     0.02633     0.02633  *
+  Fp2 ->Fp1     9/12   1.778e-07     0.00189  **
   dominant_flow Frontal->Frontal  DI=+0.00  (WITHIN FRONTAL SENSOR GROUP)
   Dominant reported edges connect sensors within the frontal group.
-
-Replace__BothReleased | pc3 | lag=0ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  CP2 ->Pz      5/12    0.004484       0.011  *
-  dominant_flow Parietal->Parietal  DI=+0.00  (WITHIN PARIETAL SENSOR GROUP)
-  Dominant reported edges connect sensors within the parietal group.
-
-Replace__BothReleased | pc3 | lag=50ms
-  scenario_subjects=12/12  reported_edges=1
-  edge        k/N    p-value      q(FDR)      sig
-  F8  ->FC5     4/12     0.02633     0.02633  *
-  dominant_flow Other->Frontocentral  DI=+1.00  (OTHER TO FRONTOCENTRAL SENSOR FLOW)
-  Dominant reported edges run from the other to the frontocentral sensor group.
-
-Replace__BothReleased | pc3 | lag=150ms
-  scenario_subjects=12/12  reported_edges=4
-  edge        k/N    p-value      q(FDR)      sig
-  Fp1 ->P3      5/12    0.004484       0.011  *
-  Fp1 ->Pz      4/12     0.02633     0.02633  *
-  Fp2 ->P3      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.
-
-Replace__BothReleased | pc3 | lag=200ms
-  scenario_subjects=12/12  reported_edges=5
-  edge        k/N    p-value      q(FDR)      sig
-  F4  ->PO10    4/12     0.02633     0.02633  *
-  Fp1 ->P7      4/12     0.02633     0.02633  *
-  Fp1 ->P8      4/12     0.02633     0.02633  *
-  dominant_flow Frontal->Parietal  DI=+1.00  (FRONTAL TO PARIETAL SENSOR FLOW)
-  Dominant reported edges run from the frontal to the parietal sensor group.

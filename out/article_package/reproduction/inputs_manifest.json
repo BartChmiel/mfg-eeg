@@ -1,0 +1,14 @@
+{
+  "sha256": {
+    "classification_subject/subject_results.csv": "f3ab05ffbb7565812b8781f8f15534f60e8be434125e0ef12c03e4e9ed83c842",
+    "classification_subject/subject_summary.json": "1c5b2a3fff55fe5109d225c72556fb09c8dc3d23cd65f229d655dffdf19da5fd",
+    "classification_subject/timing_control.csv": "3316bb4439734eb1deba4e9a05b7526a65ddb4726a64eecb766c5cc7a41160ef",
+    "classification_subject/timing_control_groups.csv": "9fd1a650b144b23d9b1301cfd38a3f4f02451d6d05333fa9ef7efd55f0db9ee8",
+    "classification_subject/timing_control_summary.json": "9e8a05bc507ca7695a53aa189d1ccf5b33bfd49d924ec8822289812d1ad19e34",
+    "reproduction/bandpass_0_5_48_rankings.csv.gz": "30938c193f243c46a03903719d7cabe7fc0f5b55384de650192f20079994606e",
+    "reproduction/car_only_rankings.csv.gz": "8c6c8da47d399bb81b43318e1d0af237a59701d59c4001fdd77113cac24999ff",
+    "reproduction/classifier_candidates.csv": "879ade01f59213d837d7f73bb2489577cc8195caaed28110c29aec7466120774",
+    "reproduction/dense_basis.npz": "44048893d98cba395fee265607a1f3bb29838b992159680b0bea30708976dbbd",
+    "reproduction/dense_scores.npz": "0fe27b2624fe6cbf45fc92254e794567572755144aa4627ba758e845671c2816"
+  }
+}

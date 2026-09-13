@@ -123,6 +123,43 @@ def _edge_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
     )
 
 
+def primary_sensitivity_rows(
+    edges: list[dict[str, Any]], stability: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    def key(row: dict[str, Any]) -> tuple[Any, ...]:
+        return (row["phase"], row["pc"], _safe_int(row["lag_ms"]), row["src"], row["dst"])
+
+    indexed = {key(row): row for row in stability}
+    result = []
+    for edge in sorted(edges, key=_edge_sort_key):
+        if not _safe_bool(edge.get("significant")):
+            continue
+        support = indexed.get(key(edge))
+        if support is None:
+            raise ValueError(f"Primary significant instance missing from sensitivity grid: {key(edge)}")
+        result.append({**edge, **{name: support[name] for name in
+            ("config_count", "successful_config_count", "stability_fraction")}})
+    return result
+
+
+def write_primary_sensitivity_table(out_dir: Path, rows: list[dict[str, Any]]) -> None:
+    fields = EDGE_FIELDS + ["config_count", "successful_config_count", "stability_fraction"]
+    _write_csv(out_dir / "primary_edge_sensitivity.csv", rows, fields)
+    lines = [r"\begin{tabular}{p{0.34\textwidth}clcccc}", r"\toprule",
+        r"Phase & PC & Edge & Lag (ms) & $K/N$ & $q$ & Settings \\", r"\midrule"]
+    for row in rows:
+        phase = str(row["phase"]).replace("__", " -> ").replace("_", r"\_")
+        mantissa, exponent = f"{float(row['q_value']):.2e}".split("e")
+        q = rf"${mantissa}\times10^{{{int(exponent)}}}$"
+        cells = [rf"\code{{{phase}}}", str(row["pc"]).upper(),
+            rf"{row['src']} $\to$ {row['dst']}", str(row["lag_ms"]),
+            f"{row['k']}/{row['n_subjects']}", q,
+            f"{row['config_count']}/{row['successful_config_count']}"]
+        lines.append(" & ".join(cells) + r" \\")
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    (out_dir / "primary_edge_sensitivity.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def _safe_rglob(root: Path, pattern: str) -> Iterable[Path]:
     if not root.exists():
         return []
@@ -586,7 +623,7 @@ def _build_classifier_snapshot(
             fusion_value = best_group.get("fusion_weight", best_group.get("fusion_grid", "n/a"))
             lines.append(
                 (
-                    "- Best subject-aware group: "
+                    "- Best timing-control group: "
                     f"alpha={best_group.get('alpha', 'n/a')}, "
                     f"fusion={fusion_value}, "
                     f"baseline AUC {_fmt_metric(best_group.get('mean_aligned_baseline_auc'))}, "
@@ -613,8 +650,8 @@ def _build_classifier_snapshot(
     if lines:
         lines.append(
             (
-                "- Classifier interpretation: positive but modest subject-aware "
-                "incremental value."
+                "- The classifier increment is descriptive; selection and validation "
+                "are documented in [Methodology](documentation/METHODOLOGY.md#classification-benchmark)."
             )
         )
     return lines
@@ -678,35 +715,13 @@ def _build_markdown(
         "",
         f"Generated at UTC: {generated_at}",
         "",
-        "## Purpose",
-        "",
         (
             "This directory contains the results used in the Grasp-and-Lift EEG "
             "article: phase-wise directed lagged dependence, cross-subject "
             "meta-analysis, sensitivity checks, classifier controls, and provenance."
         ),
         "",
-        "## Inputs",
-        "",
-        f"- Phase directory: `{phase_dir}`",
-        f"- Pre-event directory: `{pre_event_dir}`",
-        f"- Meta-analysis directory: `{meta_dir}`",
-        f"- Sensitivity directory: `{sensitivity_dir}`" if sensitivity_dir else "- Sensitivity directory: not provided",
-        f"- Classification directory: `{classification_dir}`" if classification_dir else "- Classification directory: not provided",
-        f"- Classification sweep directory: `{classification_sweep_dir}`" if classification_sweep_dir else "- Classification sweep directory: not provided",
-        f"- Classification controls directory: `{classification_controls_dir}`" if classification_controls_dir else "- Classification controls directory: not provided",
-        f"- Subject classification directory: `{classification_subject_dir}`" if classification_subject_dir else "- Subject classification directory: not provided",
-        f"- Volume-conduction directory: `{volume_conduction_dir}`" if volume_conduction_dir else "- Volume-conduction directory: not provided",
-        f"- Run manifests indexed: {manifest_count}",
-        f"- Figure candidates indexed: {figure_count}",
-        f"- Article figures generated: {article_figure_count}",
-        f"- Sensitivity files copied: {sensitivity_count}",
-        f"- Classification files copied: {classification_count}",
-        f"- Classification sweep files copied: {classification_sweep_count}",
-        f"- Classification controls files copied: {classification_controls_count}",
-        f"- Subject classification files copied: {classification_subject_count}",
-        f"- Volume-conduction files copied: {volume_conduction_count}",
-        f"- Evidence table files written: {evidence_table_count}",
+        "Input paths and the file inventory are recorded in [package_manifest.json](package_manifest.json).",
         "",
         "## Top Scenarios",
         "",
@@ -752,46 +767,32 @@ def _build_markdown(
             "## Interpretation",
             "",
             (
-                "The central result is reproducible, phase-locked, directed "
-                "lagged dependence between EEG channels after marginal normalization "
-                "and innovation-style whitening. The meta-analysis evaluates whether "
-                "the same edges recur across subjects under a binomial null with "
-                "optional BH-FDR."
+                "The reported discoveries are significant in the fixed reference setting. "
+                "They describe sensor-level lagged dependence, not anatomical pathways."
             ),
             "",
-            (
-                "The results are sensor-level statistical dependencies rather than "
-                "anatomical pathways. We describe them as directional lagged sensor "
-                "dependence and interpret only their replication, event phase, lag, "
-                "and sensor-group distribution."
-            ),
-            "",
-            "## Files To Use In The Article",
+            "## Package Contents",
             "",
             "- `tables/top_scenarios.csv`: compact table of strongest phase/PC/lag scenarios.",
             "- `tables/top_edges.csv`: compact table of most replicated directed edges.",
+            "- `tables/primary_edge_sensitivity.csv`: reference-setting instances, q-values, and sensitivity retention.",
             "- `tables/classifier_evidence.csv`: compact uncertainty summary for the subject-aware timing control.",
             "- `tables/sensitivity_evidence.csv`: compact sensitivity-grid stability summary.",
-            "- `tables/preprocessing_comparison.csv`: compact CAR-only versus cleaned-run robustness comparison, if requested.",
-            "- `article_summary.md`: summary of the final evidence.",
+            "- `tables/preprocessing_comparison.csv`: CAR-only versus band-pass robustness comparison, when supplied.",
             "- `package_manifest.json`: provenance index for inputs, manifests, and figures.",
             "- `raw_meta_exports/`: exact meta-analysis exports copied from the source run.",
-            "- `sensitivity/`: optional robustness-grid exports, if provided.",
+            "- `sensitivity/`: robustness-grid exports, when supplied.",
             "- `classification/`: optional Kaggle-style classifier ablation exports, if provided.",
             "- `classification_sweep/`: optional classification-grid robustness exports, if provided.",
             "- `classification_controls/`: optional artefact and channel-set control exports, if provided.",
-            "- `classification_subject/`: optional participant-specific classifier validation exports, if provided.",
-            "- `volume_conduction/`: distance/lag/asymmetry screening report and edge table, if provided.",
+            "- `classification_subject/`: participant-specific classifier results and timing controls, when supplied.",
+            "- `volume_conduction/`: distance/lag/asymmetry screen, when supplied.",
             "- `documentation/`: article PDF, references, and the technical methodology note.",
-            "",
-            "## Warnings",
-            "",
         ]
     )
     if warnings:
+        lines.extend(["", "## Warnings", ""])
         lines.extend(f"- {warning}" for warning in warnings)
-    else:
-        lines.append("- No packaging warnings.")
     lines.append("")
     return "\n".join(lines)
 
@@ -859,14 +860,17 @@ def build_package(
     if not edges:
         warnings.append("No meta_edges.csv rows were found.")
 
-    scenarios_sorted = sorted(scenarios, key=_scenario_sort_key)
-    edges_sorted = sorted(edges, key=_edge_sort_key)
+    scenarios_sorted = sorted((row for row in scenarios if _safe_int(row.get("reported_edges")) > 0), key=_scenario_sort_key)
+    edges_sorted = sorted((row for row in edges if _safe_bool(row.get("significant"))), key=_edge_sort_key)
     scenario_top_rows = scenarios_sorted[: int(top_scenarios)]
     edge_top_rows = edges_sorted[: int(top_edges)]
 
     tables_dir = out_path / "tables"
     _write_csv(tables_dir / "top_scenarios.csv", scenario_top_rows, SCENARIO_FIELDS)
     _write_csv(tables_dir / "top_edges.csv", edge_top_rows, EDGE_FIELDS)
+    if sensitivity_path is not None:
+        primary_rows = primary_sensitivity_rows(edges, _read_csv(sensitivity_path / "edge_stability.csv"))
+        write_primary_sensitivity_table(tables_dir, primary_rows)
 
     copied = _copy_existing(
         meta_path,
@@ -933,18 +937,26 @@ def build_package(
             [
                 (
                     "- Sensitivity grid: "
-                    f"{sensitivity_stats_payload['unique_stable_edges']} unique stable edges across the sensitivity grid; "
+                    f"{sensitivity_stats_payload['unique_stable_edges']} instances significant in at least one setting; "
                     f"{sensitivity_stats_payload['fully_stable_edges']} remain significant in all grid settings."
                 ),
                 (
                     "- Fully stable region flow: "
-                    f"{sensitivity_stats_payload['top_full_stable_region_flow']} "
+                    f"{sensitivity_stats_payload['top_full_stable_region_flow'] or 'none'} "
                     f"({sensitivity_stats_payload['top_full_stable_region_count']} edge instances)."
                 ),
             ]
         )
+        sensitivity_snapshot.append(
+            "- Per-instance retention is listed in [primary_edge_sensitivity.csv]"
+            "(tables/primary_edge_sensitivity.csv)."
+        )
     volume_conduction_snapshot: list[str] = []
-    if volume_conduction_stats_payload:
+    if volume_conduction_stats_payload and volume_conduction_stats_payload["total_edges"] == 0:
+        volume_conduction_snapshot.append(
+            "- The secondary screen has zero fully stable candidates; spatial enrichment is unassessed."
+        )
+    elif volume_conduction_stats_payload:
         volume_conduction_snapshot.extend(
             [
                 (

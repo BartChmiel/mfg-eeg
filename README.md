@@ -1,74 +1,90 @@
 # MFG EEG Grasp-and-Lift Analysis
 
-This repository analyzes the public Kaggle Grasp-and-Lift EEG Detection dataset
-with event-locked, multi-feature lagged dependence. The main result is a
-cross-subject sensor-level connectivity analysis; classification is a secondary
-check of whether MFG edge features add information beyond direct EEG features.
+Event-locked analysis of the public Kaggle Grasp-and-Lift EEG Detection dataset
+using multi-feature Granger-style (MFG) lagged dependence. The pipeline aligns
+32-channel recordings to movement phases, estimates Legendre mixed moments,
+and uses pair-specific PCA to summarize dependence across participants and lags.
+A secondary classifier experiment compares MFG features with direct EEG features.
 
 Authors: Adrian Przybysz, Bartlomiej Chmiel, Jarek Duda.
 
-## Setup
+## Main findings
+
+- Ten band-pass edge instances are significant in the fixed reference setting
+  (top-k 10, minimum recurrence four, null inflation ten, FDR alpha 0.05).
+- The strongest non-zero-lag Fp2 -> Fp1 findings at 50 and 200 ms recur in 10/12
+  and 9/12 participants and are retained in 24/27 and 21/27 sensitivity settings.
+  No band-pass instance survives all 27 settings.
+- The classifier reaches mean best-augmented ROC-AUC 0.8698, with a matched
+  aligned-minus-shifted difference of about +0.0014. This increment is descriptive
+  because candidate and model selection were not fully nested.
+
+The findings concern sensor-level dependence, not anatomical connectivity;
+frontopolar results remain susceptible to ocular and shared-source contributions.
+See the [article](docs/eeg_mfg_article.pdf) and
+[evidence summary](out/article_package/article_summary.md) for the full results.
+
+## Installation
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-Place the Kaggle files in `data/grasp-and-lift-eeg-detection/train/` and
-`data/grasp-and-lift-eeg-detection/test/`. Raw data and exploratory outputs are
-ignored by Git.
+On Linux or macOS, activate with `source .venv/bin/activate`.
+PDF generation also requires PDFLaTeX and BibTeX on `PATH`.
 
-## Repository Contents
+## Reproducing the article
 
-- `docs/` contains the final article PDF/source, bibliography, and technical
-  method notes.
-- `src_mfg/` contains reusable preprocessing, normalization, basis, montage,
-  configuration, and IO code.
-- `scripts/` contains the article pipeline and reproducibility utilities.
-- `out/article_package/` contains the final evidence bundle used by the article:
-  compact tables, selected figures, reports, and provenance metadata.
-- `tests/` contains regression checks for the pipeline components.
-
-Raw Kaggle data, local virtual environments, temporary logs, caches, private
-transfer bundles, and exploratory outputs are intentionally ignored.
-
-## Run
-
-Run the cleaned article workflow:
+From the repository root:
 
 ```powershell
-python -m scripts.run_resumable_article_pipeline
+python -m scripts.reproduce_article --source snapshots
 ```
 
-The workflow checkpoints the PCA basis after each file, skips completed subject
-runs with matching manifests, retries failed steps, and rebuilds the final
-evidence bundle. It can be restarted with the same command after an interruption.
+This rebuilds both preprocessing comparisons, the 27-setting sensitivity grids,
+tables, figures, PDF, and arXiv source archive in `out/reproduced_article/`.
+It uses archived rankings and retains the reported classifier results; the
+original EEG recordings are not needed. Add `--no-pdf` to run without LaTeX.
 
-To rebuild only the bundle from existing outputs, run:
+For a full raw-data run, place the Kaggle training CSVs in
+`data/grasp-and-lift-eeg-detection/train/`, then run:
 
 ```powershell
-python -m scripts.build_article_package --help
+python -m scripts.reproduce_article --source raw --output out/raw_reproduction
 ```
 
-The lightweight GUI entry point `launch_gui.bat` is kept for local workflow
-execution, but the command-line pipeline above is the canonical reproduction
-path.
+This also refits PCA bases and reruns the aligned/shifted classifiers. It is
+substantially more expensive; PCA and subject stages support resuming.
+See [input provenance](out/article_package/reproduction/README.md) and the
+[technical reference](docs/METHODOLOGY.md) for details.
 
-## Outputs
+To compile and package the tracked manuscript without recalculating results:
 
-- Article source and PDF: `docs/eeg_mfg_article.tex`, `docs/eeg_mfg_article.pdf`
-- Technical method notes: `docs/METHODOLOGY.md`
-- Final evidence bundle: `out/article_package/`
+```powershell
+python -m scripts.build_arxiv_submission
+```
 
-The filtered analysis leaves five edge instances stable across the full
-sensitivity grid. Two pass the distance/lag/asymmetry screen, both involving
-Fp2--Fp1, so the paper reports sensor dependence rather than anatomical
-causality. The matched classifier timing-control gain is about `+0.0014` AUC.
+The PDF and self-contained source ZIP are written to `out/arxiv_submission/`.
 
-## Checks
+## Repository structure
+
+- `docs/`: manuscript source/PDF, bibliography, and methodology.
+- `src_mfg/`: preprocessing, normalization, basis, montage, configuration, and I/O.
+- `scripts/`: analysis, reproduction, packaging, and the GUI (`launch_gui.bat`).
+- `out/article_package/`: article tables, figures, numerical inputs, and reports.
+- `tests/`: regression tests.
+
+## Tests
 
 ```powershell
 python -m compileall src_mfg scripts tests
 python -m unittest discover -s tests -v
 ```
+
+## Article
+
+*Event-Locked Multi-Feature Directed Dependence in Grasp-and-Lift EEG*,
+Adrian Przybysz, Bartlomiej Chmiel, and Jarek Duda.
+[PDF](docs/eeg_mfg_article.pdf) | [LaTeX source](docs/eeg_mfg_article.tex)
