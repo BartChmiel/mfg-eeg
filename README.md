@@ -72,9 +72,13 @@ The PDF and self-contained source ZIP are written to `out/arxiv_submission/`.
 
 - `docs/`: manuscript source/PDF, bibliography, and methodology.
 - `src_mfg/`: preprocessing, normalization, basis, montage, configuration, and I/O.
-- `scripts/`: analysis, reproduction, packaging, and the GUI (`launch_gui.bat`).
+- `scripts/`: analysis, reproduction, packaging, and a private legacy GUI (`launch_gui.bat`).
 - `out/article_package/`: article tables, figures, numerical inputs, and reports.
 - `tests/`: regression tests.
+
+The GUI is an experimental helper, outside the publication workflow. Its package
+output defaults to `out/gui_runs/article_package/`, and GUI writes to
+`out/article_package/` are blocked. Use `scripts.reproduce_article` for the article.
 
 ## Tests
 

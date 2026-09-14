@@ -135,6 +135,18 @@ def build_command(
     python_executable: str,
 ) -> tuple[list[str], dict[str, Any]]:
     values = normalize_values(spec, raw_values)
+    repo_root = Path(__file__).resolve().parents[1]
+    protected = (repo_root / "out/article_package").resolve()
+    for field in spec.fields:
+        is_output = field.key in {spec.output_key, "cache_dir"} or field.kind == "file_save"
+        value = values[field.key]
+        if is_output and value:
+            destination = (repo_root / str(value)).resolve()
+            if destination == protected or protected in destination.parents:
+                raise ValueError(
+                    "The final out/article_package archive is read-only in the GUI; "
+                    "choose an output under out/gui_runs."
+                )
     cmd = [python_executable, "-m", spec.module]
 
     for field in spec.fields:
@@ -758,7 +770,7 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
     ),
     WorkflowSpec(
         key="article_package",
-        title="10. Article Package",
+        title="10. Experimental Package",
         module="scripts.build_article_package",
         description=(
             "Collect article-facing tables, copied meta exports, figure indexes, and provenance into one package."
@@ -773,7 +785,7 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
             FieldSpec("classification_sweep_dir", "Classification sweep", "--classification-sweep-dir", "dir", "out/classification_sweep"),
             FieldSpec("classification_controls_dir", "Classification controls", "--classification-controls-dir", "dir", "out/classification_controls"),
             FieldSpec("classification_subject_dir", "Subject classification", "--classification-subject-dir", "dir", "out/classification_subject_epochs3"),
-            FieldSpec("out", "Article package", "--out", "dir", "out/article_package", True),
+            FieldSpec("out", "Experimental package", "--out", "dir", "out/gui_runs/article_package", True),
             FieldSpec("top_scenarios", "Top scenarios", "--top-scenarios", "int", 20),
             FieldSpec("top_edges", "Top edges", "--top-edges", "int", 50),
         ),
@@ -787,7 +799,7 @@ WORKFLOWS: tuple[WorkflowSpec, ...] = (
                 "classification_sweep_dir": "out/classification_sweep",
                 "classification_controls_dir": "out/classification_controls",
                 "classification_subject_dir": "out/classification_subject_epochs3",
-                "out": "out/article_package",
+                "out": "out/gui_runs/article_package",
                 "top_scenarios": 20,
                 "top_edges": 50,
             }

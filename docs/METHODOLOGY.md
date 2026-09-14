@@ -9,9 +9,10 @@ The method estimates directed lagged dependence between EEG channels by:
 EEG and event CSV files
 -> event alignment
 -> common average reference (CAR)
+-> full-series filtering / preprocessing
+-> full-series marginal normalization
 -> grasp-cycle reconstruction
 -> phase and pre-event windows
--> marginal normalization
 -> Legendre mixed-moment features
 -> pair-specific PCA dependence modes
 -> subject-level edge rankings
@@ -22,6 +23,8 @@ EEG and event CSV files
 
 The active dataset is the Kaggle Grasp-and-Lift EEG Detection training split.
 The expected sampling rate is `500 Hz`.
+The archived publication basis and pooled phase payload record 96 labelled
+series, 2,833 accepted reconstructed cycles, and 14,165 phase windows.
 
 Each recording uses paired files:
 
@@ -60,14 +63,15 @@ with common average reference (CAR):
 X_c(t) = X_c(t) - mean_j X_j(t)
 ```
 
-Grasp cycles are reconstructed from event blocks. A cycle starts at
-`HandStart` and follows the next valid event blocks until `BothReleased`, with
-an upper duration limit.
-
 The article compares CAR-only recordings with fourth-order, zero-phase
-0.5-48 Hz band-pass filtering after CAR. Each phase uses a two-second window
-around its center, with a separately fitted PCA basis for each preprocessing
-variant.
+0.5-48 Hz band-pass filtering after CAR. Filtering and marginal normalization
+operate on each complete series before window extraction. Each preprocessing
+variant uses a separately fitted PCA basis.
+
+Grasp cycles are reconstructed from event-block centers. A cycle starts at
+`HandStart` and follows the next valid event centers until `BothReleased`, with
+a maximum duration of 6 s. Each phase uses a two-second window around its center;
+windows extending beyond the recording are excluded.
 
 ## Normalization
 
@@ -87,7 +91,9 @@ source: empirical CDF transform
 target: AR residual -> EMA variance -> Student-t CDF
 ```
 
-Directional mode estimates lagged innovation coupling at the sensor level.
+Directional mode uses AR order 10, an EMA half-life of 0.1 s, and fixed
+Student-t degrees of freedom `nu=10`. It estimates lagged innovation coupling
+at the sensor level.
 
 ## Mixed-Moment Features
 
@@ -121,6 +127,11 @@ source at t
 target at t + ell
 ```
 
+Within each phase and lag, window moments are averaged with weights equal to
+the number of valid source-target sample pairs (`window_samples - lag_samples`).
+The PCA mean and covariance use the same sample-count weights across windows
+and lags.
+
 ## PCA Dependence Modes
 
 For each ordered channel pair, mixed-moment vectors are accumulated across
@@ -132,9 +143,10 @@ For component `k`:
 s_ij,k(ell) = u_ij,k^T (m_ij(ell) - mu_ij)
 ```
 
-The article presets use:
+The primary directed-dependence analysis uses:
 
 ```text
+mode = gc
 m = 4
 lags_ms = 0 50 100 150 200
 pca_r = 3
@@ -263,6 +275,25 @@ The `best_assisted` output is the row-wise better of `combined` and `fusion`.
 The reported classifier uses regularized logistic SGD with three training passes.
 The software also supports `extra_trees` with the same feature sets.
 
+The reported classifier uses the simpler `corr`, `m=2` configuration, whereas
+the primary directed-dependence analysis uses `gc`, `m=4`. The preserved results
+and reproduction recipe specify:
+
+| Setting | Value |
+| --- | --- |
+| Participants and train/validation series | All 12; series 1-6 / 7 and 1-7 / 8 |
+| Features and candidate selection | `expanded`, `event_union`, per-event cap 8 |
+| Channels and preprocessing | `all32`, `bandpass_0_5_48` |
+| Sampling | `stride=100`, `val_keep_all_positive=True` |
+| SGD alpha grid | 0.1, 0.2, 0.3 |
+| Fixed fusion weights | 0.1, 0.15, 0.2, 0.25 |
+| Timing control and probability smoothing | Label shifts 0 / 500 ms; smoothing 0 ms |
+
+The reproduction code uses base seed 42 plus the participant ID. Historical
+seeds and per-file sample limits are not independently recorded in the preserved
+aggregate outputs. The current raw recipe defaults to 1,200 training and 1,200
+validation samples per file; these defaults do not establish the historical limits.
+
 MFG candidate edges can be selected globally or by event-union. Global selection
 uses one highest-ranked candidate set. Event-union selects candidates from
 phases adjacent to each event and de-duplicates their union; its edge count
@@ -304,12 +335,11 @@ feature at t uses source at t - ell and target at t
 
 The reported score is mean ROC-AUC across the six event labels.
 
-For fast validation runs, the classifier may evaluate a strided subset of the
-series. When `--val-keep-all-positive` is enabled, event-positive samples are
-kept before the remaining budget is filled with strided negatives. This avoids
-losing short event intervals through coarse subsampling. Probability smoothing,
-if enabled, is computed with the original sample indices rather than compressed
-validation row numbers.
+The reported AUC is evaluated on sampled validation rows. With
+`--val-keep-all-positive`, rows positive for any event are prioritized over
+strided negatives; under a sample limit, positives can also be subsampled while
+reserving a negative-sample budget. Probability smoothing, if enabled, uses the
+original sample indices rather than compressed validation row numbers.
 
 Participant-specific validation is available through
 `scripts.kaggle_subject_classification`. Training and held-out series belong to

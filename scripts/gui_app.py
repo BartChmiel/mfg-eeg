@@ -132,7 +132,7 @@ class StartHereTab(ttk.Frame):
         self.dataset_root_var = tk.StringVar(
             value="data/grasp-and-lift-eeg-detection/train"
         )
-        self.out_root_var = tk.StringVar(value="out")
+        self.out_root_var = tk.StringVar(value="out/gui_runs")
         self.readiness_var = tk.StringVar(
             value="Click 'Check Setup & Results' to verify data, outputs, and article package readiness."
         )
@@ -146,8 +146,8 @@ class StartHereTab(ttk.Frame):
         self._build_readiness(body, start_row=3)
         self._build_step_section(
             body,
-            title="Recommended Kaggle Article Flow",
-            subtitle="This project is now centered on the Grasp-and-Lift Kaggle dataset. These are the steps to use first for the article.",
+            title="Legacy Experimental Flow",
+            subtitle="Private helper workflows; use scripts.reproduce_article for the final publication.",
             steps=RECOMMENDED_STEPS,
             start_row=5,
             open_button_label="Open Recommended Preset",
@@ -171,8 +171,8 @@ class StartHereTab(ttk.Frame):
         tk.Label(
             hero,
             text=(
-                "Main focus: Grasp-and-Lift EEG Detection (Kaggle).\n"
-                "The recommended route is PCA basis -> phase analysis -> pre-event EMA -> meta-analysis -> sensitivity -> classification -> sweep -> article package."
+                "Private legacy helper for Grasp-and-Lift EEG experiments.\n"
+                "The final publication workflow is python -m scripts.reproduce_article --source snapshots."
             ),
             bg=BG_HERO,
             fg="#D9E9F6",
@@ -193,7 +193,7 @@ class StartHereTab(ttk.Frame):
 
         tk.Label(
             card,
-            text="One-Click Article Run",
+            text="Legacy Experimental Run",
             bg=BG_PANEL,
             fg="#18324B",
             font=("Segoe UI Semibold", 14),
@@ -201,8 +201,8 @@ class StartHereTab(ttk.Frame):
         tk.Label(
             card,
             text=(
-                "This runs the full Kaggle article pipeline automatically:\n"
-                "PCA basis -> phase analysis -> pre-event EMA -> meta-analysis -> sensitivity -> classification -> sweep -> article package."
+                "This runs the legacy experimental pipeline:\n"
+                "PCA basis -> phase analysis -> pre-event EMA -> meta-analysis -> sensitivity -> classification -> experimental package."
             ),
             bg=BG_PANEL,
             fg=FG_MUTED,
@@ -228,7 +228,7 @@ class StartHereTab(ttk.Frame):
 
         tk.Label(
             card,
-            text="Article output root",
+            text="Experimental output root",
             bg=BG_PANEL,
             fg="#18324B",
             font=("Segoe UI", 10, "bold"),
@@ -244,7 +244,7 @@ class StartHereTab(ttk.Frame):
 
         ttk.Button(
             card,
-            text="Run Full Article Pipeline",
+            text="Run Experimental Pipeline",
             style="Accent.TButton",
             command=self._run_full_pipeline,
         ).grid(row=4, column=0, sticky="w", pady=(14, 0))
@@ -255,7 +255,7 @@ class StartHereTab(ttk.Frame):
         ).grid(row=4, column=1, sticky="w", pady=(14, 0))
         ttk.Button(
             card,
-            text="Open Final Package",
+            text="Open Experimental Package",
             command=self._open_final_package,
         ).grid(row=4, column=2, sticky="w", pady=(14, 0))
         ttk.Button(
@@ -1402,7 +1402,7 @@ class PipelineGui(tk.Tk):
         )
         self._start_run_queue(
             items,
-            queue_name="Full Kaggle Article Pipeline",
+            queue_name="Legacy Experimental Pipeline",
             results_root=self._coerce_path(out_root),
         )
 

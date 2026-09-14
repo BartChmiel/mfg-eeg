@@ -7,10 +7,43 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src_mfg.gui_workflows import WORKFLOW_MAP, build_command, parse_int_list  # noqa: E402
-from src_mfg.gui_workflows import build_article_pipeline_inputs  # noqa: E402
+from src_mfg.gui_workflows import build_article_pipeline_inputs, get_initial_values  # noqa: E402
 
 
 class GuiWorkflowTests(unittest.TestCase):
+    def test_gui_rejects_protected_output_paths(self) -> None:
+        destinations = [
+            "out/article_package",
+            "out/article_package/tables/overwrite.csv",
+            "out/gui_runs/../article_package/overwrite.csv",
+            str(REPO_ROOT / "out/article_package/overwrite.csv"),
+        ]
+        for spec in WORKFLOW_MAP.values():
+            for field in spec.fields:
+                if field.key not in {spec.output_key, "cache_dir"} and field.kind != "file_save":
+                    continue
+                for destination in destinations:
+                    with self.subTest(workflow=spec.key, field=field.key, path=destination):
+                        values = get_initial_values(spec)
+                        values[field.key] = destination
+                        with self.assertRaisesRegex(ValueError, "read-only in the GUI"):
+                            build_command(spec, values, python_executable="python")
+
+    def test_gui_defaults_and_experimental_pipeline_have_safe_outputs(self) -> None:
+        for spec in WORKFLOW_MAP.values():
+            build_command(spec, get_initial_values(spec), python_executable="python")
+        steps = build_article_pipeline_inputs(dataset_root="data/train", out_root="out/gui_runs")
+        for spec, values in steps:
+            build_command(spec, values, python_executable="python")
+        self.assertEqual(Path(steps[-1][1]["out"]), Path("out/gui_runs/article_package"))
+
+    def test_gui_can_read_archived_inputs_and_write_to_sibling_directory(self) -> None:
+        spec = WORKFLOW_MAP["article_package"]
+        values = get_initial_values(spec)
+        values["meta_dir"] = "out/article_package/raw_meta_exports"
+        values["out"] = "out/article_package_copy"
+        build_command(spec, values, python_executable="python")
+
     def test_article_workflows_define_recommended_presets(self) -> None:
         for key in [
             "build_basis",

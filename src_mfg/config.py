@@ -33,15 +33,6 @@ class Config:
     pca_max_r: int = 4
 
 
-def load_config(**overrides: Any) -> Config:
-    """
-    Factory function to initialize Config with optional parameter overrides.
-    """
-    base_params = asdict(Config())
-    base_params.update(overrides)
-    return Config(**base_params)
-
-
 def load_config_yaml(path: str | Path | None = None, **overrides: Any) -> Config:
     """Load Config from configs/default.yaml unless another path is given."""
     yaml_path = Path(path) if path is not None else Path(__file__).resolve().parents[1] / "configs" / "default.yaml"

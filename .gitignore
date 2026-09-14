@@ -44,8 +44,3 @@ docs/*.synctex.gz
 out/_verify_*.txt
 out/_vc_*_run.log
 out/classification_subject_vc_robust_epochs3/
-
-# Optional local-only dev helpers (keep on disk if useful, do not commit)
-docs/HANDOFF_VERIFICATION.md
-scripts/audit_article_claims.py
-tests/test_audit_article_claims.py
