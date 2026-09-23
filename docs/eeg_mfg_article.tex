@@ -30,7 +30,9 @@
 
 \title{Event-Locked Multi-Feature Directed Dependence in Grasp-and-Lift EEG}
 
-\author{Adrian Przybysz, Bartlomiej Chmiel, and Jarek Duda}
+\author{Bartlomiej Chmiel, Adrian Przybysz, and Jarek Duda}
+\hypersetup{pdfauthor={Bartlomiej Chmiel, Adrian Przybysz, Jarek Duda},
+    pdftitle={Event-Locked Multi-Feature Directed Dependence in Grasp-and-Lift EEG}}
 
 \begin{document}
 \maketitle
@@ -256,7 +258,7 @@ Subject-aware validation provides a secondary test of whether MFG-style edge dyn
 Aligned rows exceeded shifted rows in 175 of 288 matched comparisons, although some shifted settings retained positive lift. The timing controls therefore support only a modest descriptive predictive contribution from the MFG representation.
 
 \section{Discussion}
-The preprocessing variants yielded markedly different robustness profiles. The band-pass analysis shows structured dense score patterns, yet far fewer exact directed edge instances recur across subjects and settings: ten remain significant in the fixed reference analysis. The strongest non-zero-lag Fp2--Fp1 instances are retained in 24/27 and 21/27 settings, but none survives all 27. Distributed score structure and stability of a particular ordered pair are different properties. The inferential contrast therefore supports reproducible event-locked sensor dependence but not a strong posterior-to-central cortical connectivity claim.
+The preprocessing variants yielded markedly different robustness profiles. The band-pass analysis shows structured dense score patterns, yet far fewer exact directed edge instances recur across subjects and settings: ten remain significant in the fixed reference analysis. The strongest non-zero-lag Fp2--Fp1 instances are retained in 24/27 and 21/27 settings, but none survives all 27. Distributed score structure and stability of a particular ordered pair are different properties. The inferential contrast therefore supports reproducible event-locked sensor dependence but not a strong posterior-to-central cortical connectivity claim. The frontopolar effects may reflect phase-dependent ocular activity, which has not been ruled out and requires targeted controls before cortical interpretation.
 
 The classifier ablation tests whether MFG-style edge dynamics help decode events once the direct EEG baseline is already present. It shows a small positive increment. The absolute subject-aware AUC ($\approx 0.87$) is descriptive, but the incremental lift ($\approx +0.002$--$+0.003$) should not be overstated. Given non-nested candidate selection and row-wise augmented-model selection, we treat the classifier as descriptive decoder evidence for the representation, not as an unbiased generalization estimate or confirmation of any anatomical connectivity claim.
 

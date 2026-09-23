@@ -6,7 +6,7 @@ using multi-feature Granger-style (MFG) lagged dependence. The pipeline aligns
 and uses pair-specific PCA to summarize dependence across participants and lags.
 A secondary classifier experiment compares MFG features with direct EEG features.
 
-Authors: Adrian Przybysz, Bartlomiej Chmiel, Jarek Duda.
+Authors: Bartlomiej Chmiel, Adrian Przybysz, Jarek Duda.
 
 ## Main findings
 
@@ -19,8 +19,9 @@ Authors: Adrian Przybysz, Bartlomiej Chmiel, Jarek Duda.
   aligned-minus-shifted difference of about +0.0014. This increment is descriptive
   because candidate and model selection were not fully nested.
 
-The findings concern sensor-level dependence, not anatomical connectivity;
-frontopolar results remain susceptible to ocular and shared-source contributions.
+The findings concern sensor-level dependence, not anatomical connectivity.
+Phase-dependent ocular activity could explain the frontopolar effects and has
+not been ruled out. Shared-source contributions also remain possible.
 See the [article](docs/eeg_mfg_article.pdf) and
 [evidence summary](out/article_package/article_summary.md) for the full results.
 
@@ -90,5 +91,5 @@ python -m unittest discover -s tests -v
 ## Article
 
 *Event-Locked Multi-Feature Directed Dependence in Grasp-and-Lift EEG*,
-Adrian Przybysz, Bartlomiej Chmiel, and Jarek Duda.
+Bartlomiej Chmiel, Adrian Przybysz, and Jarek Duda.
 [PDF](docs/eeg_mfg_article.pdf) | [LaTeX source](docs/eeg_mfg_article.tex)
